@@ -1,40 +1,45 @@
 # Current Decisions
 
-This file records the decisions made so future agents do not reopen the same questions without a reason.
+This file records decisions that should not be reopened without a concrete reason.
 
 ## Decided
 
-- OpenDistillation should be an open-source productized tool, not a pure framework and not a closed SaaS first.
-- The first audience is students, indie developers, AI tinkerers, and technical beginners who want a personal local model.
-- The first experience should be Colab-first.
-- A CLI should exist later as a thin reproducible wrapper, but it is not the main first-run surface.
-- The first demo should use `.txt` and `.md` documents only.
-- The first student model target should be around 0.5B-1.5B parameters.
-- The default distillation route should be response distillation / SFT.
-- Logits distillation can exist as an experimental advanced route later.
-- The project should use strong open-source building blocks instead of pretending to invent all low-level training technology.
-- The first output should aim toward local use, ideally GGUF and llama.cpp/Ollama-compatible instructions.
+- OpenDistillation is an open-source productized workflow, not a closed SaaS first and not a research-only framework.
+- The first public promise is: "Upload docs. Distill a tiny local model. Run it locally."
+- The first audience is students, indie developers, AI tinkerers, and technical beginners.
+- The first real user experience is Colab-first.
+- The local CLI comes later as a thin reproducible wrapper.
+- v0 accepts `.txt` and `.md` only.
+- v0 uses one default teacher path, not a menu of teachers.
+- v0 targets one recommended student model around 0.5B-1.5B parameters.
+- The default training method is response distillation / supervised fine-tuning.
+- Logits distillation is a later experimental track only if technically feasible.
+- The first output should point toward local use through GGUF, llama.cpp, and/or Ollama-style instructions.
+- No generated datasets, model weights, checkpoints, API keys, `.env` files, or local machine config should be committed.
+- The project uses the Apache-2.0 license.
 
 ## Not Decided Yet
 
-- Exact teacher model.
+- Exact teacher model or hosted teacher path.
 - Exact student model.
-- Exact training backend.
-- Whether v0 uses a remote open-source teacher endpoint or a local teacher.
-- Exact GGUF export implementation path.
-- License. Apache-2.0 or MIT are likely candidates.
-- Whether the GitHub repository starts private or public.
+- Exact fine-tuning backend.
+- Exact dataset schema fields.
+- Whether GGUF export is implemented in v0 or documented as the immediate next command.
+- GitHub repository visibility and remote URL.
 
 ## Working Recommendation
 
-Use this v0 flow as the default plan:
+Use this v0 flow as the default implementation plan:
 
-1. User opens Colab.
-2. User uploads a `.txt` or `.md` file.
-3. OpenDistillation chunks the document.
-4. Teacher model generates question-answer pairs.
-5. The generated dataset is saved and previewed.
-6. A small student model is trained or fine-tuned with an efficient backend.
-7. The notebook shows a simple before/after comparison.
-8. The notebook exports the result or documents the exact export command.
-9. The user gets local run instructions.
+1. User opens the Colab notebook.
+2. User uploads one `.txt` or `.md` file.
+3. The notebook validates and previews the text.
+4. OpenDistillation chunks the document.
+5. The teacher path generates question-answer pairs.
+6. The dataset is previewed, saved, and downloadable.
+7. A small student model is loaded.
+8. A short supervised fine-tuning run starts.
+9. The notebook compares base-model and trained-model answers.
+10. The notebook saves the output.
+11. The notebook exports to GGUF or shows the exact export command and limitation.
+12. The user gets local run instructions.

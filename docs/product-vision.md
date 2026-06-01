@@ -1,68 +1,78 @@
-# OpenDistillation Product Vision
+# Product Vision
 
 ## One-Sentence Idea
 
-OpenDistillation helps people turn their own documents or task knowledge into a small local model they can actually run and keep improving.
+OpenDistillation helps people turn their own documents or task knowledge into a small local model they can understand, run, and keep improving.
 
-## Why This Might Matter
+## Product Promise
 
-Many existing tools focus on model training, fine-tuning, or research-grade distillation. The pieces exist, but the end-to-end personal-model experience is still hard to understand and hard to run.
+The public promise should stay simple:
 
-OpenDistillation should make the workflow feel like a product:
+> Upload docs. Distill a tiny local model. Run it locally.
 
-> I gave it my material, it taught a small model, and now I have my own local AI.
+That promise is product packaging around a real workflow. It does not mean OpenDistillation invents a new training algorithm. It means the project makes the workflow easier to follow end to end.
 
 ## Target User
 
-The first target user is a technical beginner, student, indie developer, or AI tinkerer who:
+The first user is a technical beginner, student, indie developer, researcher, or AI tinkerer who:
 
-- Has documents or a specific task.
-- Wants a small model that feels personal.
-- Does not want to stitch together many training tools manually.
-- May have limited GPU access.
-- Likes open-source tools and Colab notebooks.
+- Has notes, docs, or task knowledge in plain text.
+- Wants a personal model instead of only a retrieval system.
+- Can use Colab but does not want to assemble every training step manually.
+- Understands that the first model will be small and imperfect.
+- Values open-source tools and local ownership.
 
-## Core Product Promise
+## Positioning
 
-OpenDistillation should help users move from raw material to a runnable local model.
+OpenDistillation should be an open-source productized workflow, not a closed platform and not a research-only toolkit.
 
-The strongest first promise is:
+It should compete on clarity:
 
-> Upload docs. Distill a tiny local model. Run it anywhere.
-
-## Strategic Positioning
-
-OpenDistillation should not compete by having the largest number of algorithms on day one.
-
-It should compete by combining strong open-source building blocks into one polished workflow:
-
-- Unsloth or similar tools for efficient training where useful.
-- Hugging Face ecosystem for models and datasets.
-- PEFT/LoRA/QLoRA for efficient student training.
-- TRL where it fits the training loop.
-- llama.cpp/GGUF for local deployment.
-- Ollama or similar tools for easy local usage.
+- One narrow beginner path first.
+- Honest labels for what is implemented versus planned.
+- Clear default choices instead of a maze of options.
+- Reproducible steps that can later move from Colab to a thin CLI.
 
 ## Product Shape
 
 The recommended first shape is:
 
-1. GitHub repository as the public open-source home.
+1. GitHub repository as the public home.
 2. Colab notebook as the main first-run experience.
-3. CLI as the reproducible local interface.
-4. Simple documentation that explains the workflow in plain language.
+3. Small Python helper package only where it keeps the notebook clean.
+4. Thin local CLI later, reusing the same helper code.
+5. Export path toward llama.cpp and/or Ollama-style local usage.
 
-The project should avoid starting as a full SaaS or Mac app. Those can come later if the open-source workflow proves demand.
+## Technical Strategy
+
+Use proven open-source building blocks and make them approachable:
+
+- Hugging Face ecosystem for models and datasets.
+- PEFT/LoRA/QLoRA where they keep training small.
+- TRL or similar tooling where it simplifies supervised fine-tuning.
+- Unsloth or similar acceleration where it improves beginner success.
+- llama.cpp/GGUF and Ollama-style instructions for local running.
+
+Exact package and model defaults should be chosen during the first prototype spike, not guessed in advance.
 
 ## Long-Term Direction
 
-If the first version works, OpenDistillation can become a personal model lifecycle tool:
+If the first demo works, OpenDistillation can grow into a personal model lifecycle tool:
 
-- Keep adding new documents.
-- Generate new training examples.
+- Add more documents over time.
+- Generate and inspect new training examples.
 - Retrain or continue training.
-- Evaluate whether the model improved.
-- Version models over time.
-- Export and run different versions locally.
+- Track simple before/after evaluations.
+- Version datasets and model outputs.
+- Export multiple local model versions.
 
-The long-term idea is not just training once. It is helping users own and maintain their own small model.
+The long-term idea is ownership: users should understand where their model came from and how to improve it.
+
+## Non-Goals
+
+- Closed SaaS first.
+- Mac app first.
+- Broad research framework before a demo works.
+- PDF and arbitrary ingestion in v0.
+- Production cloud training backend in v0.
+- Claims of novel low-level optimization without implementation.

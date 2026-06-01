@@ -1,35 +1,109 @@
-# OpenDistillation Roadmap
+# Roadmap
 
-## Phase 0: Project Foundation
+OpenDistillation should move in small phases. Each phase must produce something a user can understand or run.
 
-- Create the project repository.
-- Write the README and product vision.
-- Decide initial license.
-- Define the first demo flow.
-- Prepare a simple public-facing explanation.
-
-## Phase 1: Colab Prototype
+## Phase 0: GitHub-Ready Foundation
 
 Goal:
 
-> A user can upload a `.txt` or `.md` file and run through the full flow in Colab.
+> A public visitor can understand the project in under one minute and see a believable first prototype plan.
 
-Planned flow:
+Deliverables:
 
-1. Install dependencies.
-2. Upload a document.
-3. Chunk the document into useful text sections.
-4. Ask an open-source teacher model to generate question-answer pairs.
-5. Save the generated training dataset.
-6. Train a small student model with an efficient backend.
-7. Run a small before/after comparison.
-8. Export to a local-friendly format where possible.
+- Public README with honest status.
+- Product vision and roadmap aligned with the README.
+- Exact v0 Colab flow.
+- First-demo implementation plan.
+- GitHub issue forms and initial issue plan.
+- Guardrails against committing secrets, generated datasets, checkpoints, and model artifacts.
+- Apache-2.0 license.
 
-## Phase 2: CLI Prototype
+Exit criteria:
+
+- Docs agree on the same narrow v0.
+- No training pipeline is implied to exist.
+- Repo is safe to push once a GitHub remote is ready.
+
+## Phase 1: Colab Skeleton
 
 Goal:
 
-> The same flow can be reproduced locally with one command and a config file.
+> A user can open the notebook, upload a `.txt` or `.md` file, and see the planned workflow shape without real training yet.
+
+Deliverables:
+
+- `notebooks/opendistillation_v0_demo.ipynb`.
+- Upload and text validation cells.
+- Text preview and chunk preview.
+- Placeholder dataset preview using deterministic sample output.
+- Clear labels showing which cells are not implemented yet.
+
+Exit criteria:
+
+- The notebook runs top to bottom without GPU.
+- A beginner can see the flow before model work begins.
+
+## Phase 2: Dataset Generation Prototype
+
+Goal:
+
+> Uploaded text becomes a small inspectable JSONL dataset.
+
+Deliverables:
+
+- TXT/MD loader.
+- Chunking helper with simple defaults.
+- One teacher-generation path.
+- JSONL dataset schema.
+- Dataset preview and download step.
+
+Exit criteria:
+
+- A sample input creates a valid dataset.
+- The user can inspect examples before training.
+
+## Phase 3: Short Training Path
+
+Goal:
+
+> A small student model can be fine-tuned from the generated dataset in Colab.
+
+Deliverables:
+
+- One recommended student model.
+- One efficient supervised fine-tuning path.
+- Small default training run.
+- Before/after prompt comparison.
+- Clear warnings about runtime, GPU, and quality limits.
+
+Exit criteria:
+
+- The notebook demonstrates a visible behavior change on the sample notes.
+- The run stays small enough for a beginner Colab demo.
+
+## Phase 4: Local Run Path
+
+Goal:
+
+> The user can save the trained output and follow an explicit path toward local usage.
+
+Deliverables:
+
+- Saved adapter or merged model output.
+- GGUF export if practical.
+- If GGUF is not practical in v0, exact follow-up command and limitation.
+- llama.cpp and/or Ollama-style run instructions.
+
+Exit criteria:
+
+- The notebook does not end at training only.
+- The local-running story is honest and testable.
+
+## Phase 5: Thin CLI
+
+Goal:
+
+> The Colab flow can be repeated locally with a small command-line wrapper.
 
 Potential command:
 
@@ -37,40 +111,16 @@ Potential command:
 opendistill run config.yaml
 ```
 
-The CLI should stay thin. The real logic should live in the Python package so Colab and CLI share the same workflow.
+The CLI should stay thin. Shared logic should live in the Python package so Colab and local runs do not drift.
 
-## Phase 3: Local Model Export
+## Not In V0
 
-Goal:
-
-> The user can export the trained student model and run it locally.
-
-Focus areas:
-
-- GGUF export path.
-- llama.cpp compatibility.
-- Ollama instructions if practical.
-- Simple local run examples.
-
-## Phase 4: Personal Model Maintenance
-
-Goal:
-
-> Users can keep improving a personal model over time.
-
-Potential features:
-
-- Dataset versioning.
-- Model version history.
-- Evaluation history.
-- Incremental retraining workflow.
-- Rollback to previous model versions.
-
-## Not In The First Version
-
-- Full SaaS.
+- SaaS.
 - Mac app.
-- PDF and arbitrary document parsing.
-- Large-scale multi-node training.
+- Account system.
+- Billing.
+- PDF parsing.
+- Arbitrary web crawling.
+- Large-scale distributed training.
 - Full benchmark suite.
 - Claims of novel distillation algorithms.

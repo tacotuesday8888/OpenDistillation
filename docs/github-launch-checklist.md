@@ -1,46 +1,53 @@
 # GitHub Launch Checklist
 
-Use this before making the repository public.
+Use this before making the repository public or inviting outside contributors.
 
-## Repo Setup
+## Repository Setup
 
-- [ ] Choose repository visibility: private for drafting, public for launch.
-- [ ] Choose license: Apache-2.0 or MIT.
-- [ ] Confirm `README.md` is public-facing and not just internal notes.
-- [ ] Confirm `START_HERE.md` is useful for future agents and collaborators.
-- [ ] Confirm no `.env`, API keys, generated models, checkpoints, or datasets are committed.
+- [ ] Choose repository visibility.
+- [ ] Add a GitHub remote.
+- [x] Choose a permissive open-source license.
+- [x] Add `LICENSE`.
+- [x] Keep generated datasets, checkpoints, model weights, and secrets ignored.
+- [x] Add structured GitHub issue forms.
+- [ ] Create labels from `docs/github-issue-plan.md` after the remote exists.
+- [ ] Create milestones from `docs/github-issue-plan.md` after the remote exists.
 
 ## Project Clarity
 
-- [ ] README explains the value in the first screen.
-- [ ] README has an honest current status section.
-- [ ] README has a clear v0 flow.
-- [ ] README does not imply unbuilt features already work.
-- [ ] Roadmap matches the actual project direction.
+- [x] README explains the value in the first screen.
+- [x] README has an honest current status section.
+- [x] README defines the narrow v0 scope.
+- [x] README does not imply the training pipeline already exists.
+- [x] Product vision, roadmap, and first-demo flow agree with each other.
+- [x] First-demo implementation plan exists.
 
-## First Issues
+## Prototype Readiness
 
-Create issues for:
-
-- [ ] Refine public README.
-- [ ] Choose teacher and student model defaults.
-- [ ] Specify generated dataset schema.
-- [ ] Build Colab notebook skeleton.
-- [ ] Implement document loading for TXT/MD.
-- [ ] Implement document chunking.
-- [ ] Implement teacher QA generation.
-- [ ] Implement dataset preview and save.
-- [ ] Implement first student training path.
-- [ ] Document local export/run path.
+- [ ] Create `notebooks/opendistillation_v0_demo.ipynb`.
+- [ ] Validate upload and preview for `.txt` and `.md`.
+- [ ] Implement simple chunking.
+- [ ] Define dataset schema.
+- [ ] Choose teacher path.
+- [ ] Choose student model and training backend.
+- [ ] Add a short training path.
+- [ ] Add before/after comparison.
+- [ ] Verify or honestly defer GGUF export.
 
 ## Launch Copy
 
-Draft one short launch message:
+Short version:
 
 ```text
-OpenDistillation is an open-source project for turning your docs into a tiny local model.
+OpenDistillation turns your docs into a tiny local model.
 
-The goal: upload notes, generate distillation data, train a small student model, and run it locally.
+Upload notes in Colab, generate training examples, fine-tune a small student model, and run the result locally.
+```
 
-Fine-tuning has Unsloth. Personal model distillation has OpenDistillation.
+Longer version:
+
+```text
+OpenDistillation is an open-source project for making personal model distillation feel like a product workflow instead of a pile of disconnected training tools.
+
+The first milestone is intentionally small: one Colab notebook, TXT/MD input, generated question-answer data, one small student model, and a clear path toward llama.cpp or Ollama-style local running.
 ```

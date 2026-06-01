@@ -13,14 +13,20 @@ build/
 # Jupyter
 .ipynb_checkpoints/
 
-# Models and generated data
+# Models, checkpoints, and generated data
 models/
 checkpoints/
 datasets/generated/
 outputs/
+wandb/
+mlruns/
 *.safetensors
 *.bin
 *.gguf
+*.pt
+*.pth
+*.ckpt
+*.onnx
 
 # Local secrets and machine config
 .env

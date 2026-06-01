@@ -1,31 +1,28 @@
 # Recommended Next Goal Prompt
 
-Use this as the next `/goal` after opening the folder:
+Use this as the next `/goal` after the GitHub-ready documentation foundation is committed:
 
 ```text
-/goal Make OpenDistillation GitHub-ready and prototype-ready. Refine the README into a compelling public-facing open-source project page, tighten the product positioning, define the exact v0 Colab user flow, create initial GitHub issues/milestones, and prepare a concrete first-demo implementation plan. Do not build the real training pipeline yet; stop at a polished repo foundation and implementation-ready plan.
+/goal Create the OpenDistillation v0 Colab notebook skeleton. Work in /Users/langqi/Developer/Projects/OpenDistillation. Add notebooks/opendistillation_v0_demo.ipynb and only the minimal shared Python helpers needed for text upload, validation, preview, and simple TXT/MD chunking. The notebook should run top to bottom on CPU without real model training. Include clear placeholder cells for teacher generation, student fine-tuning, and export, but do not implement real training yet. Verify the notebook can run from a clean local/Jupyter or Colab-compatible environment, update docs if the flow changes, review the diff for secrets and generated artifacts, and commit locally.
 ```
 
 ## Why This Goal
 
-This is the right next size because it is bigger than copywriting but smaller than "finish the whole project."
-
-It should produce a repo that feels serious before model training begins.
+This is the right next step because the project now has enough product clarity. The next useful proof is a notebook that demonstrates the shape of the experience without taking on model training risk immediately.
 
 ## Done Means
 
-- README clearly explains the project in under one minute.
-- Product vision and roadmap match the README.
-- v0 scope is narrow and believable.
-- The first Colab flow is specified step by step.
-- GitHub issues or issue templates exist for the first implementation tasks.
-- The repo is ready to push to GitHub.
+- `notebooks/opendistillation_v0_demo.ipynb` exists.
+- The notebook runs top to bottom without GPU.
+- `.txt` and `.md` upload/validation is implemented.
+- The user sees file name, character count, word count, and text preview.
+- The user sees chunk count and first chunk previews.
+- Teacher, training, and export sections are clearly labeled as future implementation.
+- No generated datasets, model artifacts, checkpoints, secrets, or local config are committed.
 
 ## Do Not Use This Goal For
 
-- Full SaaS.
-- Mac app.
-- Account system.
-- Cloud training backend.
-- Real model training implementation.
-- Claims of novel low-level optimization.
+- Real teacher-model calls.
+- Real fine-tuning.
+- GGUF export implementation.
+- SaaS, Mac app, account system, billing, or cloud backend.

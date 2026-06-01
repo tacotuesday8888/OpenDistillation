@@ -1,51 +1,43 @@
 # Agent Handoff
 
-## Where Things Are
+## Project Root
 
-- Project root: `/Users/langqi/Documents/Codex/2026-05-30/files-mentioned-by-the-user-opendistillation/OpenDistillation`
-- Main README: `README.md`
-- Product vision: `docs/product-vision.md`
-- Roadmap: `docs/roadmap.md`
-- Decisions: `docs/current-decisions.md`
-- Next goal prompt: `docs/next-goal-prompt.md`
-- Agent briefs: `docs/agents/`
+`/Users/langqi/Developer/Projects/OpenDistillation`
 
-## Current Repo State
+## Current State
 
-The repo has only foundation documents and empty future implementation folders:
+OpenDistillation is GitHub-ready at the documentation and planning level. It does not have real training code yet.
 
-- `notebooks/`
-- `src/opendistillation/`
+The repo now contains:
 
-No training pipeline exists yet.
+- Public README.
+- Product vision.
+- Roadmap.
+- Exact v0 Colab flow.
+- First-demo implementation plan.
+- GitHub issue forms.
+- Starter milestone and issue plan.
+- Ignore rules for secrets, generated datasets, checkpoints, and model artifacts.
+- Apache-2.0 license.
 
-## What The User Wants
+## Product Direction
 
-The user wants OpenDistillation to become a serious open-source project with product-level clarity.
+Keep the first promise narrow:
 
-They are not asking to write model training code blindly. They want enough structure that they can open the folder later and continue with a strong next goal.
+> Upload docs. Distill a tiny local model. Run it locally.
 
-## Recommended Next Work
+The first implementation surface is a Colab notebook. The CLI comes later as a thin wrapper. Do not start a SaaS, Mac app, account system, billing flow, cloud backend, or broad training framework.
 
-The next bigger goal should polish the public project foundation and create the first demo plan. It should stop before trying to train real models unless the user explicitly starts an implementation goal.
+## Next Recommended Work
 
-The best next milestone is:
+Use `docs/next-goal-prompt.md`.
 
-> Make OpenDistillation GitHub-ready and prototype-ready.
+The next task should create the v0 notebook skeleton and text/chunking helpers only. It should not implement real model training yet.
 
-That means:
+## Important Guardrails
 
-- Better README.
-- Clear public positioning.
-- Clear v0 scope.
-- Exact Colab flow.
-- Initial GitHub issues/milestones.
-- A notebook skeleton plan.
-
-## Important Guardrail
-
-Do not make the project look more technically mature than it is. The honest story is:
-
-> OpenDistillation integrates strong open-source training and deployment tools into a smooth personal-model distillation workflow.
-
-That is a good story. It does not need fake claims.
+- Do not imply unbuilt features already work.
+- Do not commit generated datasets, checkpoints, model weights, `.env` files, keys, or local machine config.
+- Check current official docs before choosing model, training, Colab, Hugging Face, Unsloth, PEFT, TRL, llama.cpp, Ollama, or GitHub-specific behavior.
+- Keep v0 to `.txt` and `.md`.
+- Prefer one reliable default path over many options.

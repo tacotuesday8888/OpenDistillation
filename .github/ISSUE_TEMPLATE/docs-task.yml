@@ -1,0 +1,58 @@
+name: Docs task
+description: Improve project documentation, positioning, examples, or setup instructions.
+title: "[Docs] "
+labels: ["documentation", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for documentation work that makes OpenDistillation clearer without expanding v0 scope.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should be clearer after this change?
+      placeholder: A new visitor should understand...
+    validations:
+      required: true
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Primary audience
+      description: Who benefits most from this docs change?
+      options:
+        - New GitHub visitor
+        - First-time Colab user
+        - Future contributor
+        - Prototype implementer
+        - Advanced researcher
+    validations:
+      required: true
+  - type: textarea
+    id: pages
+    attributes:
+      label: Pages or files
+      description: Which docs are involved?
+      placeholder: |
+        - README.md
+        - docs/first-demo-flow.md
+    validations:
+      required: false
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      options:
+        - label: The change explains the idea in plain language.
+          required: true
+        - label: The docs do not imply unbuilt features already exist.
+          required: true
+        - label: The change keeps v0 scoped to TXT/MD and the Colab-first path unless a decision doc changes.
+          required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Add context, links, or examples.
+    validations:
+      required: false

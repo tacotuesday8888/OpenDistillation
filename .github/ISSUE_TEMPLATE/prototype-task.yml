@@ -1,0 +1,70 @@
+name: Prototype task
+description: Track a concrete task for the first OpenDistillation demo.
+title: "[Prototype] "
+labels: ["prototype", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for small implementation tasks that move the Colab-first v0 forward.
+  - type: textarea
+    id: user_outcome
+    attributes:
+      label: User-visible outcome
+      description: What will the user be able to see or do after this task?
+      placeholder: A user can upload a .md file and see a preview...
+    validations:
+      required: true
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Milestone
+      description: Which planned milestone does this belong to?
+      options:
+        - v0.1 Colab Skeleton
+        - v0.2 Dataset Generation
+        - v0.3 Short Training Demo
+        - v0.4 Local Run Path
+        - Public Launch
+    validations:
+      required: true
+  - type: textarea
+    id: scope_in
+    attributes:
+      label: Included scope
+      description: What is included?
+      placeholder: |
+        - Validate .txt and .md uploads
+        - Show character count and word count
+    validations:
+      required: true
+  - type: textarea
+    id: scope_out
+    attributes:
+      label: Excluded scope
+      description: What should not be built as part of this issue?
+      placeholder: |
+        - PDF parsing
+        - Real fine-tuning
+        - SaaS features
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: How should this be checked?
+      placeholder: Run the notebook cell with examples/sample-notes.md and confirm...
+    validations:
+      required: true
+  - type: checkboxes
+    id: guardrails
+    attributes:
+      label: Guardrails
+      options:
+        - label: This task does not add a SaaS, Mac app, account system, billing, or cloud backend.
+          required: true
+        - label: This task does not commit generated datasets, checkpoints, model weights, secrets, or local config.
+          required: true
+        - label: Version-sensitive package, model, API, or runtime choices will be checked against current official docs before implementation.
+          required: true

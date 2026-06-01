@@ -1,0 +1,64 @@
+name: Research decision
+description: Record a bounded model, package, runtime, or product decision before implementation.
+title: "[Decision] "
+labels: ["research", "scope", "triage"]
+body:
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision needed
+      description: What specific choice needs to be made?
+      placeholder: Choose the default v0 student model...
+    validations:
+      required: true
+  - type: textarea
+    id: why_now
+    attributes:
+      label: Why this matters now
+      description: Explain the implementation risk or user impact in plain language.
+      placeholder: The notebook cannot define hardware expectations until this is chosen.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Teacher model
+        - Student model
+        - Fine-tuning backend
+        - Dataset schema
+        - GGUF/export path
+        - Local runtime
+        - License or launch
+        - Other product scope
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options to compare
+      description: List the realistic options and the simplest safe default.
+      placeholder: |
+        1. Option A
+        2. Option B
+        Recommended safe default:
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources checked
+      description: Link current official docs or reliable sources used for the decision.
+      placeholder: |
+        - Official docs:
+        - Model card:
+    validations:
+      required: true
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Recommendation
+      description: What should OpenDistillation do for v0?
+    validations:
+      required: true
