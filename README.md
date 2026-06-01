@@ -4,6 +4,8 @@
 
 OpenDistillation is an open-source project for turning your own documents or task data into a small local model.
 
+If you are opening this repo for the first time, start with [`START_HERE.md`](START_HERE.md).
+
 The goal is not to be another research-only distillation framework. The goal is to make the full workflow feel simple:
 
 1. Upload your docs.
@@ -51,12 +53,24 @@ The first version should focus on one successful flow:
 
 ```text
 OpenDistillation/
+  START_HERE.md
+  AGENTS.md
   README.md
   docs/
+    agents/
+    agent-handoff.md
+    current-decisions.md
+    first-demo-flow.md
+    next-goal-prompt.md
     product-vision.md
     roadmap.md
     superpowers/plans/
+  .github/
+    ISSUE_TEMPLATE/
+  examples/
+    sample-notes.md
   notebooks/
+    README.md
   src/
     opendistillation/
 ```
