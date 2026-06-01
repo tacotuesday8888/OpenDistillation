@@ -53,7 +53,7 @@ Deliverables:
 
 - TXT/MD loader.
 - Chunking helper with simple defaults.
-- One teacher-generation path.
+- One local deterministic mock teacher-generation path.
 - JSONL dataset schema.
 - Dataset preview and download step.
 
@@ -61,6 +61,7 @@ Exit criteria:
 
 - A sample input creates a valid dataset.
 - The user can inspect examples before training.
+- No real teacher model, paid API, model download, GPU, or remote text transfer is required.
 
 ## Phase 3: Short Training Path
 

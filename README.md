@@ -28,6 +28,8 @@ What exists now:
 
 - Public positioning and project docs.
 - A scoped v0 Colab flow.
+- A runnable prototype skeleton notebook for TXT/MD loading, chunking, dataset validation, and mock QA generation.
+- Minimal Python helpers under `src/opendistillation/`.
 - A first-demo implementation plan.
 - GitHub issue forms and a starter issue plan.
 - Guardrails to avoid committing generated datasets, checkpoints, model weights, or secrets.
@@ -35,8 +37,8 @@ What exists now:
 What does not exist yet:
 
 - A real training pipeline.
-- A runnable Colab notebook.
-- A Python package or CLI.
+- Real teacher-model calls.
+- A CLI.
 - A model export implementation.
 - A SaaS, account system, Mac app, or cloud backend.
 
@@ -83,6 +85,8 @@ The planned notebook flow is specified in [`docs/first-demo-flow.md`](docs/first
 12. Export to GGUF or show the exact export command.
 13. Show local run instructions.
 
+The current skeleton notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). It runs through steps 1-7 with a deterministic local mock teacher and then shows explicit placeholders for training and export.
+
 ## Repository Map
 
 ```text
@@ -94,6 +98,8 @@ OpenDistillation/
     ISSUE_TEMPLATE/                 # structured GitHub issue forms
   docs/
     current-decisions.md            # decisions that should not be reopened casually
+    dataset-schema.md               # JSONL shape for generated examples
+    engine-integration-points.md    # where real engines plug in later
     first-demo-flow.md              # exact v0 Colab user flow
     first-demo-implementation-plan.md
     github-issue-plan.md
@@ -104,23 +110,26 @@ OpenDistillation/
     sample-notes.md                 # tiny input file for the first demo
   notebooks/
     README.md                       # planned notebook location
+    opendistillation_v0_demo.ipynb  # runnable v0 skeleton notebook
   src/
-    opendistillation/               # future shared Python package
+    opendistillation/               # prototype helper package
 ```
 
 ## Development Direction
 
-The next implementation milestone is not "build everything." It is:
+The current skeleton covers the safe first slice:
 
-1. Create a minimal Colab notebook skeleton.
-2. Add text upload and validation.
-3. Add deterministic chunking for `.txt` and `.md`.
-4. Generate a small JSONL dataset from chunks.
-5. Add the shortest reliable fine-tuning path.
-6. Show before/after behavior.
-7. Document the export path honestly.
+1. Load and validate `.txt` or `.md`.
+2. Preview the document.
+3. Chunk text with stable IDs.
+4. Generate deterministic mock QA examples.
+5. Validate and serialize the JSONL dataset.
+
+The next implementation milestone is to choose one real teacher-generation path while keeping the mock teacher as a safe fallback. Real fine-tuning, before/after comparison, and GGUF/local export come after that.
 
 See [`docs/first-demo-implementation-plan.md`](docs/first-demo-implementation-plan.md) for the concrete build order.
+
+The helper interfaces are described in [`docs/engine-integration-points.md`](docs/engine-integration-points.md). They are intentionally small so later work can plug in open-source teacher, training, and export engines without rewriting the notebook flow.
 
 ## Contributing
 

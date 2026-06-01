@@ -24,11 +24,13 @@ Use this before making the repository public or inviting outside contributors.
 
 ## Prototype Readiness
 
-- [ ] Create `notebooks/opendistillation_v0_demo.ipynb`.
-- [ ] Validate upload and preview for `.txt` and `.md`.
-- [ ] Implement simple chunking.
-- [ ] Define dataset schema.
-- [ ] Choose teacher path.
+- [x] Create `notebooks/opendistillation_v0_demo.ipynb`.
+- [x] Validate upload and preview for `.txt` and `.md`.
+- [x] Implement simple chunking.
+- [x] Define dataset schema.
+- [x] Document engine integration points.
+- [x] Add deterministic mock teacher path.
+- [ ] Choose real teacher path.
 - [ ] Choose student model and training backend.
 - [ ] Add a short training path.
 - [ ] Add before/after comparison.

@@ -47,7 +47,7 @@ Acceptance criteria:
 - Milestones in this file exist on GitHub.
 - Issue templates show the intended labels once issues are created.
 
-### 2. Create the v0 Colab notebook skeleton
+### 2. Verify the v0 skeleton from a fresh Colab runtime
 
 Labels: `prototype`
 
@@ -55,12 +55,13 @@ Milestone: v0.1 Colab Skeleton
 
 Acceptance criteria:
 
-- `notebooks/opendistillation_v0_demo.ipynb` exists.
-- Notebook opens in Colab.
+- `notebooks/opendistillation_v0_demo.ipynb` opens from GitHub in Colab after the remote exists.
 - Notebook runs top to bottom on CPU without real training.
-- Notebook clearly labels planned-but-unimplemented cells.
+- The sample notes path works.
+- The upload path works with one `.txt` and one `.md` file.
+- Notebook clearly labels training and export as placeholders.
 
-### 3. Implement TXT/MD upload validation
+### 3. Harden TXT/MD upload validation messages
 
 Labels: `prototype`, `good first issue`
 
@@ -73,7 +74,7 @@ Acceptance criteria:
 - Empty files are rejected.
 - Uploaded content preview shows file name, character count, word count, and first 1,000 characters.
 
-### 4. Implement simple document chunking
+### 4. Review simple document chunking defaults
 
 Labels: `prototype`
 
@@ -85,8 +86,9 @@ Acceptance criteria:
 - Empty chunks are dropped.
 - Chunk IDs are stable.
 - The first 3 chunks are previewed in the notebook.
+- `examples/sample-notes.md` produces multiple chunks with the notebook default.
 
-### 5. Define the JSONL dataset schema
+### 5. Expand dataset schema documentation after real teacher selection
 
 Labels: `prototype`, `documentation`
 
@@ -97,7 +99,7 @@ Acceptance criteria:
 - `docs/dataset-schema.md` documents required fields.
 - Each row includes `instruction`, `response`, and `source_chunk_id`.
 - Dataset validation fails clearly on missing fields.
-- README links to the schema after it exists.
+- Any new optional fields are documented before they are used.
 
 ### 6. Choose the default teacher path
 

@@ -2,15 +2,15 @@
 
 This directory will hold the Colab-first OpenDistillation demo.
 
-Planned notebook:
+Current notebook:
 
 ```text
 notebooks/opendistillation_v0_demo.ipynb
 ```
 
-The first notebook should prove one beginner-readable flow:
+The current skeleton proves the first safe part of the beginner-readable flow:
 
-> Upload a `.txt` or `.md` document, preview and chunk it, generate training examples, fine-tune a small student model, compare before/after behavior, and show the path to local running.
+> Upload or load a `.txt` or `.md` document, preview and chunk it, generate deterministic mock training examples, and show clear placeholders for future training and export.
 
 ## Notebook Rules
 
@@ -28,4 +28,7 @@ Before real training is added, the notebook should run top to bottom on CPU and 
 - Upload and validation for `.txt` and `.md`.
 - Text preview.
 - Chunk preview.
-- Placeholder sections for teacher generation, student fine-tuning, comparison, and export.
+- Mock teacher generation.
+- Placeholder sections for student fine-tuning, comparison, and export.
+
+Later real engines should plug in through the interfaces described in `docs/engine-integration-points.md`.

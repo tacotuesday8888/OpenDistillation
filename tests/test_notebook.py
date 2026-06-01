@@ -1,0 +1,25 @@
+import json
+import unittest
+from pathlib import Path
+
+
+NOTEBOOK_PATH = Path(__file__).resolve().parents[1] / "notebooks" / "opendistillation_v0_demo.ipynb"
+
+
+class NotebookSkeletonTests(unittest.TestCase):
+    def test_notebook_has_milestone_1_to_3_sections_and_no_saved_outputs(self):
+        notebook = json.loads(NOTEBOOK_PATH.read_text(encoding="utf-8"))
+        sources = "\n".join("".join(cell.get("source", [])) for cell in notebook["cells"])
+
+        self.assertIn("Upload docs. Distill a tiny local model. Run it locally.", sources)
+        self.assertIn("Upload or load a TXT/MD file", sources)
+        self.assertIn("Chunk the document", sources)
+        self.assertIn("Generate mock training examples", sources)
+        self.assertIn("Training placeholder", sources)
+        self.assertIn("Export placeholder", sources)
+        self.assertTrue(all(not cell.get("outputs") for cell in notebook["cells"] if cell["cell_type"] == "code"))
+        self.assertTrue(all(cell.get("execution_count") is None for cell in notebook["cells"] if cell["cell_type"] == "code"))
+
+
+if __name__ == "__main__":
+    unittest.main()

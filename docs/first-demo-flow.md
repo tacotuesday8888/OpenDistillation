@@ -75,7 +75,7 @@ Expected output:
 
 ### Step 5: Generate Training Examples
 
-The teacher path creates question-answer examples from chunks.
+The teacher path creates question-answer examples from chunks. The current skeleton uses a deterministic local mock teacher so the notebook can run without model downloads, API calls, GPU, or remote text transfer.
 
 Default behavior:
 
@@ -87,14 +87,17 @@ Default behavior:
 Expected output:
 
 - A table preview of generated examples.
-- A JSONL dataset saved in the notebook runtime.
+- A JSONL dataset saved in the notebook runtime temp directory.
 - A download link for the dataset.
+- A clear label showing whether the teacher engine sends text to a remote endpoint.
 
 Initial JSONL shape:
 
 ```json
 {"instruction":"Question about the user's document","response":"Answer grounded in the document","source_chunk_id":"chunk-0001"}
 ```
+
+The schema is documented in `docs/dataset-schema.md`.
 
 ### Step 6: Review Dataset
 
@@ -206,6 +209,14 @@ Included:
 - One short training path.
 - One before/after comparison.
 - Local-run guidance.
+
+Current skeleton:
+
+- Implements TXT/MD loading and validation.
+- Implements simple chunking.
+- Implements the JSONL dataset schema helpers.
+- Implements a local deterministic mock teacher.
+- Shows training and export placeholders only.
 
 Excluded:
 

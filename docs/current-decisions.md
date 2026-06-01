@@ -17,13 +17,15 @@ This file records decisions that should not be reopened without a concrete reaso
 - The first output should point toward local use through GGUF, llama.cpp, and/or Ollama-style instructions.
 - No generated datasets, model weights, checkpoints, API keys, `.env` files, or local machine config should be committed.
 - The project uses the Apache-2.0 license.
+- The v0 skeleton uses a deterministic local `MockTeacherEngine` before any real teacher-model path is chosen.
+- The notebook should call small helper interfaces so real engines can be plugged in later without changing the user flow.
 
 ## Not Decided Yet
 
 - Exact teacher model or hosted teacher path.
 - Exact student model.
 - Exact fine-tuning backend.
-- Exact dataset schema fields.
+- Exact dataset schema fields beyond the required v0 `instruction`, `response`, and `source_chunk_id`.
 - Whether GGUF export is implemented in v0 or documented as the immediate next command.
 - GitHub repository visibility and remote URL.
 

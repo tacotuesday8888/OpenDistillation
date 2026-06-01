@@ -14,6 +14,8 @@ The repo now contains:
 - Product vision.
 - Roadmap.
 - Exact v0 Colab flow.
+- Runnable v0 skeleton notebook.
+- Minimal Python helpers for TXT/MD loading, chunking, dataset validation, and mock teacher generation.
 - First-demo implementation plan.
 - GitHub issue forms.
 - Starter milestone and issue plan.
@@ -32,7 +34,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task should create the v0 notebook skeleton and text/chunking helpers only. It should not implement real model training yet.
+The next task should choose and test the first real teacher path or continue toward dataset-generation quality. It should not implement real model training until the teacher and dataset path are validated.
 
 ## Important Guardrails
 
@@ -41,3 +43,4 @@ The next task should create the v0 notebook skeleton and text/chunking helpers o
 - Check current official docs before choosing model, training, Colab, Hugging Face, Unsloth, PEFT, TRL, llama.cpp, Ollama, or GitHub-specific behavior.
 - Keep v0 to `.txt` and `.md`.
 - Prefer one reliable default path over many options.
+- Keep real engines behind the helper interfaces so the notebook flow does not need to be rewritten.

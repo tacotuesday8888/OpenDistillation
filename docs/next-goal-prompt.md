@@ -1,28 +1,26 @@
 # Recommended Next Goal Prompt
 
-Use this as the next `/goal` after the GitHub-ready documentation foundation is committed:
+Use this as the next `/goal` after the v0 skeleton is committed:
 
 ```text
-/goal Create the OpenDistillation v0 Colab notebook skeleton. Work in /Users/langqi/Developer/Projects/OpenDistillation. Add notebooks/opendistillation_v0_demo.ipynb and only the minimal shared Python helpers needed for text upload, validation, preview, and simple TXT/MD chunking. The notebook should run top to bottom on CPU without real model training. Include clear placeholder cells for teacher generation, student fine-tuning, and export, but do not implement real training yet. Verify the notebook can run from a clean local/Jupyter or Colab-compatible environment, update docs if the flow changes, review the diff for secrets and generated artifacts, and commit locally.
+/goal Choose and implement the first real OpenDistillation teacher-generation path. Work in /Users/langqi/Developer/Projects/OpenDistillation on the current branch. Keep the existing notebook flow and helper interfaces. Research current official docs for the chosen open-source teacher option, add a bounded teacher engine that produces the existing JSONL schema from TXT/MD chunks, clearly label whether user text leaves the notebook runtime, keep the deterministic mock teacher as the safe default or fallback, add tests for prompt construction and dataset validation, avoid real model training and large model artifacts, verify tests and notebook behavior, review the diff for secrets/generated files, and commit locally.
 ```
 
 ## Why This Goal
 
-This is the right next step because the project now has enough product clarity. The next useful proof is a notebook that demonstrates the shape of the experience without taking on model training risk immediately.
+This is the right next step because the skeleton already demonstrates the flow. The next useful proof is replacing the mock QA generator with one bounded real teacher path while preserving the same dataset schema.
 
 ## Done Means
 
-- `notebooks/opendistillation_v0_demo.ipynb` exists.
-- The notebook runs top to bottom without GPU.
-- `.txt` and `.md` upload/validation is implemented.
-- The user sees file name, character count, word count, and text preview.
-- The user sees chunk count and first chunk previews.
-- Teacher, training, and export sections are clearly labeled as future implementation.
+- A real teacher path is chosen based on current official docs.
+- The mock teacher remains available as a safe deterministic path.
+- Generated rows still validate against `docs/dataset-schema.md`.
+- The notebook clearly states whether text is processed locally or remotely.
+- Training and export remain placeholders.
 - No generated datasets, model artifacts, checkpoints, secrets, or local config are committed.
 
 ## Do Not Use This Goal For
 
-- Real teacher-model calls.
 - Real fine-tuning.
 - GGUF export implementation.
 - SaaS, Mac app, account system, billing, or cloud backend.

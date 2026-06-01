@@ -47,6 +47,8 @@ Acceptance criteria:
 - Unsupported file types produce a readable message.
 - No generated files are committed.
 
+Status: implemented as `notebooks/opendistillation_v0_demo.ipynb`.
+
 ## Milestone 2: TXT/MD Loading And Chunking
 
 Purpose:
@@ -74,6 +76,8 @@ Acceptance criteria:
 - Chunk order is stable.
 - The sample notes produce multiple readable chunks.
 
+Status: implemented in `src/opendistillation/text.py`.
+
 ## Milestone 3: Dataset Schema And Teacher Generation
 
 Purpose:
@@ -100,7 +104,7 @@ Tasks:
 3. Add teacher prompt construction from one chunk.
 4. Choose one teacher path during implementation after checking current official model/provider docs.
 5. Generate a small number of examples per chunk.
-6. Save the dataset to an ignored runtime path.
+6. Save the dataset to a runtime path outside the repository.
 7. Preview the first 5 examples in the notebook.
 
 Acceptance criteria:
@@ -109,6 +113,8 @@ Acceptance criteria:
 - Invalid rows are shown before training.
 - Dataset output is downloadable from Colab.
 - The notebook clearly says if text is sent to a remote teacher endpoint.
+
+Status: implemented for the skeleton with `MockTeacherEngine`; real teacher-model selection remains a later milestone.
 
 ## Milestone 4: Short Student Fine-Tuning
 
