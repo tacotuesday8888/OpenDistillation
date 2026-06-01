@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Models and generated data
+models/
+checkpoints/
+datasets/generated/
+outputs/
+*.safetensors
+*.bin
+*.gguf
+
+# Local secrets and machine config
+.env
+.env.*
+*.pem
+*.key
+
+# macOS
+.DS_Store
