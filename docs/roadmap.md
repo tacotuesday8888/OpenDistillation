@@ -87,7 +87,7 @@ Exit criteria:
 - The notebook demonstrates a visible behavior change on the sample notes.
 - The run stays small enough for a beginner Colab demo.
 
-Current status: the bounded training engine, comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, and fake base-vs-adapter generation. A recovered Colab T4 runtime completed one 1-step training run and real before/after output. A clean/fresh GitHub-opened Colab runtime is still not verified yet.
+Current status: the bounded training engine, comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, and fake base-vs-adapter generation. A clean GitHub-opened Colab T4 runtime completed the optional dependency install, sample-notes flow, LoRA adapter training, and real before/after output once. The output is a qualitative wiring check, not a benchmark.
 
 ## Phase 4: Local Notes-Model Run Path
 

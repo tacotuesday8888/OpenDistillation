@@ -147,7 +147,7 @@ Acceptance criteria:
 - Output artifacts are not committed.
 - Failure cases explain the likely next step.
 
-Status: implemented as a bounded optional path using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA. Local tests cover configuration, dataset formatting, runtime readiness messages, installed-package import failures, and failure explanations without model downloads. The notebook default remains CPU-runnable with dependency install and training skipped. A recovered Colab T4 runtime completed one 1-step training run and created an adapter. A clean/fresh GitHub-opened Colab runtime still requires smoke testing using `docs/colab-smoke-test-checklist.md`.
+Status: implemented as a bounded optional path using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA. Local tests cover configuration, dataset formatting, runtime readiness messages, installed-package import failures, and failure explanations without model downloads. The notebook default remains CPU-runnable with dependency install and training skipped. A clean GitHub-opened Colab T4 runtime installed the bounded package set without upgrading `torch`, trained a LoRA adapter at `/content/OpenDistillation/outputs/notes-lora/adapter`, and recorded no memory failure. The trained answer is only a qualitative wiring check, not a quality claim.
 
 ## Milestone 5: Before/After Comparison
 
@@ -174,7 +174,7 @@ Acceptance criteria:
 - The comparison uses the user's uploaded notes.
 - The output does not claim broad benchmark improvement.
 
-Status: implemented as an optional `BeforeAfterComparisonEngine` using Transformers generation and PEFT adapter loading. Local tests cover request construction, dependency handling, missing adapter handling, and fake base-vs-adapter generation without model downloads. The notebook default remains CPU-runnable with comparison skipped. A recovered Colab T4 runtime printed a real base-vs-adapter comparison once. A clean/fresh GitHub-opened Colab runtime still requires smoke testing.
+Status: implemented as an optional `BeforeAfterComparisonEngine` using Transformers generation and PEFT adapter loading. Local tests cover request construction, dependency handling, missing adapter handling, and fake base-vs-adapter generation without model downloads. The notebook default remains CPU-runnable with comparison skipped. A clean GitHub-opened Colab T4 runtime printed a real base-vs-adapter comparison once from the sample notes path.
 
 ## Milestone 6: Export And Local Run Path
 

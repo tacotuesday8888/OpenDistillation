@@ -80,7 +80,7 @@ Current default:
 
 This choice keeps the first path beginner-readable. TRL provides the supervised fine-tuning wrapper, PEFT keeps the trainable output small, and Qwen2.5-0.5B-Instruct is within the target 0.5B-1.5B student range.
 
-Unsloth and bitsandbytes are not enabled by default. They may become later optimization paths after the plain TRL/PEFT adapter run is verified, because they add extra quantization, install, and hardware assumptions.
+Unsloth and bitsandbytes are not enabled by default. They may become later optimization paths after more evidence than one plain TRL/PEFT adapter smoke run, because they add extra quantization, install, and hardware assumptions.
 
 Verified locally:
 
@@ -89,12 +89,16 @@ Verified locally:
 - Training config kwargs and LoRA config kwargs.
 - Notebook default path with training skipped.
 
-Requires Colab/GPU verification:
+Verified once in a clean GitHub-opened Colab T4 runtime:
 
 - Optional package installation.
 - Student model download.
 - The actual `SFTLoRATrainingEngine.train()` call.
-- Adapter quality, memory use, and runtime.
+- Adapter output creation, memory use, and runtime.
+
+Still unverified:
+
+- Adapter quality beyond a qualitative wiring check.
 
 ## Before/After Comparison Engine
 
@@ -127,12 +131,15 @@ Verified locally:
 - Fake base-vs-adapter generation without downloading models.
 - Notebook default path with comparison skipped.
 
-Requires Colab/GPU verification:
+Verified once in a clean GitHub-opened Colab T4 runtime:
 
 - Real base-model generation.
 - Real PEFT adapter loading.
 - Real trained-adapter generation.
-- Whether the answer changes in a useful way after the short training run.
+
+Still unverified:
+
+- Whether the answer changes in a useful way after a real teacher path and more meaningful training data.
 
 ## Future Export Engines
 

@@ -47,14 +47,13 @@ What exists now:
 - Runtime checks and plain-language setup messages for the optional Colab GPU path.
 - A first-demo implementation plan.
 - A manual Colab GPU smoke-test checklist.
-- A smoke-test results file that records the first real Colab T4 attempt, the dependency blockers found, and a recovered-runtime training/comparison pass.
+- A smoke-test results file that records the first real Colab T4 blockers and a clean GitHub-opened T4 training/comparison pass.
 - GitHub issue forms and a starter issue plan.
 - Guardrails to avoid committing generated datasets, checkpoints, model weights, or secrets.
 
 What does not exist yet:
 
 - Real teacher-model calls.
-- A clean/fresh Colab GPU training and comparison run from the GitHub notebook.
 - Multiple personal model profiles.
 - Coding, writing, work, or phone model flows.
 - A CLI.
@@ -76,8 +75,8 @@ Current skeleton constraints:
 - **Input:** `.txt` and `.md` notes only.
 - **Teacher:** deterministic local mock teacher.
 - **Dataset:** JSONL rows with `instruction`, `response`, and `source_chunk_id`.
-- **Training:** optional short TRL/PEFT LoRA entry point; skipped by default and still needs Colab GPU verification.
-- **Comparison:** optional base-vs-adapter answer comparison after training; skipped by default and still needs Colab GPU verification.
+- **Training:** optional short TRL/PEFT LoRA entry point; skipped by default and verified once in a clean GitHub-opened Colab T4 runtime.
+- **Comparison:** optional base-vs-adapter answer comparison after training; skipped by default and verified once in that clean T4 smoke test.
 - **Export:** placeholder only; no GGUF or local runtime output yet.
 
 Planned v0 constraints after the skeleton:
@@ -114,7 +113,7 @@ The planned notes-model notebook flow is specified in [`docs/first-demo-flow.md`
 8. If training runs, compare one base-model answer with one trained-adapter answer.
 9. Show clear placeholders for export and local running.
 
-The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers. The optional training cell requires a Colab GPU runtime and extra Hugging Face packages. Use [`docs/colab-smoke-test-checklist.md`](docs/colab-smoke-test-checklist.md) and record results in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md) before calling that GPU path verified.
+The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers. The optional training cell requires a Colab GPU runtime and extra Hugging Face packages. The clean GitHub-opened T4 smoke test is recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md).
 
 ## Repository Map
 
@@ -158,7 +157,7 @@ The current skeleton covers the safe first slice of the notes / school model:
 6. Prepare a short optional LoRA fine-tuning request from those rows.
 7. Prepare an optional before/after comparison from the first generated question.
 
-The next implementation work is to smoke-test the optional training and comparison cells in Colab and choose one real teacher-generation path for the notes model while keeping the mock teacher as a safe fallback. GGUF/local export comes after that.
+The next implementation work is to choose one real teacher-generation path for the notes model while keeping the mock teacher as a safe fallback. GGUF/local export comes after that.
 
 Future personal model types should reuse the same broad workflow, but they should not be implemented until the notes model path works.
 

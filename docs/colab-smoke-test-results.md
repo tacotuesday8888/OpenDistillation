@@ -4,14 +4,107 @@ Date: 2026-06-02
 
 ## Result
 
-Fresh Colab GPU training from a clean runtime is **not verified yet**.
+Fresh Colab GPU training from a clean GitHub-opened runtime is **verified once** on 2026-06-02.
 
-Recovered-runtime Colab GPU training and before/after comparison **did pass** after two fixes were pushed:
+The clean run passed after three fixes were pushed:
 
 - Do not upgrade Colab's preinstalled GPU `torch` package.
 - Do not pass `assistant_only_loss=True` for TRL prompt/completion rows.
+- Load `examples/sample-notes.md` by default in Colab so the first smoke path does not block on a file picker.
 
-A real Colab GPU runtime was reached through Chrome on 2026-06-02, but the optional training path did not reach model download or training. The first run failed during runtime readiness because the broad install command upgraded Colab's preinstalled `torch` package and left `torchvision` mismatched.
+The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
+
+## Clean GitHub Runtime Success
+
+- Notebook URL: `https://colab.research.google.com/github/tacotuesday8888/OpenDistillation/blob/main/notebooks/opendistillation_v0_demo.ipynb`
+- GitHub commit used by the notebook: `64037d9` (`fix: default colab notes flow to sample`)
+- Runtime: `T4 (Python 3)`
+- GPU: `Tesla T4`
+- Setup output: `Using project root: /content/OpenDistillation`
+- Notes input: `examples/sample-notes.md`
+- Notes output: `File: sample-notes.md`, `Extension: .md`, `Characters: 941`, `Approx. words: 152`
+- Chunk output: `Chunks: 4`
+- Teacher output: `Teacher engine: mock-local-teacher`, `Sends text to remote endpoint: False`, `Generated examples: 8`
+- Runtime dataset path: `/tmp/opendistillation_mock_training_data.jsonl`
+
+Dependency install result:
+
+```text
+Runtime packages checked before training:
+torch, transformers, datasets, trl, peft, accelerate
+Packages installed by this cell:
+transformers<5, datasets, trl<1, peft<0.19, accelerate
+Install command:
+python -m pip install -U 'transformers<5' datasets 'trl<1' 'peft<0.19' accelerate
+Optional training dependencies installed. Restart the runtime if Colab asks, then rerun setup.
+```
+
+Clean-runtime package versions recorded after training:
+
+```text
+torch_version: 2.11.0+cu128
+transformers_version: 4.57.6
+datasets_version: 4.8.5
+trl_version: 0.29.1
+peft_version: 0.18.1
+accelerate_version: 1.13.0
+cuda_available: True
+gpu_name: Tesla T4
+```
+
+Training result:
+
+```text
+training_result_present: True
+training_engine: trl-sfttrainer-peft-lora
+adapter_output_path: /content/OpenDistillation/outputs/notes-lora/adapter
+adapter_output_exists: True
+adapter_files: ['README.md', 'adapter_config.json', 'adapter_model.safetensors', 'added_tokens.json', 'chat_template.jinja', 'merges.txt', 'special_tokens_map.json', 'tokenizer.json', 'tokenizer_config.json', 'training_args.bin', 'vocab.json']
+training_notes:
+- Created a PEFT LoRA adapter from validated v0 notes dataset rows.
+- This artifact is for Colab prototype testing and is not a GGUF export.
+```
+
+Comparison result:
+
+```text
+Question:
+What is the main point of chunk-0001?
+
+Reference answer from generated dataset:
+The main point is: # Sample Notes OpenDistillation is a personal model factory for the AI PC and AI phone era. The long-term idea is to help people build small personal models for different parts of life: notes and school, coding, writing...
+
+Base model answer:
+I'm sorry, but I cannot answer your question as you have not provided any context or information about what "chunk-0001" refers to. Could you please provide more details or clarify your question?
+
+Trained adapter answer:
+The main point is: The first example in this chapter shows how to create a simple text-to-text model using the `TextToText` class and the `TextToTextConfig`.
+```
+
+Runtime and memory:
+
+```text
+Install cell runtime: 20s
+Training cell runtime shown by Colab: 1m
+End-to-end observed Colab run-all plus diagnostic: about 3 minutes
+cuda_memory_allocated_mb after comparison: 1920.3
+cuda_max_memory_allocated_mb: 3838.8
+Peak memory or memory failure: no memory failure observed
+```
+
+Exact errors:
+
+```text
+Training/comparison errors: none observed.
+Non-fatal Colab UI output display modal after the dataset download helper:
+Could not load the JavaScript files needed to display output. This is probably because your Google Account login access has expired or because third-party cookies are not allowed by your browser. Please reload this page.
+```
+
+The model download status is considered successful for the clean smoke test because `Qwen/Qwen2.5-0.5B-Instruct` loaded far enough to train a PEFT adapter and run base-vs-adapter generation. The comparison output is a qualitative wiring check, not a quality benchmark.
+
+## Initial Failed Colab Attempt
+
+A real Colab GPU runtime was reached through Chrome on 2026-06-02, but the first optional training path did not reach model download or training. The first run failed during runtime readiness because the broad install command upgraded Colab's preinstalled `torch` package and left `torchvision` mismatched.
 
 ## Colab Attempt
 
@@ -104,21 +197,21 @@ The trained answer is not a quality claim. This was a 1-step sanity check showin
 
 ## Smoke-Test Fields
 
-Fill these in after running `docs/colab-smoke-test-checklist.md` in Colab:
+Clean GitHub-opened runtime values from 2026-06-02:
 
 ```text
-Colab runtime type:
-GPU type:
-Dependency install result:
-Model download result:
-Training starts: yes/no
-Adapter output created: yes/no
-Adapter output path:
-Before/after comparison output: yes/no
-Runtime:
-Peak memory or memory failure:
-Exact error messages:
-Docs updated after run:
+Colab runtime type: T4 (Python 3)
+GPU type: Tesla T4
+Dependency install result: succeeded with bounded package set; did not upgrade torch
+Model download result: succeeded; model loaded for training and comparison
+Training starts: yes
+Adapter output created: yes
+Adapter output path: /content/OpenDistillation/outputs/notes-lora/adapter
+Before/after comparison output: yes
+Runtime: install 20s; training cell 1m; about 3 minutes observed end to end including diagnostic
+Peak memory or memory failure: no memory failure; CUDA max memory allocated 3838.8 MB
+Exact error messages: no training/comparison error; non-fatal Colab output display modal after files.download()
+Docs updated after run: yes
 ```
 
 Recovered-runtime values from 2026-06-02:
@@ -150,4 +243,4 @@ The notebook is expected to:
 - Save any adapter output under `outputs/notes-lora/adapter`.
 - Run before/after comparison only after training creates an adapter.
 
-The actual Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a recovered Colab T4 runtime. A clean/fresh Colab GPU run from the GitHub notebook still needs to be recorded before the default Colab path is called fully verified.
+The actual Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime. Real teacher generation, GGUF export, and local runtime instructions remain unverified and deferred.

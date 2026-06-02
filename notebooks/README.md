@@ -38,3 +38,5 @@ With training skipped by default, the notebook should run top to bottom on CPU a
 Later real engines should plug in through the interfaces described in `docs/engine-integration-points.md`.
 
 The optional training and comparison sections are not part of the CPU smoke path. They require a Colab GPU runtime and installing the Hugging Face training packages listed in the notebook. Training saves adapters under `outputs/`, which is ignored by git. Use `docs/colab-smoke-test-checklist.md` before marking that GPU path verified.
+
+As of 2026-06-02, the optional sample-notes training and comparison path has passed once from a clean GitHub-opened Colab T4 runtime. See `docs/colab-smoke-test-results.md` for the exact package versions, adapter path, memory notes, and before/after output.

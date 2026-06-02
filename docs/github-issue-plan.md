@@ -155,7 +155,7 @@ Acceptance criteria:
 - Output artifacts stay in ignored runtime paths.
 - Missing GPU and out-of-memory failures are explained plainly.
 
-Status: bounded local engine and notebook entry point exist. A recovered Colab T4 runtime completed one 1-step training run and created an adapter. Remaining work is a clean/fresh Colab GPU smoke test from the GitHub notebook.
+Status: bounded local engine and notebook entry point exist. A clean GitHub-opened Colab T4 runtime completed the optional training path and created `/content/OpenDistillation/outputs/notes-lora/adapter`. Remaining work is quality hardening after a real teacher path exists.
 
 ### 10. Add before/after comparison
 
@@ -169,7 +169,7 @@ Acceptance criteria:
 - Both answers are shown side by side.
 - The comparison is labeled as a sanity check, not a benchmark.
 
-Status: implemented locally as an optional notebook section using the first generated dataset question. A recovered Colab T4 runtime printed one real base-vs-adapter comparison. Remaining work is a clean/fresh Colab GPU smoke test with a real adapter.
+Status: implemented locally as an optional notebook section using the first generated dataset question. A clean GitHub-opened Colab T4 runtime printed one real base-vs-adapter comparison. The output is a qualitative sanity check, not a benchmark.
 
 ### 11. Run manual Colab GPU smoke test for optional training and comparison
 
@@ -186,6 +186,8 @@ Acceptance criteria:
 - Short training starts and either creates `outputs/notes-lora/adapter` or records the exact failure.
 - Before/after comparison either prints base and adapter answers or records the exact failure.
 - Docs are updated to mark the verified and unverified parts honestly.
+
+Status: completed on 2026-06-02 from a clean GitHub-opened Colab T4 runtime. Results are recorded in `docs/colab-smoke-test-results.md`. Real teacher generation, GGUF export, and local runtime instructions remain separate follow-up work.
 
 ### 12. Verify GGUF or local-run export path
 

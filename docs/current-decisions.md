@@ -74,14 +74,15 @@ Verified locally in this repository:
 - Notebook setup structure for the fresh Colab clone fallback.
 - Ignore rules for generated datasets, adapters, checkpoints, model weights, Hugging Face caches, notebook checkpoints, and common trainer artifacts.
 - Recovered Colab T4 run after dependency fixes: model download, 1-step LoRA training, adapter creation, and before/after comparison completed once.
+- Clean GitHub-opened Colab T4 run: bounded optional dependency install succeeded without upgrading `torch`, `USE_SAMPLE_NOTES = True` loaded the sample notes, `RUN_TRAINING = True` created `/content/OpenDistillation/outputs/notes-lora/adapter`, and before/after comparison printed both answers.
 
-Requires a clean/fresh Colab GPU smoke test:
+Still deferred or unverified:
 
-- Installing the optional Hugging Face training packages from a clean GitHub-opened notebook without upgrading Colab's preinstalled GPU `torch`.
-- Confirming the runtime check prints the Colab GPU name from that clean runtime.
-- Repeating `SFTLoRATrainingEngine.train()` and the before/after comparison from that clean runtime.
-- Confirming adapter quality, comparison output, runtime, and memory use from the clean runtime.
-- `docs/colab-smoke-test-results.md` currently records the first real Colab T4 attempt, two blockers, and one recovered-runtime pass.
+- Real teacher-model generation for notes.
+- GGUF export and local runtime instructions.
+- Adapter quality beyond a qualitative wiring check.
+- Upload-path smoke tests for user-provided `.txt` and `.md` files.
+- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, and the clean GitHub-opened T4 pass.
 
 Why this path:
 

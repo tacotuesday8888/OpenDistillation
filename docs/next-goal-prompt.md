@@ -1,34 +1,30 @@
 # Recommended Next Goal Prompt
 
-Use this as the next `/goal` after the v0 demo hardening update is committed:
+Use this as the next `/goal` after the clean Colab GPU smoke-test results are committed:
 
 ```text
-/goal Run and record the manual Colab GPU smoke test for the existing OpenDistillation v0 optional training and before/after comparison path from a clean/fresh GitHub-opened Colab runtime. Work in /Users/langqi/Developer/Projects/OpenDistillation on the current branch. Use docs/colab-smoke-test-checklist.md. Do not change the product scope. Open the notebook from GitHub in Colab, choose a GPU runtime, install the optional Hugging Face packages with INSTALL_TRAINING_DEPS = True, and do not upgrade Colab's preinstalled GPU torch package. Run the default TXT/MD notes flow, set RUN_TRAINING = True, record package install success, GPU name, model download status, training start, adapter output path, before/after comparison output, runtime, memory failures, and any exact errors. If the currently attached runtime is already modified, ask before deleting/resetting it because that discards temporary Colab runtime state. Update README/docs/current-decisions.md/docs/first-demo-implementation-plan.md/docs/github-issue-plan.md with verified versus unverified status. Do not implement a real teacher path, GGUF export, SaaS, Mac app, phone app, account system, cloud backend, multiple profiles, coding model, writing model, or work model. Do not commit generated datasets, adapters, checkpoints, model weights, caches, secrets, .env files, or local machine config. Verify tests and notebook JSON, review the diff for secrets/generated files, commit locally, and push.
+/goal Choose and prototype the first real teacher-generation path for the OpenDistillation v0 notes model. Work in /Users/langqi/Developer/Projects/OpenDistillation on the current branch. Keep the product scope narrow: TXT/MD notes only, one notes/school model only, Colab-first, deterministic MockTeacherEngine as the safe fallback. Check current official/reliable docs before choosing a teacher model or package path. Do not build a SaaS, Mac app, phone app, account system, cloud backend, multi-profile system, GGUF export, local runtime, or real large training pipeline. Define the teacher path, document whether text stays local or is sent remote, add the smallest prototype hook behind the existing teacher interface, keep generated datasets/model artifacts/secrets out of git, add focused tests, update README/docs/current-decisions.md/docs/first-demo-flow.md/docs/first-demo-implementation-plan.md/docs/github-issue-plan.md with verified versus unverified status, run verification, review the diff for secrets/artifacts, commit locally, and push.
 ```
 
 ## Why This Goal
 
-The optional training and comparison path passed once in a recovered Colab T4 runtime. The biggest remaining demo risk is whether a clean/fresh GitHub-opened Colab runtime follows the notebook path without manual recovery.
+The clean GitHub-opened Colab T4 smoke test now verifies the optional sample-notes training and before/after comparison path once. The next useful product risk is replacing or supplementing the deterministic mock teacher with one real notes teacher path.
 
 ## Done Means
 
-- `docs/colab-smoke-test-checklist.md` has concrete results.
-- The optional dependency install result is recorded.
-- The runtime check prints the GPU name or the exact failure is recorded.
-- Training either creates an adapter under `outputs/notes-lora/adapter` or records the exact failure.
-- Before/after comparison either prints both answers or records the exact failure.
-- Docs clearly say what is verified and what remains unverified.
-- Real teacher generation and export remain deferred.
-- No coding, writing, work, phone, or multi-profile implementation is added.
+- One real teacher path is selected with current docs checked.
+- The docs say plainly whether notes text stays local or is sent to a remote endpoint.
+- `MockTeacherEngine` remains available and safe.
+- The prototype is behind the existing teacher interface.
+- Tests cover the new teacher-selection or request-building behavior without requiring real model downloads by default.
+- Real teacher execution is either verified with evidence or clearly marked as still unverified.
+- Real training, GGUF export, local runtime, and future model profiles remain deferred.
 - No generated datasets, model artifacts, checkpoints, secrets, or local config are committed.
 
 ## Do Not Use This Goal For
 
-- Implementing a new training pipeline.
-- Real teacher generation.
-- GGUF export implementation.
-- Coding model implementation.
-- Writing model implementation.
-- Work model implementation.
-- Phone model implementation.
-- SaaS, Mac app, account system, billing, or cloud backend.
+- Expanding beyond TXT/MD notes.
+- Adding coding, writing, work, phone, or multi-profile flows.
+- Building account systems, cloud services, or paid API infrastructure.
+- Implementing GGUF export or local runtime.
+- Claiming model quality from a tiny smoke run.

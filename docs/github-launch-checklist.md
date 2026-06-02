@@ -18,7 +18,7 @@ Use this before making the repository public or inviting outside contributors.
 - [x] README explains the value in the first screen.
 - [x] README has an honest current status section.
 - [x] README defines the narrow notes-model v0 scope.
-- [x] README distinguishes the optional training entry point from a verified Colab training run.
+- [x] README reports the verified clean Colab T4 smoke test without claiming model quality.
 - [x] README labels coding, writing, work, and phone models as future directions.
 - [x] Product vision, roadmap, and first-demo flow agree with each other.
 - [x] First-demo implementation plan exists.
@@ -37,8 +37,8 @@ Use this before making the repository public or inviting outside contributors.
 - [x] Add before/after comparison wiring.
 - [x] Add optional dependency install switch and runtime readiness messages.
 - [x] Add manual Colab GPU smoke-test checklist.
-- [ ] Smoke-test short training in Colab with GPU.
-- [ ] Smoke-test before/after comparison in Colab with GPU.
+- [x] Smoke-test short training in Colab with GPU.
+- [x] Smoke-test before/after comparison in Colab with GPU.
 - [ ] Verify or honestly defer GGUF export.
 
 ## Launch Copy
