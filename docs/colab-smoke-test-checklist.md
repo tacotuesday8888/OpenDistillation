@@ -7,39 +7,75 @@ Use this checklist before marking the optional training and before/after compari
 - [ ] Open `notebooks/opendistillation_v0_demo.ipynb` from GitHub in Colab.
 - [ ] Choose **Runtime > Change runtime type > GPU** before running the training path.
 - [ ] Run the setup cell and confirm it prints the expected project root.
+  - Expected output in Colab: `Using project root: /content/OpenDistillation`
+  - If setup fails, paste the full error in `docs/colab-smoke-test-results.md`.
 - [ ] Set `INSTALL_TRAINING_DEPS = True` in the optional dependency install cell.
 - [ ] Run the install cell and record whether `torch`, `transformers`, `datasets`, `trl`, `peft`, and `accelerate` install successfully.
+  - Expected package list: `torch, transformers, datasets, trl, peft, accelerate`
+  - Expected install command: `python -m pip install -U torch transformers datasets trl peft accelerate`
+  - If installation fails, paste the final 30-50 lines of pip output in `docs/colab-smoke-test-results.md`.
 - [ ] If Colab asks for a runtime restart, restart and rerun setup before continuing.
 
 ## Default Notes Flow
 
 - [ ] Use `examples/sample-notes.md` or upload one `.txt` notes file.
 - [ ] Confirm the notebook prints file name, extension, character count, word count, and preview.
+  - Expected sample file output: `File: sample-notes.md`, `Extension: .md`, and a notes preview.
 - [ ] Confirm the chunking cell prints multiple stable chunk IDs.
+  - Expected sample output includes `Chunks: 4` and chunk IDs such as `chunk-0001`.
 - [ ] Confirm `MockTeacherEngine` generates rows and says it does not send text to a remote endpoint.
+  - Expected output includes `Teacher engine: mock-local-teacher` and `Sends text to remote endpoint: False`.
 - [ ] Confirm the JSONL preview shows `instruction`, `response`, and `source_chunk_id`.
+  - Expected output includes a runtime temp JSONL path, not a committed repository path.
 
 ## Optional Training
 
 - [ ] Set `RUN_TRAINING = True`.
 - [ ] Run the training cell.
 - [ ] Record the runtime check output, including the GPU name.
+  - Expected success output includes `GPU detected: <GPU name>` and `Runtime is ready for the optional short training run.`
+  - If this says no CUDA GPU is detected, confirm the Colab runtime type is GPU and paste the runtime-check output in `docs/colab-smoke-test-results.md`.
 - [ ] Record whether `Qwen/Qwen2.5-0.5B-Instruct` starts downloading.
 - [ ] Record whether the short TRL/PEFT training run starts.
 - [ ] Record total runtime.
 - [ ] Confirm the adapter output path prints under `outputs/notes-lora/adapter`.
+  - Expected success output includes `Adapter output: /content/OpenDistillation/outputs/notes-lora/adapter`.
 - [ ] If the run fails, record the exact error and whether the notebook's failure message explains the next step.
+  - For memory failures, paste the exact CUDA out-of-memory line and the notebook's recovery message.
 
 ## Before/After Comparison
 
 - [ ] Run the comparison cell after training succeeds.
 - [ ] Confirm the question and generated reference answer are shown.
 - [ ] Confirm both base-model answer and trained-adapter answer are shown.
+  - Expected headings: `Question:`, `Reference answer from generated dataset:`, `Base model answer:`, and `Trained adapter answer:`.
 - [ ] Confirm the notebook labels this as a qualitative sanity check, not a benchmark.
 - [ ] Record whether comparison quality is visibly different, unchanged, or broken.
+  - Paste the question and both answers in `docs/colab-smoke-test-results.md`.
 
 ## Artifact Safety
 
 - [ ] Confirm generated datasets, adapters, model files, checkpoints, and caches are under ignored runtime/output paths.
 - [ ] Confirm no notebook outputs are saved before committing.
 - [ ] Confirm no API keys, tokens, `.env` files, or local machine config are created or committed.
+
+## Results Paste Template
+
+Copy this block into `docs/colab-smoke-test-results.md` after the run:
+
+```text
+Colab runtime type:
+GPU type:
+Dependency install result:
+Model download result:
+Training starts: yes/no
+Adapter output created: yes/no
+Adapter output path:
+Before/after comparison output: yes/no
+Runtime:
+Peak memory or memory failure:
+Exact error messages:
+Question used for comparison:
+Base model answer:
+Trained adapter answer:
+```

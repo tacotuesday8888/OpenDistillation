@@ -26,6 +26,7 @@ This file records decisions that should not be reopened without a concrete reaso
 - The first training path does not use Unsloth or bitsandbytes by default. Those are future optimizations after the plain TRL/PEFT path is smoke-tested.
 - The first before/after comparison uses the first generated dataset question, Hugging Face Transformers chat generation, and PEFT `PeftModel.from_pretrained()` to load the trained LoRA adapter.
 - The notebook includes an explicit `INSTALL_TRAINING_DEPS = False` switch so the default local path never installs packages, downloads models, or starts training by accident.
+- The notebook setup clones the GitHub repository in fresh Colab runtimes before importing local helpers.
 - Runtime readiness checks should explain missing optional packages, missing CUDA GPU, adapter-path problems, and likely GPU memory failures in plain language.
 - The manual Colab GPU smoke test should use `docs/colab-smoke-test-checklist.md` before the optional training/comparison path is called verified.
 
@@ -68,6 +69,7 @@ Verified locally in this repository:
 - Optional runtime helper behavior for install-command text, missing-package checks, GPU/no-GPU formatting, and beginner-readable failure explanations.
 - Notebook JSON parsing and the default CPU path where training remains skipped.
 - Notebook default install path where `INSTALL_TRAINING_DEPS = False`.
+- Notebook setup structure for the fresh Colab clone fallback.
 - Ignore rules for generated datasets, adapters, checkpoints, model weights, Hugging Face caches, notebook checkpoints, and common trainer artifacts.
 
 Requires a Colab GPU smoke test:
@@ -78,6 +80,7 @@ Requires a Colab GPU smoke test:
 - Running `SFTLoRATrainingEngine.train()`.
 - Running the before/after comparison against the real base model and adapter.
 - Confirming adapter quality, comparison output, runtime, and memory use.
+- `docs/colab-smoke-test-results.md` currently records that this Codex workspace could not execute a real Colab GPU runtime.
 
 Why this path:
 

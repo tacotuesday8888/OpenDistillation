@@ -12,6 +12,9 @@ class NotebookSkeletonTests(unittest.TestCase):
         sources = "\n".join("".join(cell.get("source", [])) for cell in notebook["cells"])
 
         self.assertIn("A personal model factory for the AI PC and AI phone era.", sources)
+        self.assertIn("OPEN_DISTILLATION_REPO_URL", sources)
+        self.assertIn("https://github.com/tacotuesday8888/OpenDistillation.git", sources)
+        self.assertIn('"clone", "--depth", "1"', sources)
         self.assertIn("Upload or load a TXT/MD file", sources)
         self.assertIn("Chunk the document", sources)
         self.assertIn("Generate mock training examples", sources)

@@ -36,6 +36,7 @@ The notebook uses the local helper package for the current prototype stage.
 Expected output:
 
 - A visible note that the skeleton uses standard-library Python and local helpers.
+- In fresh Colab runtimes, a repository clone into `/content/OpenDistillation` before local helper imports.
 - A short note that optional training needs current Hugging Face training packages.
 - An explicit `INSTALL_TRAINING_DEPS = False` default so local users do not install anything by accident.
 - The exact optional install command for Colab GPU users.
