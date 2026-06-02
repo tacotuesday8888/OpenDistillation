@@ -247,6 +247,40 @@ class ComparisonPathTests(unittest.TestCase):
         message = str(context.exception)
         for dependency in ("torch", "transformers", "peft", "accelerate"):
             self.assertIn(dependency, message)
+        self.assertIn("transformers<5", message)
+        self.assertNotIn("pip install -U torch", message)
+
+    def test_comparison_dependency_error_reports_installed_package_import_failure(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            adapter_path = Path(tmpdir) / "adapter"
+            adapter_path.mkdir()
+            request = build_comparison_request(
+                [
+                    {
+                        "instruction": "Question",
+                        "response": "Answer",
+                        "source_chunk_id": "chunk-0001",
+                    }
+                ],
+                TrainingResult(
+                    engine_name="trl-sfttrainer-peft-lora",
+                    output_path=adapter_path,
+                    created_model_artifact=True,
+                ),
+            )
+
+            def fail_import(module_name):
+                if module_name == "peft":
+                    raise RuntimeError("operator torchvision::nms does not exist")
+                return object()
+
+            with patch("opendistillation.comparison.import_module", side_effect=fail_import):
+                with self.assertRaises(ComparisonDependencyError) as context:
+                    BeforeAfterComparisonEngine().compare(request)
+
+        message = str(context.exception)
+        self.assertIn("peft: RuntimeError: operator torchvision::nms does not exist", message)
+        self.assertIn("without upgrading Colab's preinstalled torch", message)
 
     def test_compare_generates_base_and_adapter_answers_with_fake_dependencies(self):
         with tempfile.TemporaryDirectory() as tmpdir:

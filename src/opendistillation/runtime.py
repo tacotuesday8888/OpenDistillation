@@ -13,6 +13,13 @@ from typing import Any
 
 
 OPTIONAL_TRAINING_PACKAGES = ("torch", "transformers", "datasets", "trl", "peft", "accelerate")
+OPTIONAL_TRAINING_INSTALL_PACKAGES = (
+    "transformers<5",
+    "datasets",
+    "trl<1",
+    "peft<0.19",
+    "accelerate",
+)
 OPTIONAL_COMPARISON_PACKAGES = ("torch", "transformers", "peft", "accelerate")
 
 
@@ -21,19 +28,26 @@ class RuntimeCheck:
     """A plain-English readiness summary for optional Colab training."""
 
     missing_packages: tuple[str, ...]
+    import_errors: dict[str, str]
     cuda_available: bool
     gpu_name: str | None
     install_command: str
 
     @property
     def can_run_training(self) -> bool:
-        return not self.missing_packages and self.cuda_available
+        return not self.missing_packages and not self.import_errors and self.cuda_available
 
 
-def build_pip_install_command(packages: Sequence[str] = OPTIONAL_TRAINING_PACKAGES) -> str:
+def build_pip_install_command(packages: Sequence[str] = OPTIONAL_TRAINING_INSTALL_PACKAGES) -> str:
     """Return a stable install command suitable for Colab and local notebooks."""
 
-    return "python -m pip install -U " + " ".join(packages)
+    return "python -m pip install -U " + " ".join(_quote_package(package) for package in packages)
+
+
+def _quote_package(package: str) -> str:
+    if any(character in package for character in "<>=!~"):
+        return "'" + package + "'"
+    return package
 
 
 def check_training_runtime(
@@ -43,14 +57,20 @@ def check_training_runtime(
     """Check optional packages and CUDA without downloading models."""
 
     missing: list[str] = []
+    import_errors: dict[str, str] = {}
     modules: dict[str, Any] = {}
     for package in OPTIONAL_TRAINING_PACKAGES:
         try:
             modules[package] = importer(package)
         except ModuleNotFoundError as exc:
             missing_name = exc.name or package
-            if missing_name not in missing:
-                missing.append(missing_name)
+            if missing_name == package:
+                if missing_name not in missing:
+                    missing.append(missing_name)
+            else:
+                import_errors[package] = f"{type(exc).__name__}: {exc}"
+        except Exception as exc:
+            import_errors[package] = f"{type(exc).__name__}: {exc}"
 
     torch_module = modules.get("torch")
     cuda_available = False
@@ -67,6 +87,7 @@ def check_training_runtime(
 
     return RuntimeCheck(
         missing_packages=tuple(missing),
+        import_errors=import_errors,
         cuda_available=cuda_available,
         gpu_name=gpu_name,
         install_command=build_pip_install_command(),
@@ -82,6 +103,16 @@ def format_runtime_check(check: RuntimeCheck) -> list[str]:
         lines.append("Install command: " + check.install_command)
     else:
         lines.append("Optional training packages are importable.")
+
+    if check.import_errors:
+        lines.append("Optional training package import failures:")
+        for package, error in check.import_errors.items():
+            lines.append(f"- {package}: {error}")
+        if any("torchvision::nms" in error for error in check.import_errors.values()):
+            lines.append(
+                "This can happen when Colab's torch/torchvision packages are mismatched after upgrading torch."
+            )
+            lines.append("Restart the Colab runtime and use the notebook install command without upgrading torch.")
 
     if check.cuda_available:
         lines.append("GPU detected: " + (check.gpu_name or "CUDA device"))
@@ -129,6 +160,7 @@ def explain_runtime_failure(exc: BaseException) -> list[str]:
 
 __all__ = [
     "OPTIONAL_COMPARISON_PACKAGES",
+    "OPTIONAL_TRAINING_INSTALL_PACKAGES",
     "OPTIONAL_TRAINING_PACKAGES",
     "RuntimeCheck",
     "build_pip_install_command",

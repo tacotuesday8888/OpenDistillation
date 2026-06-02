@@ -10,9 +10,11 @@ Use this checklist before marking the optional training and before/after compari
   - Expected output in Colab: `Using project root: /content/OpenDistillation`
   - If setup fails, paste the full error in `docs/colab-smoke-test-results.md`.
 - [ ] Set `INSTALL_TRAINING_DEPS = True` in the optional dependency install cell.
-- [ ] Run the install cell and record whether `torch`, `transformers`, `datasets`, `trl`, `peft`, and `accelerate` install successfully.
-  - Expected package list: `torch, transformers, datasets, trl, peft, accelerate`
-  - Expected install command: `python -m pip install -U torch transformers datasets trl peft accelerate`
+- [ ] Run the install cell and record whether the optional Hugging Face training packages install successfully.
+  - Runtime packages checked before training: `torch, transformers, datasets, trl, peft, accelerate`
+  - Packages installed by the notebook cell: `transformers<5, datasets, trl<1, peft<0.19, accelerate`
+  - Expected install command: `python -m pip install -U 'transformers<5' datasets 'trl<1' 'peft<0.19' accelerate`
+  - The notebook intentionally does not upgrade Colab's preinstalled GPU `torch` package.
   - If installation fails, paste the final 30-50 lines of pip output in `docs/colab-smoke-test-results.md`.
 - [ ] If Colab asks for a runtime restart, restart and rerun setup before continuing.
 
@@ -35,6 +37,7 @@ Use this checklist before marking the optional training and before/after compari
 - [ ] Record the runtime check output, including the GPU name.
   - Expected success output includes `GPU detected: <GPU name>` and `Runtime is ready for the optional short training run.`
   - If this says no CUDA GPU is detected, confirm the Colab runtime type is GPU and paste the runtime-check output in `docs/colab-smoke-test-results.md`.
+  - If this reports `operator torchvision::nms does not exist`, restart the Colab runtime and rerun the notebook without upgrading `torch`.
 - [ ] Record whether `Qwen/Qwen2.5-0.5B-Instruct` starts downloading.
 - [ ] Record whether the short TRL/PEFT training run starts.
 - [ ] Record total runtime.

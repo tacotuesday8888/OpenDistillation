@@ -18,6 +18,7 @@ from .comparison import (
 )
 from .runtime import (
     OPTIONAL_COMPARISON_PACKAGES,
+    OPTIONAL_TRAINING_INSTALL_PACKAGES,
     OPTIONAL_TRAINING_PACKAGES,
     RuntimeCheck,
     build_pip_install_command,
@@ -44,6 +45,7 @@ __all__ = [
     "ComparisonConfigurationError",
     "ComparisonDependencyError",
     "OPTIONAL_COMPARISON_PACKAGES",
+    "OPTIONAL_TRAINING_INSTALL_PACKAGES",
     "OPTIONAL_TRAINING_PACKAGES",
     "ExportEngine",
     "ExportRequest",

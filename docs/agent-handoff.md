@@ -20,7 +20,7 @@ The repo now contains:
 - Optional before/after comparison engine for one generated question, skipped by default in the notebook.
 - Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
 - Manual Colab GPU smoke-test checklist.
-- Smoke-test results file recording that this workspace could not execute a real Colab GPU runtime.
+- Smoke-test results file recording the first real Colab T4 attempt and the dependency blocker found before model download/training.
 - First-demo implementation plan.
 - GitHub issue forms.
 - Starter milestone and issue plan.

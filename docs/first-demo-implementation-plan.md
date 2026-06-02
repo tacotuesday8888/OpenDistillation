@@ -138,6 +138,7 @@ Tasks:
 5. Add a beginner-readable failure message for missing GPU or out-of-memory errors.
 6. Add an explicit optional dependency install switch so the default notebook path never installs packages by accident.
 7. Add a runtime readiness check before model download or training starts.
+8. In Colab, install the bounded Hugging Face package set without upgrading the preinstalled GPU `torch` package.
 
 Acceptance criteria:
 
@@ -146,7 +147,7 @@ Acceptance criteria:
 - Output artifacts are not committed.
 - Failure cases explain the likely next step.
 
-Status: implemented as a bounded optional path using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA. Local tests cover configuration, dataset formatting, runtime readiness messages, and failure explanations without model downloads. The notebook default remains CPU-runnable with dependency install and training skipped. The actual adapter training run still requires a Colab GPU smoke test using `docs/colab-smoke-test-checklist.md`.
+Status: implemented as a bounded optional path using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA. Local tests cover configuration, dataset formatting, runtime readiness messages, installed-package import failures, and failure explanations without model downloads. The notebook default remains CPU-runnable with dependency install and training skipped. The actual adapter training run still requires a Colab GPU smoke test using `docs/colab-smoke-test-checklist.md`.
 
 ## Milestone 5: Before/After Comparison
 

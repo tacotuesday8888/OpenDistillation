@@ -5,6 +5,7 @@ import unittest
 sys.path.insert(0, "src")
 
 from opendistillation.runtime import (
+    OPTIONAL_TRAINING_INSTALL_PACKAGES,
     OPTIONAL_TRAINING_PACKAGES,
     build_pip_install_command,
     check_training_runtime,
@@ -39,7 +40,11 @@ class RuntimeTests(unittest.TestCase):
     def test_install_command_lists_one_training_package_set(self):
         self.assertEqual(
             build_pip_install_command(),
-            "python -m pip install -U torch transformers datasets trl peft accelerate",
+            "python -m pip install -U 'transformers<5' datasets 'trl<1' 'peft<0.19' accelerate",
+        )
+        self.assertEqual(
+            OPTIONAL_TRAINING_INSTALL_PACKAGES,
+            ("transformers<5", "datasets", "trl<1", "peft<0.19", "accelerate"),
         )
         self.assertEqual(OPTIONAL_TRAINING_PACKAGES, ("torch", "transformers", "datasets", "trl", "peft", "accelerate"))
 
@@ -53,7 +58,31 @@ class RuntimeTests(unittest.TestCase):
         self.assertFalse(result.can_run_training)
         self.assertEqual(result.missing_packages, OPTIONAL_TRAINING_PACKAGES)
         self.assertIn("Missing optional training packages: torch, transformers, datasets, trl, peft, accelerate", lines)
-        self.assertIn("Install command: python -m pip install -U torch transformers datasets trl peft accelerate", lines)
+        self.assertIn(
+            "Install command: python -m pip install -U 'transformers<5' datasets 'trl<1' 'peft<0.19' accelerate",
+            lines,
+        )
+
+    def test_runtime_check_reports_import_failures_separately_from_missing_packages(self):
+        def importer(module_name):
+            if module_name == "torch":
+                return FakeTorch(available=True, name="Tesla T4")
+            if module_name == "peft":
+                raise RuntimeError("operator torchvision::nms does not exist")
+            return object()
+
+        result = check_training_runtime(importer=importer)
+        lines = format_runtime_check(result)
+
+        self.assertFalse(result.can_run_training)
+        self.assertEqual(result.missing_packages, ())
+        self.assertEqual(result.import_errors, {"peft": "RuntimeError: operator torchvision::nms does not exist"})
+        self.assertIn("Optional training package import failures:", lines)
+        self.assertIn("- peft: RuntimeError: operator torchvision::nms does not exist", lines)
+        self.assertIn(
+            "This can happen when Colab's torch/torchvision packages are mismatched after upgrading torch.",
+            lines,
+        )
 
     def test_runtime_check_reports_ready_gpu_runtime(self):
         def importer(module_name):

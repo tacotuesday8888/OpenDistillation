@@ -37,9 +37,9 @@ Expected output:
 
 - A visible note that the skeleton uses standard-library Python and local helpers.
 - In fresh Colab runtimes, a repository clone into `/content/OpenDistillation` before local helper imports.
-- A short note that optional training needs current Hugging Face training packages.
+- A short note that optional training needs the bounded Hugging Face training package set plus Colab's existing GPU `torch`.
 - An explicit `INSTALL_TRAINING_DEPS = False` default so local users do not install anything by accident.
-- The exact optional install command for Colab GPU users.
+- The exact optional install command for Colab GPU users, without upgrading Colab's preinstalled `torch`.
 
 ### Step 3: Upload Or Load A Notes File
 

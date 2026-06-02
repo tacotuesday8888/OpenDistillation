@@ -180,6 +180,33 @@ class TrainingPathTests(unittest.TestCase):
         message = str(context.exception)
         for dependency in ("torch", "transformers", "datasets", "trl", "peft", "accelerate"):
             self.assertIn(dependency, message)
+        self.assertIn("transformers<5", message)
+        self.assertNotIn("pip install -U torch", message)
+
+    def test_training_dependency_error_reports_installed_package_import_failure(self):
+        rows = [
+            {
+                "instruction": "Question",
+                "response": "Answer",
+                "source_chunk_id": "chunk-0001",
+            }
+        ]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            request = build_training_request(rows, Path(tmpdir) / "notes-lora")
+            engine = SFTLoRATrainingEngine()
+
+            def fail_import(module_name):
+                if module_name == "peft":
+                    raise RuntimeError("operator torchvision::nms does not exist")
+                return object()
+
+            with patch("opendistillation.training.import_module", side_effect=fail_import):
+                with self.assertRaises(TrainingDependencyError) as context:
+                    engine.train(request)
+
+        message = str(context.exception)
+        self.assertIn("peft: RuntimeError: operator torchvision::nms does not exist", message)
+        self.assertIn("without upgrading Colab's preinstalled torch", message)
 
 
 if __name__ == "__main__":

@@ -26,8 +26,9 @@ This file records decisions that should not be reopened without a concrete reaso
 - The first training path does not use Unsloth or bitsandbytes by default. Those are future optimizations after the plain TRL/PEFT path is smoke-tested.
 - The first before/after comparison uses the first generated dataset question, Hugging Face Transformers chat generation, and PEFT `PeftModel.from_pretrained()` to load the trained LoRA adapter.
 - The notebook includes an explicit `INSTALL_TRAINING_DEPS = False` switch so the default local path never installs packages, downloads models, or starts training by accident.
+- The optional Colab install command does not upgrade Colab's preinstalled GPU `torch` package. The runtime still checks that `torch` and CUDA are available before training starts.
 - The notebook setup clones the GitHub repository in fresh Colab runtimes before importing local helpers.
-- Runtime readiness checks should explain missing optional packages, missing CUDA GPU, adapter-path problems, and likely GPU memory failures in plain language.
+- Runtime readiness checks should explain missing optional packages, installed-package import failures, missing CUDA GPU, adapter-path problems, and likely GPU memory failures in plain language.
 - The manual Colab GPU smoke test should use `docs/colab-smoke-test-checklist.md` before the optional training/comparison path is called verified.
 
 ## Not Decided Yet
@@ -67,6 +68,7 @@ Verified locally in this repository:
 - Training configuration, request construction, and TRL/PEFT dataset formatting tests.
 - Before/after comparison request construction, adapter-path validation, dependency handling, and fake base-vs-adapter generation tests.
 - Optional runtime helper behavior for install-command text, missing-package checks, GPU/no-GPU formatting, and beginner-readable failure explanations.
+- Optional runtime helper behavior for installed-package import failures, including the Colab `torchvision::nms` mismatch seen after upgrading `torch`.
 - Notebook JSON parsing and the default CPU path where training remains skipped.
 - Notebook default install path where `INSTALL_TRAINING_DEPS = False`.
 - Notebook setup structure for the fresh Colab clone fallback.
@@ -75,12 +77,12 @@ Verified locally in this repository:
 Requires a Colab GPU smoke test:
 
 - Downloading `Qwen/Qwen2.5-0.5B-Instruct`.
-- Installing the optional Hugging Face training packages.
+- Installing the optional Hugging Face training packages without upgrading Colab's preinstalled GPU `torch`.
 - Confirming the runtime check prints the Colab GPU name.
 - Running `SFTLoRATrainingEngine.train()`.
 - Running the before/after comparison against the real base model and adapter.
 - Confirming adapter quality, comparison output, runtime, and memory use.
-- `docs/colab-smoke-test-results.md` currently records that this Codex workspace could not execute a real Colab GPU runtime.
+- `docs/colab-smoke-test-results.md` currently records the first real Colab T4 attempt and the dependency blocker found before model download/training.
 
 Why this path:
 

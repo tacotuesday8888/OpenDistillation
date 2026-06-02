@@ -47,7 +47,7 @@ What exists now:
 - Runtime checks and plain-language setup messages for the optional Colab GPU path.
 - A first-demo implementation plan.
 - A manual Colab GPU smoke-test checklist.
-- A smoke-test results file that records that real Colab GPU execution is still blocked from this workspace.
+- A smoke-test results file that records the first real Colab T4 attempt and the current dependency blocker.
 - GitHub issue forms and a starter issue plan.
 - Guardrails to avoid committing generated datasets, checkpoints, model weights, or secrets.
 

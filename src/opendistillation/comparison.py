@@ -14,6 +14,7 @@ from typing import Any
 
 from .dataset import validate_dataset
 from .engines import TrainingResult
+from .runtime import build_pip_install_command
 from .training import DEFAULT_STUDENT_MODEL, SFTLoRAConfig
 
 
@@ -157,20 +158,24 @@ def _validate_request(request: BeforeAfterComparisonRequest) -> None:
 
 def _load_comparison_dependencies() -> tuple[Any, type[Any], type[Any], type[Any]]:
     missing = []
+    import_errors: dict[str, str] = {}
     modules: dict[str, Any] = {}
     for module_name in COMPARISON_DEPENDENCIES:
         try:
             modules[module_name] = import_module(module_name)
         except ModuleNotFoundError as exc:
             missing_name = exc.name or module_name
-            if missing_name not in missing:
-                missing.append(missing_name)
+            if missing_name == module_name:
+                if missing_name not in missing:
+                    missing.append(missing_name)
+            else:
+                import_errors[module_name] = f"{type(exc).__name__}: {exc}"
+        except Exception as exc:
+            import_errors[module_name] = f"{type(exc).__name__}: {exc}"
 
-    if missing:
+    if missing or import_errors:
         raise ComparisonDependencyError(
-            "Missing optional comparison packages: "
-            + ", ".join(missing)
-            + ". In Colab, install: pip install -U torch transformers peft accelerate"
+            _format_dependency_error("comparison", missing, import_errors)
         )
 
     try:
@@ -183,8 +188,25 @@ def _load_comparison_dependencies() -> tuple[Any, type[Any], type[Any], type[Any
     except AttributeError as exc:
         raise ComparisonDependencyError(
             "Installed comparison packages do not expose the expected Transformers/PEFT APIs. "
-            "Upgrade in Colab with: pip install -U torch transformers peft accelerate"
+            "In Colab, install with: "
+            + build_pip_install_command()
+            + " without upgrading Colab's preinstalled torch."
         ) from exc
+
+
+def _format_dependency_error(kind: str, missing: list[str], import_errors: dict[str, str]) -> str:
+    parts: list[str] = []
+    if missing:
+        parts.append(f"Missing optional {kind} packages: " + ", ".join(missing) + ".")
+    if import_errors:
+        failures = "; ".join(f"{package}: {error}" for package, error in import_errors.items())
+        parts.append(f"Optional {kind} package import failures: {failures}.")
+    parts.append(
+        "In Colab, install with: "
+        + build_pip_install_command()
+        + " without upgrading Colab's preinstalled torch."
+    )
+    return " ".join(parts)
 
 
 def _generate_chat_answer(
