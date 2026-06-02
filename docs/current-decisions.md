@@ -18,7 +18,9 @@ This file records decisions that should not be reopened without a concrete reaso
 - The first output should point toward local use through GGUF, llama.cpp, and/or Ollama-style instructions.
 - No generated datasets, model weights, checkpoints, API keys, `.env` files, or local machine config should be committed.
 - The project uses the Apache-2.0 license.
-- The v0 skeleton uses a deterministic local `MockTeacherEngine` before any real teacher-model path is chosen.
+- The default teacher path remains deterministic local `MockTeacherEngine` so the notebook can run without downloads or GPU.
+- The first optional real teacher path is `HuggingFaceLocalTeacherEngine` with `Qwen/Qwen2.5-1.5B-Instruct`.
+- The optional real teacher path is local/open-source: model weights download from Hugging Face, but notes text is not sent to a paid or proprietary remote API.
 - The notebook should call small helper interfaces so real engines and future model types can be plugged in later without changing the first flow.
 - The first student model is `Qwen/Qwen2.5-0.5B-Instruct`.
 - The first training backend is Hugging Face TRL `SFTTrainer` with PEFT LoRA adapters.
@@ -30,11 +32,12 @@ This file records decisions that should not be reopened without a concrete reaso
 - The notebook setup clones the GitHub repository in fresh Colab runtimes before importing local helpers.
 - Runtime readiness checks should explain missing optional packages, installed-package import failures, missing CUDA GPU, adapter-path problems, and likely GPU memory failures in plain language.
 - The manual Colab GPU smoke test should use `docs/colab-smoke-test-checklist.md` before the optional training/comparison path is called verified.
+- `RUN_REAL_TEACHER = False` is the notebook default. Real teacher generation starts only after the user opts in and installs the optional Hugging Face packages.
 
 ## Not Decided Yet
 
-- Exact teacher model or hosted teacher path.
 - Exact dataset schema fields beyond the required v0 `instruction`, `response`, and `source_chunk_id`.
+- Whether a hosted teacher path is ever needed after the local Qwen teacher is smoke-tested.
 - Whether GGUF export is implemented in v0 or documented as the immediate next command.
 - Which future model profile comes after the notes / school model.
 - GitHub repository visibility and remote URL.
@@ -47,8 +50,8 @@ Use this notes-model v0 flow as the default implementation plan:
 2. User uses the sample notes file or uploads one `.txt` or `.md` notes file.
 3. The notebook validates and previews the text.
 4. OpenDistillation chunks the notes.
-5. The mock teacher generates question-answer pairs in the current skeleton.
-6. A future real teacher path replaces the mock teacher behind the same interface.
+5. The mock teacher generates question-answer pairs by default.
+6. The user can opt into `HuggingFaceLocalTeacherEngine` for local Qwen-generated rows with the same schema.
 7. The dataset is previewed, saved, and downloadable.
 8. Optional training prepares `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
 9. A short supervised fine-tuning run starts only when the user sets `RUN_TRAINING = True` in a Colab GPU runtime.
@@ -65,6 +68,7 @@ Verified locally in this repository:
 
 - Dataset validation and JSONL serialization.
 - Mock teacher generation.
+- Optional real teacher selection, JSONL parsing, schema validation, and failure classification using fake no-download dependencies.
 - Training configuration, request construction, and TRL/PEFT dataset formatting tests.
 - Before/after comparison request construction, adapter-path validation, dependency handling, and fake base-vs-adapter generation tests.
 - Optional runtime helper behavior for install-command text, missing-package checks, GPU/no-GPU formatting, and beginner-readable failure explanations.
@@ -78,7 +82,8 @@ Verified locally in this repository:
 
 Still deferred or unverified:
 
-- Real teacher-model generation for notes.
+- Clean Colab GPU smoke-test evidence for `RUN_REAL_TEACHER = True`.
+- Real teacher output quality beyond local fake-dependency tests.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond a qualitative wiring check.
 - Upload-path smoke tests for user-provided `.txt` and `.md` files.
@@ -91,17 +96,21 @@ Why this path:
 - TRL documents direct PEFT adapter training through `peft_config=LoraConfig()`.
 - PEFT documents loading saved adapters with `PeftModel.from_pretrained()` for inference.
 - Transformers documents chat generation with `apply_chat_template()` and `generate()`.
+- Transformers documents chat-style text generation through message dictionaries and the text-generation pipeline.
+- `Qwen/Qwen2.5-1.5B-Instruct` is an Apache-2.0 Qwen2.5 chat/instruct model with about 1.5B parameters, which keeps the first real teacher path small enough for the v0 Colab experiment and inside the open-source constraint.
 - PEFT LoRA keeps the trained artifact small.
 - bitsandbytes and Unsloth are useful memory/speed tools, but they introduce more install, quantization, and hardware assumptions than the first beginner path needs.
 
 Sources checked on 2026-06-02:
 
 - [Qwen/Qwen2.5-0.5B-Instruct model card](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct)
+- [Qwen/Qwen2.5-1.5B-Instruct model card](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct)
 - [TRL SFTTrainer docs](https://huggingface.co/docs/trl/en/sft_trainer)
 - [PEFT LoRA guide](https://huggingface.co/docs/peft/developer_guides/lora)
 - [PEFT PeftModel docs](https://huggingface.co/docs/peft/package_reference/peft_model)
 - [Transformers Trainer docs](https://huggingface.co/docs/transformers/trainer)
 - [Transformers text generation docs](https://huggingface.co/docs/transformers/llm_tutorial)
+- [Transformers chat templating docs](https://huggingface.co/docs/transformers/chat_templating)
 - [Accelerate docs](https://huggingface.co/docs/accelerate/index)
 - [bitsandbytes docs](https://huggingface.co/docs/bitsandbytes/index)
 - [Unsloth fine-tuning guide](https://docs.unsloth.ai/get-started/fine-tuning-llms-guide)

@@ -5,7 +5,7 @@ Use this before making the repository public or inviting outside contributors.
 ## Repository Setup
 
 - [ ] Choose repository visibility.
-- [ ] Add a GitHub remote.
+- [x] Add a GitHub remote.
 - [x] Choose a permissive open-source license.
 - [x] Add `LICENSE`.
 - [x] Keep generated datasets, checkpoints, model weights, and secrets ignored.
@@ -31,7 +31,8 @@ Use this before making the repository public or inviting outside contributors.
 - [x] Define dataset schema.
 - [x] Document engine integration points.
 - [x] Add deterministic mock teacher path.
-- [ ] Choose real teacher path.
+- [x] Choose and prototype the optional local real teacher path.
+- [ ] Smoke-test the optional real teacher path in clean Colab GPU.
 - [x] Choose student model and training backend.
 - [x] Add a bounded optional short training path.
 - [x] Add before/after comparison wiring.
@@ -48,7 +49,7 @@ Short version:
 ```text
 OpenDistillation is a personal model factory for the AI PC and AI phone era.
 
-The first path is intentionally small: a Colab notes-model flow for TXT/MD notes, mock QA data, and a clear path toward a tiny local model.
+The first path is intentionally small: a Colab notes-model flow for TXT/MD notes, mock QA data by default, an opt-in local Qwen teacher, and a clear path toward a tiny local model.
 ```
 
 Longer version:
@@ -56,5 +57,5 @@ Longer version:
 ```text
 OpenDistillation is an open-source workflow for building small personal models for specific parts of life: notes, coding, writing, work, and eventually phone-local routines.
 
-The first milestone is not a broad platform. It is one notes / school model path: TXT/MD input, generated question-answer data, one small optional Qwen/LoRA training path, and an honest path toward llama.cpp or Ollama-style local running.
+The first milestone is not a broad platform. It is one notes / school model path: TXT/MD input, generated question-answer data, one optional local Qwen teacher, one small optional Qwen/LoRA training path, and an honest path toward llama.cpp or Ollama-style local running.
 ```

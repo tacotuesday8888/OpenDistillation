@@ -1,6 +1,6 @@
 # GitHub Issue Plan
 
-This file is the starter backlog to create after the repository has a GitHub remote. It exists because this local repo does not have a remote configured yet.
+This file is the starter backlog to create or sync on GitHub after pushing local changes.
 
 ## Labels To Create
 
@@ -13,13 +13,13 @@ This file is the starter backlog to create after the repository has a GitHub rem
 
 ## Milestones
 
-### v0.1 Notes-Model Colab Skeleton
+### v0.1 Notes-Model Colab Prototype
 
 Goal: a notebook that opens in Colab, accepts `.txt` or `.md` notes, previews text, and shows the planned notes-model flow with training skipped by default.
 
 ### v0.2 Notes Dataset Generation
 
-Goal: uploaded notes become validated question-answer JSONL examples.
+Goal: uploaded notes become validated question-answer JSONL examples through the safe mock teacher by default and one opt-in local real teacher.
 
 ### v0.3 Short Training Demo
 
@@ -47,7 +47,7 @@ Acceptance criteria:
 - Milestones in this file exist on GitHub.
 - Issue templates show the intended labels once issues are created.
 
-### 2. Verify the v0 skeleton from a fresh Colab runtime
+### 2. Verify the v0 prototype from a fresh Colab runtime
 
 Labels: `prototype`
 
@@ -101,6 +101,8 @@ Acceptance criteria:
 - Dataset validation fails clearly on missing fields.
 - Any new optional fields are documented before they are used.
 
+Status: implemented for the current v0 schema. Both `MockTeacherEngine` and the optional `HuggingFaceLocalTeacherEngine` must return `instruction`, `response`, and `source_chunk_id`.
+
 ### 6. Choose the default notes teacher path
 
 Labels: `research`, `scope`
@@ -114,6 +116,8 @@ Acceptance criteria:
 - Notebook states whether uploaded notes are sent to a remote endpoint.
 - Fallback behavior is documented for teacher failures.
 
+Status: implemented locally. The default remains `MockTeacherEngine`. The opt-in real teacher is `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`; it downloads model weights from Hugging Face but does not send notes text to a paid or proprietary remote API. Clean Colab GPU smoke-test evidence for `RUN_REAL_TEACHER = True` is still pending.
+
 ### 7. Generate question-answer examples from chunks
 
 Labels: `prototype`
@@ -126,6 +130,8 @@ Acceptance criteria:
 - The notebook previews the first 5 examples.
 - Dataset is saved to an ignored generated-data path.
 - Dataset can be downloaded from Colab.
+
+Status: implemented for the default mock teacher path and locally tested for the optional real teacher parser with fake no-download dependencies. The next verification gap is a clean Colab GPU run of `RUN_REAL_TEACHER = True`.
 
 ### 8. Choose the default notes student model and training backend
 
@@ -155,7 +161,7 @@ Acceptance criteria:
 - Output artifacts stay in ignored runtime paths.
 - Missing GPU and out-of-memory failures are explained plainly.
 
-Status: bounded local engine and notebook entry point exist. A clean GitHub-opened Colab T4 runtime completed the optional training path and created `/content/OpenDistillation/outputs/notes-lora/adapter`. Remaining work is quality hardening after a real teacher path exists.
+Status: bounded local engine and notebook entry point exist. A clean GitHub-opened Colab T4 runtime completed the optional training path and created `/content/OpenDistillation/outputs/notes-lora/adapter`. Remaining work is quality hardening after the real teacher path is smoke-tested.
 
 ### 10. Add before/after comparison
 
@@ -187,7 +193,7 @@ Acceptance criteria:
 - Before/after comparison either prints base and adapter answers or records the exact failure.
 - Docs are updated to mark the verified and unverified parts honestly.
 
-Status: completed on 2026-06-02 from a clean GitHub-opened Colab T4 runtime. Results are recorded in `docs/colab-smoke-test-results.md`. Real teacher generation, GGUF export, and local runtime instructions remain separate follow-up work.
+Status: completed on 2026-06-02 from a clean GitHub-opened Colab T4 runtime. Results are recorded in `docs/colab-smoke-test-results.md`. The optional real teacher path now exists but still needs its own clean Colab GPU smoke test. GGUF export and local runtime instructions remain separate follow-up work.
 
 ### 12. Verify GGUF or local-run export path
 

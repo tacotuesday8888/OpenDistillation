@@ -1,23 +1,22 @@
 # Recommended Next Goal Prompt
 
-Use this as the next `/goal` after the clean Colab GPU smoke-test results are committed:
+Use this as the next `/goal` after the optional real teacher implementation is committed:
 
 ```text
-/goal Choose and prototype the first real teacher-generation path for the OpenDistillation v0 notes model. Work in /Users/langqi/Developer/Projects/OpenDistillation on the current branch. Keep the product scope narrow: TXT/MD notes only, one notes/school model only, Colab-first, deterministic MockTeacherEngine as the safe fallback. Check current official/reliable docs before choosing a teacher model or package path. Do not build a SaaS, Mac app, phone app, account system, cloud backend, multi-profile system, GGUF export, local runtime, or real large training pipeline. Define the teacher path, document whether text stays local or is sent remote, add the smallest prototype hook behind the existing teacher interface, keep generated datasets/model artifacts/secrets out of git, add focused tests, update README/docs/current-decisions.md/docs/first-demo-flow.md/docs/first-demo-implementation-plan.md/docs/github-issue-plan.md with verified versus unverified status, run verification, review the diff for secrets/artifacts, commit locally, and push.
+/goal Smoke-test and harden the optional real teacher path for the OpenDistillation v0 notes model. Work in /Users/langqi/Developer/Projects/OpenDistillation on the current branch. Keep the product scope narrow: TXT/MD notes only, one notes/school model only, Colab-first, deterministic MockTeacherEngine as the safe fallback. Use Chrome or Computer if needed to run the GitHub-opened Colab notebook. Do not build a SaaS, Mac app, phone app, account system, cloud backend, multi-profile system, GGUF export, local runtime, or real large training pipeline. Run `RUN_REAL_TEACHER = True` with the optional Hugging Face dependencies in a clean Colab GPU runtime, record whether `Qwen/Qwen2.5-1.5B-Instruct` loads and produces valid rows, capture exact failure messages if it does not, keep generated datasets/model artifacts/secrets out of git, update README/docs/current-decisions.md/docs/first-demo-flow.md/docs/colab-smoke-test-results.md/docs/github-issue-plan.md with verified versus unverified status, run local verification, review the diff for secrets/artifacts, commit locally, and push.
 ```
 
 ## Why This Goal
 
-The clean GitHub-opened Colab T4 smoke test now verifies the optional sample-notes training and before/after comparison path once. The next useful product risk is replacing or supplementing the deterministic mock teacher with one real notes teacher path.
+The first optional local real teacher path now exists behind `TeacherEngine`: `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`. The next useful product risk is proving whether that teacher path actually works in a clean Colab GPU runtime and whether the generated rows are useful enough to train from.
 
 ## Done Means
 
-- One real teacher path is selected with current docs checked.
-- The docs say plainly whether notes text stays local or is sent to a remote endpoint.
+- `RUN_REAL_TEACHER = True` is attempted from a clean GitHub-opened Colab GPU runtime.
+- The docs say plainly whether the real teacher loaded, generated valid rows, failed, or remained unverified.
+- The first generated rows are inspected and recorded without committing generated datasets.
 - `MockTeacherEngine` remains available and safe.
-- The prototype is behind the existing teacher interface.
-- Tests cover the new teacher-selection or request-building behavior without requiring real model downloads by default.
-- Real teacher execution is either verified with evidence or clearly marked as still unverified.
+- No-download tests still cover the teacher path by using fake dependencies.
 - Real training, GGUF export, local runtime, and future model profiles remain deferred.
 - No generated datasets, model artifacts, checkpoints, secrets, or local config are committed.
 

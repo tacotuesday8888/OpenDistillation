@@ -32,7 +32,7 @@ Then explain the future model types:
 
 Then explain the v0 truth:
 
-> Only the notes / school model skeleton exists today.
+> Only the notes / school model prototype exists today.
 
 Then explain the workflow:
 

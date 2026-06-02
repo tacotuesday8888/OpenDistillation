@@ -26,8 +26,8 @@ The user opens `notebooks/opendistillation_v0_demo.ipynb` from GitHub in Colab.
 Expected output:
 
 - A short explanation of the notes-model demo.
-- A warning that this is an early prototype skeleton.
-- Runtime guidance: CPU is enough for the default path; GPU is needed only if the user opts into the optional fine-tuning cell.
+- A warning that this is an early prototype.
+- Runtime guidance: CPU is enough for the default path; GPU is needed if the user opts into the local real teacher or optional fine-tuning cells.
 
 ### Step 2: Runtime Setup
 
@@ -35,9 +35,9 @@ The notebook uses the local helper package for the current prototype stage.
 
 Expected output:
 
-- A visible note that the skeleton uses standard-library Python and local helpers.
+- A visible note that the default path uses standard-library Python and local helpers.
 - In fresh Colab runtimes, a repository clone into `/content/OpenDistillation` before local helper imports.
-- A short note that optional training needs the bounded Hugging Face training package set plus Colab's existing GPU `torch`.
+- A short note that the optional real teacher and optional training paths need the bounded Hugging Face package set plus Colab's existing GPU `torch`.
 - An explicit `INSTALL_TRAINING_DEPS = False` default so local users do not install anything by accident.
 - The exact optional install command for Colab GPU users, without upgrading Colab's preinstalled `torch`.
 
@@ -50,7 +50,7 @@ Validation rules:
 - Reject unsupported extensions.
 - Reject empty files.
 - Show a beginner-readable warning if the file is too short.
-- Keep the sample or uploaded content local to the notebook runtime unless a future teacher path explicitly sends prompts to a remote endpoint.
+- Keep the sample or uploaded content local to the notebook runtime. The optional Qwen teacher downloads model weights from Hugging Face but does not send notes text to a paid or proprietary remote API.
 
 Expected output:
 
@@ -76,9 +76,9 @@ Expected output:
 - Preview of the first 3 chunks.
 - Clear warning if there are too few chunks for optional training.
 
-### Step 5: Generate Mock Training Examples
+### Step 5: Generate Training Examples
 
-The current skeleton uses a deterministic local mock teacher so the notebook can run without model downloads, API calls, GPU, or remote text transfer.
+The notebook uses a deterministic local mock teacher by default so it can run without model downloads, API calls, GPU, or remote text transfer. The user can set `RUN_REAL_TEACHER = True` in a Colab GPU runtime to use `Qwen/Qwen2.5-1.5B-Instruct` as a local open-source teacher.
 
 Default behavior:
 
@@ -86,13 +86,15 @@ Default behavior:
 - Keep the output schema simple.
 - Prefer readability over pretending the examples are production quality.
 - Label whether the teacher engine sends text to a remote endpoint.
+- Keep `RUN_REAL_TEACHER = False` unless the user has installed the optional Hugging Face packages and wants to test the real teacher path.
 
 Expected output:
 
 - A preview of generated examples.
 - A JSONL dataset saved in the notebook runtime temp directory.
 - A Colab download helper when running in Colab.
-- A clear label that `MockTeacherEngine` is local and deterministic.
+- A clear label for `mock-local-teacher` or `huggingface-local-teacher`.
+- Plain-language failure messages for missing dependencies, model download/load failures, CUDA or memory failures, and invalid generated rows.
 
 Initial JSONL shape:
 
@@ -185,8 +187,8 @@ Expected output:
 ## Success Criteria
 
 - The notebook tells one honest notes-model story.
-- The user sees uploaded or sample notes become mock training examples.
-- The user sees where a real teacher, optional training, before/after comparison, export, and local-run pieces fit.
+- The user sees uploaded or sample notes become training examples.
+- The user sees where the real teacher opt-in, optional training, before/after comparison, export, and local-run pieces fit.
 - All unimplemented pieces are labeled honestly.
 - The demo does not imply coding, writing, work, or phone models already exist.
 
@@ -197,7 +199,7 @@ Expected output:
 - Too few chunks.
 - Teacher generation failure.
 - Invalid generated dataset row.
-- Future no-GPU or out-of-memory training failures.
+- No-GPU or out-of-memory failures for optional real teacher or training paths.
 - Missing optional Hugging Face packages.
 - Missing trained adapter before comparison.
 - Future export path unavailable.
@@ -210,7 +212,8 @@ Included now:
 - Plain text preview.
 - Simple chunking.
 - JSONL dataset schema helpers.
-- Local deterministic mock teacher.
+- Local deterministic mock teacher, enabled by default.
+- Optional local Qwen real teacher, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL/PEFT LoRA training entry point, skipped by default.
 - Optional before/after comparison entry point, skipped by default.
 - Runtime readiness checks and manual Colab smoke-test checklist.
@@ -218,8 +221,8 @@ Included now:
 
 Planned later in v0:
 
-- One real teacher path for notes.
-- Colab GPU smoke test for the optional short training and comparison path.
+- Clean Colab GPU smoke test for the optional real teacher path.
+- Teacher output quality hardening after that smoke test.
 - Local-run guidance.
 
 Excluded:

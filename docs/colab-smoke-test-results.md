@@ -238,9 +238,12 @@ The notebook is expected to:
 - Clone `https://github.com/tacotuesday8888/OpenDistillation.git` into `/content/OpenDistillation` when opened from GitHub in a fresh Colab runtime.
 - Print `Using project root: /content/OpenDistillation` after setup in Colab.
 - Keep `INSTALL_TRAINING_DEPS = False` and `RUN_TRAINING = False` as safe defaults.
+- Keep `RUN_REAL_TEACHER = False` as the safe teacher default.
+- Save the current generated dataset to `/tmp/opendistillation_training_data.jsonl`.
+- Load `Qwen/Qwen2.5-1.5B-Instruct` for teacher generation only after `RUN_REAL_TEACHER = True`.
 - Install the bounded Hugging Face training package set only after `INSTALL_TRAINING_DEPS = True`, without upgrading Colab's preinstalled GPU `torch`.
 - Start the optional training path only after `RUN_TRAINING = True` and a CUDA GPU is detected.
 - Save any adapter output under `outputs/notes-lora/adapter`.
 - Run before/after comparison only after training creates an adapter.
 
-The actual Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime. Real teacher generation, GGUF export, and local runtime instructions remain unverified and deferred.
+The actual student-model Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime. The optional real teacher implementation exists locally but still needs a clean Colab GPU smoke test. GGUF export and local runtime instructions remain unverified and deferred.

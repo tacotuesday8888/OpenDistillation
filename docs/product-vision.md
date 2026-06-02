@@ -70,13 +70,14 @@ Future model profiles can be added only after the first notes-model path works.
 Use proven open-source building blocks and make them approachable:
 
 - Hugging Face ecosystem for models and datasets.
+- `Qwen/Qwen2.5-1.5B-Instruct` as the first opt-in local teacher model for notes.
 - TRL `SFTTrainer` with PEFT LoRA for the first short student training path.
 - `Qwen/Qwen2.5-0.5B-Instruct` as the first small student model.
 - PEFT/LoRA/QLoRA where they keep future training paths small.
 - Unsloth or similar acceleration later if it improves beginner success after the plain TRL/PEFT path is verified.
 - llama.cpp/GGUF and Ollama-style instructions for local running.
 
-Teacher generation, export, and local-runtime defaults should still be chosen during focused prototype spikes, not guessed in advance.
+Teacher generation now has one local notes-only prototype path; export and local-runtime defaults should still be chosen during focused prototype spikes, not guessed in advance.
 
 ## Long-Term Direction
 

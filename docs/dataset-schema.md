@@ -16,9 +16,9 @@ Each line is one JSON object:
 
 The helper code validates that all three fields exist and are non-empty strings. Extra fields are not kept in the public v0 schema.
 
-## Current Generator
+## Current Generators
 
-The current notebook uses `MockTeacherEngine`, a deterministic local generator. It is only for the prototype skeleton.
+The notebook uses `MockTeacherEngine`, a deterministic local generator, by default. It is the safe path for local and CPU runs.
 
 It does not:
 
@@ -27,8 +27,13 @@ It does not:
 - Send notes text to a remote service.
 - Claim to produce high-quality training data.
 
-## Future Teacher Path
+The notebook also includes an opt-in real teacher path:
 
-Later goals can replace the mock teacher with a real open-source teacher engine while keeping the same dataset shape. The replacement should still return validated rows with `instruction`, `response`, and `source_chunk_id`.
+- Engine: `HuggingFaceLocalTeacherEngine`.
+- Model: `Qwen/Qwen2.5-1.5B-Instruct`.
+- Switch: `RUN_REAL_TEACHER = True`.
+- Data behavior: model weights download from Hugging Face; notes text is not sent to a paid or proprietary remote API.
 
-Any remote teacher path must clearly say when uploaded notes leave the notebook runtime.
+Both generators must return validated rows with `instruction`, `response`, and `source_chunk_id`. The real teacher parser rejects invalid JSONL, missing fields, empty fields, and rows with the wrong `source_chunk_id`.
+
+Any future remote teacher path must clearly say when uploaded notes leave the notebook runtime.

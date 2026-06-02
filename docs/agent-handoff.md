@@ -6,7 +6,7 @@
 
 ## Current State
 
-OpenDistillation is GitHub-ready at the documentation and prototype-skeleton level, with bounded optional training and comparison entry points. A clean GitHub-opened Colab T4 runtime completed one optional training/comparison smoke test from the sample notes path.
+OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, an opt-in local real teacher path, and bounded optional training and comparison entry points. A clean GitHub-opened Colab T4 runtime completed one optional training/comparison smoke test from the sample notes path. The opt-in real teacher path still needs its own clean Colab GPU smoke test.
 
 The repo now contains:
 
@@ -14,8 +14,9 @@ The repo now contains:
 - Product vision for a personal model factory.
 - Roadmap.
 - Exact v0 notes-model Colab flow.
-- Runnable v0 skeleton notebook.
-- Minimal Python helpers for TXT/MD loading, chunking, dataset validation, and mock teacher generation.
+- Runnable v0 prototype notebook.
+- Minimal Python helpers for TXT/MD loading, chunking, dataset validation, mock teacher generation, and opt-in real teacher generation.
+- Optional `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL `SFTTrainer` + PEFT LoRA training engine for `Qwen/Qwen2.5-0.5B-Instruct`, skipped by default in the notebook.
 - Optional before/after comparison engine for one generated question, skipped by default in the notebook.
 - Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
@@ -45,7 +46,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task should choose and test the first real teacher-generation path for the notes model while keeping the deterministic mock teacher as the fallback.
+The next task should smoke-test and harden the opt-in real teacher-generation path for the notes model while keeping the deterministic mock teacher as the fallback.
 
 ## Important Guardrails
 

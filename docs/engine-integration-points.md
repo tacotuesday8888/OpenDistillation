@@ -1,6 +1,6 @@
 # Engine Integration Points
 
-The v0 skeleton is designed so the notebook flow can stay stable while real engines are added later.
+The v0 prototype is designed so the notebook flow can stay stable while engines are added or hardened.
 
 Current flow:
 
@@ -31,16 +31,33 @@ Current interface:
 - `TeacherRequest(chunks, examples_per_chunk=2)`
 - `TeacherEngine.generate(request)`
 - `MockTeacherEngine`
+- `HuggingFaceLocalTeacherEngine`
+- `RealTeacherConfig`
+- `explain_teacher_failure(exc)`
 
-The notebook currently uses `MockTeacherEngine`, which is local and deterministic.
+The notebook uses `MockTeacherEngine` by default, which is local and deterministic.
 
-Later real teacher engines can sit behind the same `TeacherEngine.generate()` method. Possible implementations:
+The first optional real teacher engine is `HuggingFaceLocalTeacherEngine`, which loads `Qwen/Qwen2.5-1.5B-Instruct` through Hugging Face Transformers. It sits behind the same `TeacherEngine.generate()` method and returns the same validated JSONL schema.
 
-- A local open-source teacher model through Hugging Face Transformers.
-- A hosted open-source teacher endpoint, if that is more reliable for beginners.
-- A batch generation job that still returns the same JSONL rows.
+Current teacher defaults:
 
-Any real teacher engine must declare whether it sends user notes to a remote endpoint.
+- Mock teacher: `mock-local-teacher`, `sends_data_remote = False`, no model download.
+- Real teacher: `huggingface-local-teacher`, `sends_data_remote = False`, model weights download from Hugging Face when the user opts in.
+- Notebook safety switch: `RUN_REAL_TEACHER = False`.
+
+The real teacher parser accepts JSONL-style model output, validates every row through `validate_dataset()`, and rejects rows that do not use the expected source chunk ID. Failure messages are grouped into dependency, model-load, generation/CUDA-memory, and invalid-output cases.
+
+Later teacher engines can still sit behind the same interface, but v0 should not become a menu of teacher choices before this first notes path is smoke-tested.
+
+Verified locally:
+
+- Mock teacher generation.
+- Real teacher request construction, JSONL parsing, schema validation, and failure handling with fake no-download dependencies.
+
+Still unverified:
+
+- Clean Colab GPU run with `RUN_REAL_TEACHER = True`.
+- Real teacher output quality on the sample notes file.
 
 ## Dataset Validation
 
@@ -143,7 +160,7 @@ Still unverified:
 
 ## Future Export Engines
 
-Export is not implemented in the skeleton.
+Export is not implemented in the prototype.
 
 The intended future boundary is:
 

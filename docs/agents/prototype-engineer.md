@@ -37,7 +37,7 @@ The first journey is a notes / school model only:
 
 ## Outputs
 
-- Notebook skeleton.
+- Notebook prototype.
 - Minimal Python package.
 - Example notes document.
 - Example generated dataset format.

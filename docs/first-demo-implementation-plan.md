@@ -103,7 +103,7 @@ Tasks:
 1. Define the dataset row fields in `docs/dataset-schema.md`.
 2. Add deterministic validation for required fields.
 3. Add teacher prompt construction from one chunk.
-4. Choose one teacher path during implementation after checking current official model/provider docs.
+4. Keep `MockTeacherEngine` as the default and add one opt-in real teacher path after checking current official model/provider docs.
 5. Generate a small number of examples per chunk.
 6. Save the dataset to a runtime path outside the repository.
 7. Preview the first 5 examples in the notebook.
@@ -115,7 +115,7 @@ Acceptance criteria:
 - Dataset output is downloadable from Colab.
 - The notebook clearly says if text is sent to a remote teacher endpoint.
 
-Status: implemented for the skeleton with `MockTeacherEngine`; real teacher-model selection remains a later milestone.
+Status: implemented for the default path with `MockTeacherEngine` and for the opt-in real path with `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`. Local tests cover real-teacher request construction, JSONL parsing, schema validation, dependency failures, model-load failures, generation/CUDA-memory failures, and invalid output without downloading a model. A clean Colab GPU smoke test for `RUN_REAL_TEACHER = True` is still pending.
 
 ## Milestone 4: Short Student Fine-Tuning
 

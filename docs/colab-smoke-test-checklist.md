@@ -1,6 +1,6 @@
 # Colab GPU Smoke-Test Checklist
 
-Use this checklist before marking the optional training and before/after comparison path as verified. It is a manual test because this local workspace cannot provide a Colab GPU runtime.
+Use this checklist before marking the optional real teacher, training, or before/after comparison paths as verified. It is a manual test because this local workspace cannot provide a Colab GPU runtime.
 
 ## Setup
 
@@ -10,7 +10,7 @@ Use this checklist before marking the optional training and before/after compari
   - Expected output in Colab: `Using project root: /content/OpenDistillation`
   - If setup fails, paste the full error in `docs/colab-smoke-test-results.md`.
 - [ ] Set `INSTALL_TRAINING_DEPS = True` in the optional dependency install cell.
-- [ ] Run the install cell and record whether the optional Hugging Face training packages install successfully.
+- [ ] Run the install cell and record whether the optional Hugging Face teacher/training packages install successfully.
   - Runtime packages checked before training: `torch, transformers, datasets, trl, peft, accelerate`
   - Packages installed by the notebook cell: `transformers<5, datasets, trl<1, peft<0.19, accelerate`
   - Expected install command: `python -m pip install -U 'transformers<5' datasets 'trl<1' 'peft<0.19' accelerate`
@@ -29,6 +29,23 @@ Use this checklist before marking the optional training and before/after compari
   - Expected output includes `Teacher engine: mock-local-teacher` and `Sends text to remote endpoint: False`.
 - [ ] Confirm the JSONL preview shows `instruction`, `response`, and `source_chunk_id`.
   - Expected output includes a runtime temp JSONL path, not a committed repository path.
+
+## Optional Real Teacher
+
+- [ ] Keep the same Colab GPU runtime after optional Hugging Face dependencies are installed.
+- [ ] Set `RUN_REAL_TEACHER = True`.
+- [ ] Run the teacher cell.
+- [ ] Record whether `Qwen/Qwen2.5-1.5B-Instruct` starts downloading and loads successfully.
+- [ ] Confirm the teacher output says `Teacher engine: huggingface-local-teacher`.
+- [ ] Confirm the output says `Sends text to remote endpoint: False`.
+- [ ] Confirm generated rows validate with `instruction`, `response`, and `source_chunk_id`.
+- [ ] Paste the first 1-3 generated rows in `docs/colab-smoke-test-results.md`.
+- [ ] If the run fails, record which plain-language failure message appears:
+  - Missing optional Hugging Face package.
+  - Model download or load failure.
+  - CUDA/GPU memory failure.
+  - Invalid JSONL/schema output.
+- [ ] After the real teacher check, set `RUN_REAL_TEACHER = False` again unless intentionally training from real teacher rows.
 
 ## Optional Training
 
@@ -70,6 +87,9 @@ Copy this block into `docs/colab-smoke-test-results.md` after the run:
 Colab runtime type:
 GPU type:
 Dependency install result:
+Real teacher run: skipped/succeeded/failed
+Real teacher model download/load result:
+Real teacher generated rows:
 Model download result:
 Training starts: yes/no
 Adapter output created: yes/no

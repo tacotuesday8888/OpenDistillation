@@ -6,7 +6,23 @@ Optional model training and comparison helpers stay lazy-loaded.
 
 from .dataset import DatasetValidationError, rows_to_jsonl, validate_dataset, validate_dataset_row
 from .engines import ExportEngine, ExportRequest, ExportResult, TrainingEngine, TrainingRequest, TrainingResult
-from .teacher import MockTeacherEngine, TeacherEngine, TeacherRequest, build_teacher_prompt, generate_mock_qa_pairs
+from .teacher import (
+    DEFAULT_REAL_TEACHER_MODEL,
+    HuggingFaceLocalTeacherEngine,
+    MockTeacherEngine,
+    RealTeacherConfig,
+    RealTeacherDependencyError,
+    RealTeacherError,
+    RealTeacherGenerationError,
+    RealTeacherModelLoadError,
+    RealTeacherOutputError,
+    TeacherEngine,
+    TeacherRequest,
+    build_teacher_prompt,
+    explain_teacher_failure,
+    generate_mock_qa_pairs,
+    parse_teacher_jsonl_output,
+)
 from .text import LoadedTextDocument, TextChunk, TextValidationError, chunk_text, load_text_document
 from .comparison import (
     BeforeAfterComparisonEngine,
@@ -39,6 +55,7 @@ from .training import (
 __all__ = [
     "DatasetValidationError",
     "DEFAULT_STUDENT_MODEL",
+    "DEFAULT_REAL_TEACHER_MODEL",
     "BeforeAfterComparisonEngine",
     "BeforeAfterComparisonRequest",
     "BeforeAfterComparisonResult",
@@ -50,8 +67,15 @@ __all__ = [
     "ExportEngine",
     "ExportRequest",
     "ExportResult",
+    "HuggingFaceLocalTeacherEngine",
     "LoadedTextDocument",
     "MockTeacherEngine",
+    "RealTeacherConfig",
+    "RealTeacherDependencyError",
+    "RealTeacherError",
+    "RealTeacherGenerationError",
+    "RealTeacherModelLoadError",
+    "RealTeacherOutputError",
     "TextChunk",
     "TextValidationError",
     "RuntimeCheck",
@@ -70,11 +94,13 @@ __all__ = [
     "build_training_request",
     "check_training_runtime",
     "chunk_text",
+    "explain_teacher_failure",
     "explain_runtime_failure",
     "format_sft_rows",
     "format_runtime_check",
     "generate_mock_qa_pairs",
     "load_text_document",
+    "parse_teacher_jsonl_output",
     "rows_to_jsonl",
     "validate_dataset",
     "validate_dataset_row",

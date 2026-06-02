@@ -57,7 +57,7 @@ Deliverables:
 
 - One real open-source teacher path.
 - Clear local-versus-remote labeling.
-- TXT/MD loader and chunker reused from the skeleton.
+- TXT/MD loader and chunker reused from the prototype.
 - JSONL dataset schema.
 - Dataset preview and download step.
 
@@ -66,6 +66,8 @@ Exit criteria:
 - A sample notes file creates a valid dataset.
 - The user can inspect examples before training.
 - The mock teacher remains available as a safe deterministic fallback.
+
+Current status: implemented locally as an opt-in `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`, with `RUN_REAL_TEACHER = False` keeping the default notebook path safe. Local tests cover request construction, JSONL parsing, schema validation, dependency failures, model-load failures, generation/CUDA-memory failures, and invalid-output failures without downloading a model. A clean Colab GPU smoke test for `RUN_REAL_TEACHER = True` is still needed before this phase is called verified.
 
 ## Phase 3: Short Notes-Model Training Path
 
@@ -87,7 +89,7 @@ Exit criteria:
 - The notebook demonstrates a visible behavior change on the sample notes.
 - The run stays small enough for a beginner Colab demo.
 
-Current status: the bounded training engine, comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, and fake base-vs-adapter generation. A clean GitHub-opened Colab T4 runtime completed the optional dependency install, sample-notes flow, LoRA adapter training, and real before/after output once. The output is a qualitative wiring check, not a benchmark.
+Current status: the bounded training engine, comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, and fake base-vs-adapter generation. A clean GitHub-opened Colab T4 runtime completed the optional dependency install, sample-notes flow, mock-generated dataset, LoRA adapter training, and real before/after output once. The output is a qualitative wiring check, not a benchmark.
 
 ## Phase 4: Local Notes-Model Run Path
 
