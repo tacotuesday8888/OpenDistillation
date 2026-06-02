@@ -80,13 +80,14 @@ Deliverables:
 - Small default training run, skipped unless the notebook user opts in.
 - Before/after prompt comparison, skipped unless training creates an adapter.
 - Clear warnings about runtime, GPU, and quality limits.
+- Manual Colab GPU smoke-test checklist.
 
 Exit criteria:
 
 - The notebook demonstrates a visible behavior change on the sample notes.
 - The run stays small enough for a beginner Colab demo.
 
-Current status: the bounded training engine, comparison engine, and notebook entry points exist. Local tests cover configuration, dataset formatting, comparison request behavior, and fake base-vs-adapter generation. The actual Colab GPU training run and real before/after output are not verified yet.
+Current status: the bounded training engine, comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, and fake base-vs-adapter generation. The actual Colab GPU training run and real before/after output are not verified yet.
 
 ## Phase 4: Local Notes-Model Run Path
 

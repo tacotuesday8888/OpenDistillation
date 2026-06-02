@@ -37,6 +37,8 @@ Expected output:
 
 - A visible note that the skeleton uses standard-library Python and local helpers.
 - A short note that optional training needs current Hugging Face training packages.
+- An explicit `INSTALL_TRAINING_DEPS = False` default so local users do not install anything by accident.
+- The exact optional install command for Colab GPU users.
 
 ### Step 3: Upload Or Load A Notes File
 
@@ -121,12 +123,14 @@ Default behavior:
 - Build a training request from the validated dataset rows.
 - Show a plan for `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
 - Require `RUN_TRAINING = True` before model download or adapter training begins.
+- Run a readiness check before training that reports missing optional packages and whether a CUDA GPU is available.
 - Save any adapter output under `outputs/`, which is ignored by git.
 
 Expected output:
 
 - A clear training plan.
 - A clear "training skipped" message while `RUN_TRAINING = False`.
+- Plain-language setup messages for missing packages, no GPU, missing adapter output, or likely GPU memory failures.
 - A reminder that Colab GPU verification is still required.
 
 ### Step 8: Before/After Comparison
@@ -146,6 +150,21 @@ Expected output:
 - A clear "comparison skipped" message while training is skipped.
 - A clear comparison plan after training creates an adapter.
 - A side-by-side style text output for question, reference answer, base answer, and trained-adapter answer.
+- Plain-language setup messages if adapter loading or generation fails.
+
+### Manual Colab Smoke Test
+
+The optional training and comparison path should be called verified only after `docs/colab-smoke-test-checklist.md` is completed.
+
+The checklist records:
+
+- Optional package install success.
+- GPU name from the runtime check.
+- Model download status.
+- Training start and adapter output path.
+- Before/after comparison output.
+- Runtime and any memory failure.
+- Confirmation that generated artifacts stay out of git.
 
 ### Step 9: Export Placeholder
 
@@ -178,6 +197,8 @@ Expected output:
 - Teacher generation failure.
 - Invalid generated dataset row.
 - Future no-GPU or out-of-memory training failures.
+- Missing optional Hugging Face packages.
+- Missing trained adapter before comparison.
 - Future export path unavailable.
 
 ## V0 Boundaries
@@ -191,6 +212,7 @@ Included now:
 - Local deterministic mock teacher.
 - Optional TRL/PEFT LoRA training entry point, skipped by default.
 - Optional before/after comparison entry point, skipped by default.
+- Runtime readiness checks and manual Colab smoke-test checklist.
 - Export placeholder.
 
 Planned later in v0:

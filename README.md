@@ -44,7 +44,9 @@ What exists now:
 - Helper interfaces for future teacher and export engines.
 - A bounded optional training engine using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA.
 - A before/after comparison helper that can compare one base-model answer with one trained-adapter answer after opt-in training.
+- Runtime checks and plain-language setup messages for the optional Colab GPU path.
 - A first-demo implementation plan.
+- A manual Colab GPU smoke-test checklist.
 - GitHub issue forms and a starter issue plan.
 - Guardrails to avoid committing generated datasets, checkpoints, model weights, or secrets.
 
@@ -111,7 +113,7 @@ The planned notes-model notebook flow is specified in [`docs/first-demo-flow.md`
 8. If training runs, compare one base-model answer with one trained-adapter answer.
 9. Show clear placeholders for export and local running.
 
-The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, model downloads, paid APIs, or training. The optional training cell requires a Colab GPU runtime and extra Hugging Face packages.
+The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, or training. The optional training cell requires a Colab GPU runtime and extra Hugging Face packages. Use [`docs/colab-smoke-test-checklist.md`](docs/colab-smoke-test-checklist.md) before calling that GPU path verified.
 
 ## Repository Map
 
@@ -123,6 +125,7 @@ OpenDistillation/
   .github/
     ISSUE_TEMPLATE/                 # structured GitHub issue forms
   docs/
+    colab-smoke-test-checklist.md   # manual GPU verification checklist
     current-decisions.md            # decisions that should not be reopened casually
     dataset-schema.md               # JSONL shape for generated examples
     engine-integration-points.md    # where real engines plug in later

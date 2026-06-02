@@ -18,6 +18,8 @@ The repo now contains:
 - Minimal Python helpers for TXT/MD loading, chunking, dataset validation, and mock teacher generation.
 - Optional TRL `SFTTrainer` + PEFT LoRA training engine for `Qwen/Qwen2.5-0.5B-Instruct`, skipped by default in the notebook.
 - Optional before/after comparison engine for one generated question, skipped by default in the notebook.
+- Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
+- Manual Colab GPU smoke-test checklist.
 - First-demo implementation plan.
 - GitHub issue forms.
 - Starter milestone and issue plan.
@@ -42,7 +44,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task should choose and test the first real teacher path for the notes model, or run a small Colab GPU smoke test for the existing optional training and comparison cells if training verification is the active milestone.
+The next task should run a small Colab GPU smoke test for the existing optional training and comparison cells. After that, choose and test the first real teacher path for the notes model.
 
 ## Important Guardrails
 

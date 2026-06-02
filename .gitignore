@@ -18,8 +18,14 @@ models/
 checkpoints/
 datasets/generated/
 outputs/
+adapters/
+hf_cache/
+huggingface_cache/
+.cache/
 wandb/
 mlruns/
+events.out.tfevents*
+trainer_state.json
 *.safetensors
 *.bin
 *.gguf

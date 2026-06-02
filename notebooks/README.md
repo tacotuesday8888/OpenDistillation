@@ -29,10 +29,12 @@ With training skipped by default, the notebook should run top to bottom on CPU a
 - Text preview.
 - Chunk preview.
 - Mock teacher generation.
+- Optional dependency install section with `INSTALL_TRAINING_DEPS = False` by default.
 - Optional student fine-tuning section with `RUN_TRAINING = False` by default.
+- Runtime readiness messages before any opt-in training starts.
 - Optional before/after comparison section that skips when training is skipped.
 - Placeholder section for export.
 
 Later real engines should plug in through the interfaces described in `docs/engine-integration-points.md`.
 
-The optional training and comparison sections are not part of the CPU smoke path. They require a Colab GPU runtime and installing the Hugging Face training packages listed in the notebook. Training saves adapters under `outputs/`, which is ignored by git.
+The optional training and comparison sections are not part of the CPU smoke path. They require a Colab GPU runtime and installing the Hugging Face training packages listed in the notebook. Training saves adapters under `outputs/`, which is ignored by git. Use `docs/colab-smoke-test-checklist.md` before marking that GPU path verified.

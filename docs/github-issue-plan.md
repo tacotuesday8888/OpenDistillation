@@ -171,7 +171,23 @@ Acceptance criteria:
 
 Status: implemented locally as an optional notebook section using the first generated dataset question. Remaining work is a Colab GPU smoke test with a real adapter.
 
-### 11. Verify GGUF or local-run export path
+### 11. Run manual Colab GPU smoke test for optional training and comparison
+
+Labels: `prototype`
+
+Milestone: v0.3 Short Training Demo
+
+Acceptance criteria:
+
+- `docs/colab-smoke-test-checklist.md` is completed from a fresh Colab GPU runtime.
+- Optional Hugging Face package install result is recorded.
+- Runtime check prints a GPU name.
+- `Qwen/Qwen2.5-0.5B-Instruct` download status is recorded.
+- Short training starts and either creates `outputs/notes-lora/adapter` or records the exact failure.
+- Before/after comparison either prints base and adapter answers or records the exact failure.
+- Docs are updated to mark the verified and unverified parts honestly.
+
+### 12. Verify GGUF or local-run export path
 
 Labels: `prototype`, `research`
 
@@ -183,7 +199,7 @@ Acceptance criteria:
 - Local run instructions are documented in `docs/local-run.md`.
 - README does not claim local running works until verified.
 
-### 12. Public launch pass
+### 13. Public launch pass
 
 Labels: `documentation`, `scope`
 

@@ -136,6 +136,8 @@ Tasks:
 3. Add a training cell with small defaults.
 4. Save adapter or model output to an ignored runtime path.
 5. Add a beginner-readable failure message for missing GPU or out-of-memory errors.
+6. Add an explicit optional dependency install switch so the default notebook path never installs packages by accident.
+7. Add a runtime readiness check before model download or training starts.
 
 Acceptance criteria:
 
@@ -144,7 +146,7 @@ Acceptance criteria:
 - Output artifacts are not committed.
 - Failure cases explain the likely next step.
 
-Status: implemented as a bounded optional path using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA. Local tests cover configuration and dataset formatting without model downloads. The notebook default remains CPU-runnable with training skipped. The actual adapter training run still requires a Colab GPU smoke test.
+Status: implemented as a bounded optional path using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA. Local tests cover configuration, dataset formatting, runtime readiness messages, and failure explanations without model downloads. The notebook default remains CPU-runnable with dependency install and training skipped. The actual adapter training run still requires a Colab GPU smoke test using `docs/colab-smoke-test-checklist.md`.
 
 ## Milestone 5: Before/After Comparison
 
@@ -163,6 +165,7 @@ Tasks:
 2. Ask the base model and trained model the same prompt.
 3. Display both answers side by side.
 4. Label the comparison as a sanity check, not a benchmark.
+5. Explain missing adapter, dependency, GPU, and memory problems without requiring the user to understand the training stack.
 
 Acceptance criteria:
 

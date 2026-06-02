@@ -35,6 +35,8 @@ Use this before making the repository public or inviting outside contributors.
 - [x] Choose student model and training backend.
 - [x] Add a bounded optional short training path.
 - [x] Add before/after comparison wiring.
+- [x] Add optional dependency install switch and runtime readiness messages.
+- [x] Add manual Colab GPU smoke-test checklist.
 - [ ] Smoke-test short training in Colab with GPU.
 - [ ] Smoke-test before/after comparison in Colab with GPU.
 - [ ] Verify or honestly defer GGUF export.
