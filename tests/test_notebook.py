@@ -7,7 +7,7 @@ NOTEBOOK_PATH = Path(__file__).resolve().parents[1] / "notebooks" / "opendistill
 
 
 class NotebookSkeletonTests(unittest.TestCase):
-    def test_notebook_has_milestone_1_to_3_sections_and_no_saved_outputs(self):
+    def test_notebook_has_notes_flow_sections_and_no_saved_outputs(self):
         notebook = json.loads(NOTEBOOK_PATH.read_text(encoding="utf-8"))
         sources = "\n".join("".join(cell.get("source", [])) for cell in notebook["cells"])
 
@@ -15,7 +15,8 @@ class NotebookSkeletonTests(unittest.TestCase):
         self.assertIn("Upload or load a TXT/MD file", sources)
         self.assertIn("Chunk the document", sources)
         self.assertIn("Generate mock training examples", sources)
-        self.assertIn("Training placeholder", sources)
+        self.assertIn("Optional short student fine-tuning", sources)
+        self.assertIn("RUN_TRAINING = False", sources)
         self.assertIn("Export placeholder", sources)
         self.assertTrue(all(not cell.get("outputs") for cell in notebook["cells"] if cell["cell_type"] == "code"))
         self.assertTrue(all(cell.get("execution_count") is None for cell in notebook["cells"] if cell["cell_type"] == "code"))

@@ -12,7 +12,7 @@ The current prototype is much narrower:
 
 > One Colab-first notes / school model skeleton for `.txt` and `.md` notes.
 
-It has a runnable notebook skeleton and helper package, but it does not have real teacher-model calls, real training, model export, or multiple model profiles yet.
+It has a runnable notebook skeleton, helper package, deterministic mock teacher, and a bounded optional TRL/PEFT LoRA training entry point. It does not have real teacher-model calls, a verified Colab GPU training run, model export, before/after comparison, or multiple model profiles yet.
 
 ## Read These In Order
 
@@ -32,7 +32,7 @@ The next useful implementation goal is in:
 docs/next-goal-prompt.md
 ```
 
-It should choose the first real teacher-generation path for the notes model only. It should not start coding, writing, work, phone, SaaS, Mac app, or multi-profile features.
+It should choose the first real teacher-generation path for the notes model only, or smoke-test the existing optional training cell in Colab if that is the active milestone. It should not start coding, writing, work, phone, SaaS, Mac app, or multi-profile features.
 
 ## What Not To Do Next
 

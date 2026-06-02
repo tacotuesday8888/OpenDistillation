@@ -12,7 +12,7 @@ The first journey is a notes / school model only:
 2. Chunk the notes.
 3. Generate question-answer examples with a safe teacher path.
 4. Save and preview the dataset.
-5. Train or fine-tune a small student model later through one efficient backend.
+5. Prepare or run a small student fine-tune through one efficient backend.
 6. Show a simple before/after result later.
 7. Export or document the path to local running later.
 

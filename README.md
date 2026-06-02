@@ -14,7 +14,7 @@ The long-term idea is bigger than one document tool. As AI PCs and AI phones bec
 
 OpenDistillation should become the open-source workflow for making those models. The first version is intentionally much smaller:
 
-> Upload TXT/MD notes in Colab, generate mock training examples, and prepare the path toward a tiny local notes model.
+> Upload TXT/MD notes in Colab, generate mock training examples, and optionally start a tiny LoRA fine-tuning run from that dataset.
 
 ## Why This Exists
 
@@ -41,7 +41,8 @@ What exists now:
 - A scoped v0 notes-model Colab flow.
 - A runnable prototype skeleton notebook for TXT/MD loading, chunking, dataset validation, and mock QA generation.
 - Minimal Python helpers under `src/opendistillation/`.
-- Helper interfaces for future teacher, training, and export engines.
+- Helper interfaces for future teacher and export engines.
+- A bounded optional training engine using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA.
 - A first-demo implementation plan.
 - GitHub issue forms and a starter issue plan.
 - Guardrails to avoid committing generated datasets, checkpoints, model weights, or secrets.
@@ -49,7 +50,8 @@ What exists now:
 What does not exist yet:
 
 - Real teacher-model calls.
-- Real model training.
+- A verified Colab GPU training run.
+- Before/after model comparison.
 - Multiple personal model profiles.
 - Coding, writing, work, or phone model flows.
 - A CLI.
@@ -64,14 +66,14 @@ The v0 prototype is only the first personal model type:
 
 The first prototype should prove one complete path:
 
-> A user uploads one `.txt` or `.md` notes file in Colab, sees generated question-answer training data, fine-tunes a small student model later, compares the base and trained model later, and gets explicit local-run instructions later.
+> A user uploads one `.txt` or `.md` notes file in Colab, sees generated question-answer training data, can opt into a short small-student fine-tune, and later compares the base and trained model and gets explicit local-run instructions.
 
 Current skeleton constraints:
 
 - **Input:** `.txt` and `.md` notes only.
 - **Teacher:** deterministic local mock teacher.
 - **Dataset:** JSONL rows with `instruction`, `response`, and `source_chunk_id`.
-- **Training:** placeholder only; no real fine-tuning yet.
+- **Training:** optional short TRL/PEFT LoRA entry point; skipped by default and still needs Colab GPU verification.
 - **Export:** placeholder only; no GGUF or local runtime output yet.
 
 Planned v0 constraints after the skeleton:
@@ -104,9 +106,10 @@ The planned notes-model notebook flow is specified in [`docs/first-demo-flow.md`
 4. Split it into short chunks.
 5. Generate deterministic mock question-answer examples.
 6. Preview and save the JSONL dataset in the notebook runtime.
-7. Show clear placeholders for real teacher generation, training, comparison, export, and local running.
+7. Show an optional short training plan that stays skipped by default.
+8. Show clear placeholders for comparison, export, and local running.
 
-The current skeleton notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). It runs without GPU, model downloads, paid APIs, or real training.
+The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, model downloads, paid APIs, or training. The optional training cell requires a Colab GPU runtime and extra Hugging Face packages.
 
 ## Repository Map
 
@@ -145,8 +148,9 @@ The current skeleton covers the safe first slice of the notes / school model:
 3. Chunk text with stable IDs.
 4. Generate deterministic mock QA examples.
 5. Validate and serialize the JSONL dataset.
+6. Prepare a short optional LoRA fine-tuning request from those rows.
 
-The next implementation milestone is to choose one real teacher-generation path for the notes model while keeping the mock teacher as a safe fallback. Real fine-tuning, before/after comparison, and GGUF/local export come after that.
+The next implementation work is to smoke-test the optional training cell in Colab and choose one real teacher-generation path for the notes model while keeping the mock teacher as a safe fallback. Before/after comparison and GGUF/local export come after that.
 
 Future personal model types should reuse the same broad workflow, but they should not be implemented until the notes model path works.
 

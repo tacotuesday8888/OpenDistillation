@@ -8,9 +8,19 @@ from .dataset import DatasetValidationError, rows_to_jsonl, validate_dataset, va
 from .engines import ExportEngine, ExportRequest, ExportResult, TrainingEngine, TrainingRequest, TrainingResult
 from .teacher import MockTeacherEngine, TeacherEngine, TeacherRequest, build_teacher_prompt, generate_mock_qa_pairs
 from .text import LoadedTextDocument, TextChunk, TextValidationError, chunk_text, load_text_document
+from .training import (
+    DEFAULT_STUDENT_MODEL,
+    SFTLoRAConfig,
+    SFTLoRATrainingEngine,
+    TrainingConfigurationError,
+    TrainingDependencyError,
+    build_training_request,
+    format_sft_rows,
+)
 
 __all__ = [
     "DatasetValidationError",
+    "DEFAULT_STUDENT_MODEL",
     "ExportEngine",
     "ExportRequest",
     "ExportResult",
@@ -23,8 +33,14 @@ __all__ = [
     "TrainingEngine",
     "TrainingRequest",
     "TrainingResult",
+    "SFTLoRAConfig",
+    "SFTLoRATrainingEngine",
+    "TrainingConfigurationError",
+    "TrainingDependencyError",
     "build_teacher_prompt",
+    "build_training_request",
     "chunk_text",
+    "format_sft_rows",
     "generate_mock_qa_pairs",
     "load_text_document",
     "rows_to_jsonl",

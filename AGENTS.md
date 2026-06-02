@@ -22,9 +22,9 @@ Do not turn this into a broad research framework or multi-profile platform befor
 
 The project has a Colab-first prototype skeleton.
 
-It can load and chunk TXT/MD notes, validate a JSONL dataset schema, and generate deterministic mock QA examples. It does not have real teacher-model calls, real training, export, or multiple model profiles yet.
+It can load and chunk TXT/MD notes, validate a JSONL dataset schema, generate deterministic mock QA examples, and prepare an optional short TRL/PEFT LoRA training run. It does not have real teacher-model calls, a verified Colab GPU training run, export, before/after comparison, or multiple model profiles yet.
 
-The next major milestone is one real teacher-generation path for the notes model, not a Mac app, SaaS, phone app, or full training platform.
+The next major milestones are one real teacher-generation path for the notes model and a Colab GPU smoke test for the optional training cell, not a Mac app, SaaS, phone app, or full training platform.
 
 ## Product Defaults
 
@@ -37,7 +37,7 @@ Use these defaults unless the user explicitly changes direction:
 - Secondary interface: thin local CLI.
 - Initial input: `.txt` and `.md` notes only.
 - Initial teacher path: deterministic mock teacher, then one real open-source teacher path.
-- Initial student target: around 0.5B-1.5B parameters when real training begins.
+- Initial student target: around 0.5B-1.5B parameters.
 - Initial training method: response distillation / SFT.
 - Advanced training method: experimental logits distillation only where technically feasible.
 - Initial export target: GGUF or a clear documented path toward GGUF.
@@ -81,4 +81,4 @@ The next useful work is:
 2. Keep v0 scoped to the notes / school model.
 3. Choose one real teacher-generation path for TXT/MD notes.
 4. Keep the deterministic mock teacher as a safe fallback.
-5. Validate the first flow with the smallest possible teacher/student path before adding new model profiles.
+5. Smoke-test the existing Qwen2.5-0.5B TRL/PEFT training path in Colab before adding new model profiles.

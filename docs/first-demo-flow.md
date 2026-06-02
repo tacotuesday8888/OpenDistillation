@@ -6,7 +6,7 @@ This is the exact v0 user flow for the first Colab prototype. It is a product an
 
 A beginner should be able to open one Colab notebook and understand this story:
 
-> My notes became training examples, those examples can later fine-tune a small model, and I can see the path toward running that model locally.
+> My notes became training examples, those examples can optionally start a tiny model fine-tune, and I can see the path toward running that model locally.
 
 The first demo should be small, slow if necessary, and honest. It should not pretend to be production training, a phone app, a coding model, or a complete personal model factory.
 
@@ -27,7 +27,7 @@ Expected output:
 
 - A short explanation of the notes-model demo.
 - A warning that this is an early prototype skeleton.
-- Runtime guidance: CPU is enough for the skeleton; GPU is needed only for future real fine-tuning.
+- Runtime guidance: CPU is enough for the default path; GPU is needed only if the user opts into the optional fine-tuning cell.
 
 ### Step 2: Runtime Setup
 
@@ -36,7 +36,7 @@ The notebook uses the local helper package for the current prototype stage.
 Expected output:
 
 - A visible note that the skeleton uses standard-library Python and local helpers.
-- A short note that future package/model versions must be checked when real engines are added.
+- A short note that optional training needs current Hugging Face training packages.
 
 ### Step 3: Upload Or Load A Notes File
 
@@ -71,7 +71,7 @@ Expected output:
 
 - Number of chunks.
 - Preview of the first 3 chunks.
-- Clear warning if there are too few chunks for future training.
+- Clear warning if there are too few chunks for optional training.
 
 ### Step 5: Generate Mock Training Examples
 
@@ -101,7 +101,7 @@ The schema is documented in `docs/dataset-schema.md`.
 
 ### Step 6: Review Dataset
 
-The user sees the dataset before any future training.
+The user sees the dataset before optional training.
 
 Expected output:
 
@@ -109,21 +109,25 @@ Expected output:
 - First 5 examples.
 - Simple validation of required fields.
 
-### Step 7: Training Placeholder
+### Step 7: Optional Training Entry Point
 
-The notebook shows where real student fine-tuning will plug in later.
+The notebook shows a bounded real student fine-tuning path, but keeps it skipped by default.
 
 Default behavior:
 
 - Do not load a model.
 - Do not use GPU.
 - Do not fine-tune.
-- Explain that future training engines may use Hugging Face Transformers, PEFT/LoRA, TRL, or Unsloth after current official docs are checked.
+- Build a training request from the validated dataset rows.
+- Show a plan for `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
+- Require `RUN_TRAINING = True` before model download or adapter training begins.
+- Save any adapter output under `outputs/`, which is ignored by git.
 
 Expected output:
 
-- A clear "training skipped" message.
-- A reminder that the skeleton creates no model artifacts.
+- A clear training plan.
+- A clear "training skipped" message while `RUN_TRAINING = False`.
+- A reminder that Colab GPU verification is still required.
 
 ### Step 8: Export Placeholder
 
@@ -144,7 +148,7 @@ Expected output:
 
 - The notebook tells one honest notes-model story.
 - The user sees uploaded or sample notes become mock training examples.
-- The user sees where real teacher, training, export, and local-run engines plug in later.
+- The user sees where a real teacher, optional training, export, and local-run pieces fit.
 - All unimplemented pieces are labeled honestly.
 - The demo does not imply coding, writing, work, or phone models already exist.
 
@@ -167,13 +171,13 @@ Included now:
 - Simple chunking.
 - JSONL dataset schema helpers.
 - Local deterministic mock teacher.
-- Training and export placeholders.
+- Optional TRL/PEFT LoRA training entry point, skipped by default.
+- Export placeholder.
 
 Planned later in v0:
 
 - One real teacher path for notes.
-- One student model path for notes.
-- One short training path.
+- Colab GPU smoke test for the optional short training path.
 - One before/after comparison.
 - Local-run guidance.
 

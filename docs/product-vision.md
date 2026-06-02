@@ -12,7 +12,7 @@ The long-term public promise is:
 
 The v0 promise is narrower:
 
-> Upload TXT/MD notes in Colab, generate training examples, and prepare a tiny local notes model.
+> Upload TXT/MD notes in Colab, generate training examples, and prepare or optionally start a tiny local notes model fine-tune.
 
 This is product packaging around a real workflow. It does not mean OpenDistillation invents a new training algorithm, and it does not mean multiple model types are implemented today.
 
@@ -70,12 +70,13 @@ Future model profiles can be added only after the first notes-model path works.
 Use proven open-source building blocks and make them approachable:
 
 - Hugging Face ecosystem for models and datasets.
-- PEFT/LoRA/QLoRA where they keep training small.
-- TRL or similar tooling where it simplifies supervised fine-tuning.
-- Unsloth or similar acceleration where it improves beginner success.
+- TRL `SFTTrainer` with PEFT LoRA for the first short student training path.
+- `Qwen/Qwen2.5-0.5B-Instruct` as the first small student model.
+- PEFT/LoRA/QLoRA where they keep future training paths small.
+- Unsloth or similar acceleration later if it improves beginner success after the plain TRL/PEFT path is verified.
 - llama.cpp/GGUF and Ollama-style instructions for local running.
 
-Exact package and model defaults should be chosen during focused prototype spikes, not guessed in advance.
+Teacher generation, export, and local-runtime defaults should still be chosen during focused prototype spikes, not guessed in advance.
 
 ## Long-Term Direction
 

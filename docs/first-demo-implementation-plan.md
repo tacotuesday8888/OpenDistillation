@@ -6,7 +6,7 @@ This plan turns the v0 notes-model Colab flow into small implementation mileston
 
 The first demo should prove this notes / school model path:
 
-> Upload one TXT/MD notes file, generate a small training dataset, fine-tune one small student model later, compare before/after answers later, and show the local run path later.
+> Upload one TXT/MD notes file, generate a small training dataset, optionally start one small student fine-tune, compare before/after answers later, and show the local run path later.
 
 The demo is successful if the user understands the whole workflow, even if the trained model is small and imperfect.
 
@@ -125,14 +125,14 @@ Purpose:
 
 Files:
 
-- Add `src/opendistillation/train.py`.
+- Add `src/opendistillation/training.py`.
 - Update `notebooks/opendistillation_v0_demo.ipynb`.
 - Update `docs/current-decisions.md` once model/backend choices are verified.
 
 Tasks:
 
 1. Choose one student model around 0.5B-1.5B parameters after checking current official model and library docs.
-2. Choose one fine-tuning backend after a small Colab smoke test.
+2. Choose one fine-tuning backend after checking current official docs.
 3. Add a training cell with small defaults.
 4. Save adapter or model output to an ignored runtime path.
 5. Add a beginner-readable failure message for missing GPU or out-of-memory errors.
@@ -143,6 +143,8 @@ Acceptance criteria:
 - The default run is short enough for a demo.
 - Output artifacts are not committed.
 - Failure cases explain the likely next step.
+
+Status: implemented as a bounded optional path using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA. Local tests cover configuration and dataset formatting without model downloads. The notebook default remains CPU-runnable with training skipped. The actual adapter training run still requires a Colab GPU smoke test.
 
 ## Milestone 5: Before/After Comparison
 

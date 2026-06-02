@@ -15,7 +15,7 @@ This file is the starter backlog to create after the repository has a GitHub rem
 
 ### v0.1 Notes-Model Colab Skeleton
 
-Goal: a notebook that opens in Colab, accepts `.txt` or `.md` notes, previews text, and shows the planned notes-model flow without real training.
+Goal: a notebook that opens in Colab, accepts `.txt` or `.md` notes, previews text, and shows the planned notes-model flow with training skipped by default.
 
 ### v0.2 Notes Dataset Generation
 
@@ -56,10 +56,10 @@ Milestone: v0.1 Colab Skeleton
 Acceptance criteria:
 
 - `notebooks/opendistillation_v0_demo.ipynb` opens from GitHub in Colab after the remote exists.
-- Notebook runs top to bottom on CPU without real training.
+- Notebook runs top to bottom on CPU with training skipped.
 - The sample notes path works.
 - The upload path works with one `.txt` and one `.md` file.
-- Notebook clearly labels training and export as placeholders.
+- Notebook clearly labels optional training and export status.
 
 ### 3. Harden TXT/MD upload validation messages
 
@@ -140,6 +140,8 @@ Acceptance criteria:
 - Choice is recorded in `docs/current-decisions.md`.
 - Hardware expectations are documented in the notebook.
 
+Status: implemented locally with `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA.
+
 ### 9. Add the short fine-tuning path
 
 Labels: `prototype`
@@ -148,10 +150,12 @@ Milestone: v0.3 Short Training Demo
 
 Acceptance criteria:
 
-- Training starts from the generated JSONL dataset.
+- Training can start from the generated JSONL dataset after `RUN_TRAINING = True`.
 - Default run is intentionally short.
 - Output artifacts stay in ignored runtime paths.
 - Missing GPU and out-of-memory failures are explained plainly.
+
+Status: bounded local engine and notebook entry point exist. Remaining work is a Colab GPU smoke test.
 
 ### 10. Add before/after comparison
 

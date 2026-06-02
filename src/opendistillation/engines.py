@@ -33,7 +33,7 @@ class TrainingResult:
 
 
 class TrainingEngine(Protocol):
-    """Protocol future Unsloth/Transformers/PEFT/TRL integrations can satisfy."""
+    """Protocol concrete training integrations can satisfy."""
 
     name: str
     requires_gpu: bool

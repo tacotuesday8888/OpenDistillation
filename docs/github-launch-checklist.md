@@ -18,7 +18,7 @@ Use this before making the repository public or inviting outside contributors.
 - [x] README explains the value in the first screen.
 - [x] README has an honest current status section.
 - [x] README defines the narrow notes-model v0 scope.
-- [x] README does not imply the training pipeline already exists.
+- [x] README distinguishes the optional training entry point from a verified Colab training run.
 - [x] README labels coding, writing, work, and phone models as future directions.
 - [x] Product vision, roadmap, and first-demo flow agree with each other.
 - [x] First-demo implementation plan exists.
@@ -32,8 +32,9 @@ Use this before making the repository public or inviting outside contributors.
 - [x] Document engine integration points.
 - [x] Add deterministic mock teacher path.
 - [ ] Choose real teacher path.
-- [ ] Choose student model and training backend.
-- [ ] Add a short training path.
+- [x] Choose student model and training backend.
+- [x] Add a bounded optional short training path.
+- [ ] Smoke-test short training in Colab with GPU.
 - [ ] Add before/after comparison.
 - [ ] Verify or honestly defer GGUF export.
 
@@ -52,5 +53,5 @@ Longer version:
 ```text
 OpenDistillation is an open-source workflow for building small personal models for specific parts of life: notes, coding, writing, work, and eventually phone-local routines.
 
-The first milestone is not a broad platform. It is one notes / school model path: TXT/MD input, generated question-answer data, one small student model later, and an honest path toward llama.cpp or Ollama-style local running.
+The first milestone is not a broad platform. It is one notes / school model path: TXT/MD input, generated question-answer data, one small optional Qwen/LoRA training path, and an honest path toward llama.cpp or Ollama-style local running.
 ```

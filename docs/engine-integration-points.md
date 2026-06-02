@@ -10,7 +10,7 @@ TXT/MD notes file
   -> chunk_text()
   -> TeacherEngine.generate()
   -> validate_dataset() / rows_to_jsonl()
-  -> future training engine
+  -> optional SFTLoRATrainingEngine
   -> future export engine
 ```
 
@@ -51,30 +51,49 @@ Current helpers:
 
 Training engines should consume the validated schema from `docs/dataset-schema.md`. If a later backend needs a different internal format, convert from this schema at the boundary instead of changing the notebook flow.
 
-## Future Training Engines
+## Training Engine
 
-Training is not implemented in the skeleton.
-
-The intended future boundary is:
+The first real training boundary is:
 
 ```text
-validated JSONL rows -> training engine -> adapter/model output
+validated JSONL rows -> SFTLoRATrainingEngine -> PEFT LoRA adapter output
 ```
 
-Current interface placeholders:
+Current interface:
 
 - `TrainingRequest`
 - `TrainingResult`
 - `TrainingEngine.train(request)`
+- `SFTLoRAConfig`
+- `SFTLoRATrainingEngine`
+- `build_training_request(rows, output_dir, config=...)`
+- `format_sft_rows(rows)`
 
-Candidate open-source engines can include:
+Current default:
 
-- Hugging Face Transformers for model loading and training primitives.
-- PEFT/LoRA or QLoRA for small adapter training.
-- TRL if it simplifies supervised fine-tuning.
-- Unsloth if it gives a simpler or faster Colab path.
+- Student model: `Qwen/Qwen2.5-0.5B-Instruct`.
+- Backend: TRL `SFTTrainer` with PEFT `LoraConfig`.
+- Dataset conversion: the v0 `instruction` / `response` rows become conversational prompt/completion examples.
+- Output path: `outputs/notes-lora/adapter`, which is ignored by git.
+- Default notebook behavior: training is skipped until `RUN_TRAINING = True`.
 
-The first real training goal should choose one backend after checking current official docs and doing a small Colab smoke test.
+This choice keeps the first path beginner-readable. TRL provides the supervised fine-tuning wrapper, PEFT keeps the trainable output small, and Qwen2.5-0.5B-Instruct is within the target 0.5B-1.5B student range.
+
+Unsloth and bitsandbytes are not enabled by default. They may become later optimization paths after the plain TRL/PEFT adapter run is verified, because they add extra quantization, install, and hardware assumptions.
+
+Verified locally:
+
+- Training request validation.
+- Conversion from the v0 dataset schema into TRL prompt/completion rows.
+- Training config kwargs and LoRA config kwargs.
+- Notebook default path with training skipped.
+
+Requires Colab/GPU verification:
+
+- Optional package installation.
+- Student model download.
+- The actual `SFTLoRATrainingEngine.train()` call.
+- Adapter quality, memory use, and runtime.
 
 ## Future Export Engines
 

@@ -31,7 +31,7 @@ Exit criteria:
 
 Goal:
 
-> A user can open the notebook, load a `.txt` or `.md` notes file, and see the planned notes-model workflow shape without real training yet.
+> A user can open the notebook, load a `.txt` or `.md` notes file, and see the planned notes-model workflow shape with training skipped by default.
 
 Deliverables:
 
@@ -39,13 +39,13 @@ Deliverables:
 - Upload and text validation cells.
 - Text preview and chunk preview.
 - Deterministic mock QA dataset preview.
-- Clear labels showing training/export cells are placeholders.
+- Clear labels showing optional training and export status.
 
 Exit criteria:
 
 - The notebook runs top to bottom without GPU.
 - A beginner can see how notes become training examples.
-- No real teacher model, paid API, model download, GPU, or remote text transfer is required.
+- No real teacher model, paid API, model download, GPU, or remote text transfer is required for the default path.
 
 ## Phase 2: Real Teacher Path For Notes
 
@@ -75,9 +75,9 @@ Goal:
 
 Deliverables:
 
-- One recommended student model.
-- One efficient supervised fine-tuning path.
-- Small default training run.
+- One recommended student model: `Qwen/Qwen2.5-0.5B-Instruct`.
+- One efficient supervised fine-tuning path: TRL `SFTTrainer` with PEFT LoRA.
+- Small default training run, skipped unless the notebook user opts in.
 - Before/after prompt comparison.
 - Clear warnings about runtime, GPU, and quality limits.
 
@@ -85,6 +85,8 @@ Exit criteria:
 
 - The notebook demonstrates a visible behavior change on the sample notes.
 - The run stays small enough for a beginner Colab demo.
+
+Current status: the bounded training engine and notebook entry point exist, and local tests cover configuration and dataset formatting. The actual Colab GPU run and before/after comparison are not verified yet.
 
 ## Phase 4: Local Notes-Model Run Path
 
