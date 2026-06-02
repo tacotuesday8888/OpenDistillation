@@ -1,6 +1,6 @@
 # Notebooks
 
-This directory will hold the Colab-first OpenDistillation demo.
+This directory holds the Colab-first OpenDistillation demo.
 
 Current notebook:
 
@@ -8,13 +8,13 @@ Current notebook:
 notebooks/opendistillation_v0_demo.ipynb
 ```
 
-The current skeleton proves the first safe part of the beginner-readable flow:
+The current skeleton proves the first safe part of the notes / school model flow:
 
-> Upload or load a `.txt` or `.md` document, preview and chunk it, generate deterministic mock training examples, and show clear placeholders for future training and export.
+> Load a `.txt` or `.md` notes file, preview and chunk it, generate deterministic mock training examples, and show clear placeholders for future training and export.
 
 ## Notebook Rules
 
-- One main path, not a menu of advanced options.
+- One notes-model path, not a menu of personal model profiles.
 - Small defaults.
 - Clear output after every major step.
 - Honest labels for anything not implemented yet.
@@ -25,7 +25,7 @@ The current skeleton proves the first safe part of the beginner-readable flow:
 Before real training is added, the notebook should run top to bottom on CPU and show:
 
 - Introduction and status warning.
-- Upload and validation for `.txt` and `.md`.
+- Upload/loading and validation for `.txt` and `.md` notes.
 - Text preview.
 - Chunk preview.
 - Mock teacher generation.

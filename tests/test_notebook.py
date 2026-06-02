@@ -11,7 +11,7 @@ class NotebookSkeletonTests(unittest.TestCase):
         notebook = json.loads(NOTEBOOK_PATH.read_text(encoding="utf-8"))
         sources = "\n".join("".join(cell.get("source", [])) for cell in notebook["cells"])
 
-        self.assertIn("Upload docs. Distill a tiny local model. Run it locally.", sources)
+        self.assertIn("A personal model factory for the AI PC and AI phone era.", sources)
         self.assertIn("Upload or load a TXT/MD file", sources)
         self.assertIn("Chunk the document", sources)
         self.assertIn("Generate mock training examples", sources)

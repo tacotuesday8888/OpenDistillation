@@ -13,13 +13,13 @@ This file is the starter backlog to create after the repository has a GitHub rem
 
 ## Milestones
 
-### v0.1 Colab Skeleton
+### v0.1 Notes-Model Colab Skeleton
 
-Goal: a notebook that opens in Colab, accepts `.txt` or `.md`, previews text, and shows the planned flow without real training.
+Goal: a notebook that opens in Colab, accepts `.txt` or `.md` notes, previews text, and shows the planned notes-model flow without real training.
 
-### v0.2 Dataset Generation
+### v0.2 Notes Dataset Generation
 
-Goal: uploaded text becomes validated question-answer JSONL examples.
+Goal: uploaded notes become validated question-answer JSONL examples.
 
 ### v0.3 Short Training Demo
 
@@ -74,7 +74,7 @@ Acceptance criteria:
 - Empty files are rejected.
 - Uploaded content preview shows file name, character count, word count, and first 1,000 characters.
 
-### 4. Review simple document chunking defaults
+### 4. Review simple notes chunking defaults
 
 Labels: `prototype`
 
@@ -86,7 +86,7 @@ Acceptance criteria:
 - Empty chunks are dropped.
 - Chunk IDs are stable.
 - The first 3 chunks are previewed in the notebook.
-- `examples/sample-notes.md` produces multiple chunks with the notebook default.
+- `examples/sample-notes.md` produces multiple notes chunks with the notebook default.
 
 ### 5. Expand dataset schema documentation after real teacher selection
 
@@ -101,7 +101,7 @@ Acceptance criteria:
 - Dataset validation fails clearly on missing fields.
 - Any new optional fields are documented before they are used.
 
-### 6. Choose the default teacher path
+### 6. Choose the default notes teacher path
 
 Labels: `research`, `scope`
 
@@ -111,7 +111,7 @@ Acceptance criteria:
 
 - Current official docs for the chosen teacher path are checked.
 - Choice is recorded in `docs/current-decisions.md`.
-- Notebook states whether uploaded text is sent to a remote endpoint.
+- Notebook states whether uploaded notes are sent to a remote endpoint.
 - Fallback behavior is documented for teacher failures.
 
 ### 7. Generate question-answer examples from chunks
@@ -127,7 +127,7 @@ Acceptance criteria:
 - Dataset is saved to an ignored generated-data path.
 - Dataset can be downloaded from Colab.
 
-### 8. Choose the default student model and training backend
+### 8. Choose the default notes student model and training backend
 
 Labels: `research`, `scope`
 

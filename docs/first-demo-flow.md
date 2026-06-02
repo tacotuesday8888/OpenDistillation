@@ -1,21 +1,21 @@
 # First Demo Flow
 
-This is the exact v0 user flow for the first Colab prototype. It is a product and implementation spec, not implemented code.
+This is the exact v0 user flow for the first Colab prototype. It is a product and implementation spec for the notes / school model, not a broad multi-profile system.
 
 ## Demo Goal
 
 A beginner should be able to open one Colab notebook and understand this story:
 
-> My document became training examples, those examples fine-tuned a small model, and I can see how to run the result locally.
+> My notes became training examples, those examples can later fine-tune a small model, and I can see the path toward running that model locally.
 
-The first demo should be small, slow if necessary, and honest. It should not pretend to be production training.
+The first demo should be small, slow if necessary, and honest. It should not pretend to be production training, a phone app, a coding model, or a complete personal model factory.
 
 ## Default User Input
 
-- One `.txt` or `.md` file.
+- One `.txt` or `.md` notes file.
 - Recommended sample: `examples/sample-notes.md`.
 - Minimum useful size: roughly 500-2,000 words.
-- Unsupported in v0: PDF, DOCX, web pages, images, folders, private drives, and databases.
+- Unsupported in v0: PDF, DOCX, web pages, images, folders, private drives, databases, coding repositories, workspaces, phone data, and multi-profile inputs.
 
 ## Step-By-Step Notebook Flow
 
@@ -25,29 +25,29 @@ The user opens `notebooks/opendistillation_v0_demo.ipynb` from GitHub in Colab.
 
 Expected output:
 
-- A short explanation of the demo.
-- A warning that this is an early prototype.
-- Runtime guidance: CPU is enough for the skeleton; GPU is needed for real fine-tuning.
+- A short explanation of the notes-model demo.
+- A warning that this is an early prototype skeleton.
+- Runtime guidance: CPU is enough for the skeleton; GPU is needed only for future real fine-tuning.
 
-### Step 2: Install Dependencies
+### Step 2: Runtime Setup
 
-The notebook installs only the packages needed for the current prototype stage.
+The notebook uses the local helper package for the current prototype stage.
 
 Expected output:
 
-- A visible dependency list.
-- A short note that package versions may change while the prototype is being validated.
+- A visible note that the skeleton uses standard-library Python and local helpers.
+- A short note that future package/model versions must be checked when real engines are added.
 
-### Step 3: Upload A Text File
+### Step 3: Upload Or Load A Notes File
 
-The user uploads one `.txt` or `.md` file.
+The user uploads one `.txt` or `.md` notes file, or uses the sample notes file when running locally.
 
 Validation rules:
 
 - Reject unsupported extensions.
 - Reject empty files.
-- Show a beginner-readable error if the file is too short.
-- Keep the uploaded content local to the notebook runtime unless the teacher path explicitly sends prompts to a remote endpoint.
+- Show a beginner-readable warning if the file is too short.
+- Keep the uploaded content local to the notebook runtime unless a future teacher path explicitly sends prompts to a remote endpoint.
 
 Expected output:
 
@@ -56,7 +56,7 @@ Expected output:
 - Approximate word count.
 - First 1,000 characters.
 
-### Step 4: Chunk The Document
+### Step 4: Chunk The Notes
 
 The notebook splits the text into short chunks.
 
@@ -71,120 +71,82 @@ Expected output:
 
 - Number of chunks.
 - Preview of the first 3 chunks.
-- Clear warning if there are too few chunks for training.
+- Clear warning if there are too few chunks for future training.
 
-### Step 5: Generate Training Examples
+### Step 5: Generate Mock Training Examples
 
-The teacher path creates question-answer examples from chunks. The current skeleton uses a deterministic local mock teacher so the notebook can run without model downloads, API calls, GPU, or remote text transfer.
+The current skeleton uses a deterministic local mock teacher so the notebook can run without model downloads, API calls, GPU, or remote text transfer.
 
 Default behavior:
 
 - Generate a small number of examples per chunk.
 - Keep the output schema simple.
-- Prefer quality and readability over quantity.
-- Label any remote teacher call clearly before it runs.
+- Prefer readability over pretending the examples are production quality.
+- Label whether the teacher engine sends text to a remote endpoint.
 
 Expected output:
 
-- A table preview of generated examples.
+- A preview of generated examples.
 - A JSONL dataset saved in the notebook runtime temp directory.
-- A download link for the dataset.
-- A clear label showing whether the teacher engine sends text to a remote endpoint.
+- A Colab download helper when running in Colab.
+- A clear label that `MockTeacherEngine` is local and deterministic.
 
 Initial JSONL shape:
 
 ```json
-{"instruction":"Question about the user's document","response":"Answer grounded in the document","source_chunk_id":"chunk-0001"}
+{"instruction":"Question about the user's notes","response":"Answer grounded in the notes","source_chunk_id":"chunk-0001"}
 ```
 
 The schema is documented in `docs/dataset-schema.md`.
 
 ### Step 6: Review Dataset
 
-The user sees the dataset before training.
+The user sees the dataset before any future training.
 
 Expected output:
 
 - Count of training examples.
 - First 5 examples.
-- Simple warnings for very short answers, empty fields, or duplicate questions.
+- Simple validation of required fields.
 
-### Step 7: Load Student Model
+### Step 7: Training Placeholder
 
-The notebook loads one recommended small student model.
-
-Default behavior:
-
-- Choose one model around 0.5B-1.5B parameters during implementation.
-- Avoid a confusing model picker in v0.
-- Explain memory and runtime limits plainly.
-
-Expected output:
-
-- Student model name.
-- Estimated hardware requirement.
-- Whether GPU is required for the next step.
-
-### Step 8: Run Short Fine-Tuning
-
-The notebook runs a short supervised fine-tuning job.
+The notebook shows where real student fine-tuning will plug in later.
 
 Default behavior:
 
-- Small batch.
-- Small step count.
-- Visible progress logs.
-- Save adapter/output artifacts only inside the Colab runtime unless the user downloads them.
+- Do not load a model.
+- Do not use GPU.
+- Do not fine-tune.
+- Explain that future training engines may use Hugging Face Transformers, PEFT/LoRA, TRL, or Unsloth after current official docs are checked.
 
 Expected output:
 
-- Training starts successfully.
-- Training finishes or fails with an understandable message.
-- Output path inside the runtime.
+- A clear "training skipped" message.
+- A reminder that the skeleton creates no model artifacts.
 
-### Step 9: Compare Before And After
+### Step 8: Export Placeholder
 
-The notebook asks the base model and trained model the same question based on the uploaded document.
-
-Expected output:
-
-- The prompt used for comparison.
-- Base model answer.
-- Trained model answer.
-- Plain-language note that this is a sanity check, not a benchmark.
-
-### Step 10: Save Or Export
-
-The notebook saves the trained output.
+The notebook shows where GGUF/local-runtime export will plug in later.
 
 Default behavior:
 
-- Save adapter output first if that is the reliable path.
-- Attempt GGUF export only if it is stable enough for v0.
-- If GGUF export is not implemented, show the exact planned export command and explain what remains unverified.
+- Do not create GGUF files.
+- Do not claim llama.cpp or Ollama local running works yet.
+- Explain that export comes after real training output exists.
 
 Expected output:
 
-- Path to saved output.
-- Download instruction.
-- GGUF/export status.
-
-### Step 11: Run Locally
-
-The notebook shows local run instructions.
-
-Expected output:
-
-- llama.cpp and/or Ollama-style command if export is available.
-- If export is not available yet, a clear "not implemented in this prototype" note with the next implementation issue.
+- A clear "export skipped" message.
+- A reminder that no model artifacts or local runtime files are created.
 
 ## Success Criteria
 
-- The notebook tells one complete story.
-- The user sees their uploaded text become training examples.
-- The user sees a before/after model response.
-- Local running is either demonstrated or documented with an exact next command.
+- The notebook tells one honest notes-model story.
+- The user sees uploaded or sample notes become mock training examples.
+- The user sees where real teacher, training, export, and local-run engines plug in later.
 - All unimplemented pieces are labeled honestly.
+- The demo does not imply coding, writing, work, or phone models already exist.
 
 ## Failure Cases To Handle
 
@@ -193,33 +155,35 @@ Expected output:
 - Too few chunks.
 - Teacher generation failure.
 - Invalid generated dataset row.
-- No GPU available for training.
-- Out-of-memory during training.
-- Export path unavailable.
+- Future no-GPU or out-of-memory training failures.
+- Future export path unavailable.
 
 ## V0 Boundaries
 
-Included:
+Included now:
 
-- `.txt` and `.md` upload.
+- `.txt` and `.md` notes loading.
 - Plain text preview.
 - Simple chunking.
-- Question-answer dataset generation.
-- One student model path.
+- JSONL dataset schema helpers.
+- Local deterministic mock teacher.
+- Training and export placeholders.
+
+Planned later in v0:
+
+- One real teacher path for notes.
+- One student model path for notes.
 - One short training path.
 - One before/after comparison.
 - Local-run guidance.
 
-Current skeleton:
-
-- Implements TXT/MD loading and validation.
-- Implements simple chunking.
-- Implements the JSONL dataset schema helpers.
-- Implements a local deterministic mock teacher.
-- Shows training and export placeholders only.
-
 Excluded:
 
+- Multiple model profiles.
+- Coding model.
+- Writing model.
+- Work model.
+- Phone model.
 - PDF/DOCX parsing.
 - Multi-file projects.
 - Web UI.

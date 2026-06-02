@@ -2,30 +2,42 @@
 
 ## Project Mission
 
-OpenDistillation is an open-source, productized tool for helping people turn their own documents or task knowledge into a small local model.
+OpenDistillation is an open-source, productized workflow for building small personal models for the AI PC and AI phone era.
 
-The first product promise is:
+The long-term direction is a personal model factory:
 
-> Upload docs. Distill a tiny local model. Run it locally.
+- Notes / school models.
+- Coding models.
+- Writing models.
+- Work models.
+- Phone-local models.
 
-Do not turn this into a broad research framework before the first clear demo works.
+The first product path is much narrower:
+
+> Build a tiny local notes model from TXT/MD notes.
+
+Do not turn this into a broad research framework or multi-profile platform before the first notes-model demo works.
 
 ## Current Stage
 
-The project is in foundation mode.
+The project has a Colab-first prototype skeleton.
 
-The next major milestone is a Colab-first prototype, not a Mac app, SaaS, or full training platform.
+It can load and chunk TXT/MD notes, validate a JSONL dataset schema, and generate deterministic mock QA examples. It does not have real teacher-model calls, real training, export, or multiple model profiles yet.
+
+The next major milestone is one real teacher-generation path for the notes model, not a Mac app, SaaS, phone app, or full training platform.
 
 ## Product Defaults
 
 Use these defaults unless the user explicitly changes direction:
 
-- Public positioning: open-source productized tool.
+- Public positioning: personal model factory for the AI PC and AI phone era.
+- First model type: notes / school model.
+- Future model types: coding, writing, work, and phone models, only after the notes model works.
 - Main first-run experience: Colab notebook.
 - Secondary interface: thin local CLI.
-- Initial input: `.txt` and `.md` files only.
-- Initial teacher path: open-source teacher model, remote if that improves beginner success.
-- Initial student target: around 0.5B-1.5B parameters.
+- Initial input: `.txt` and `.md` notes only.
+- Initial teacher path: deterministic mock teacher, then one real open-source teacher path.
+- Initial student target: around 0.5B-1.5B parameters when real training begins.
 - Initial training method: response distillation / SFT.
 - Advanced training method: experimental logits distillation only where technically feasible.
 - Initial export target: GGUF or a clear documented path toward GGUF.
@@ -35,7 +47,9 @@ Use these defaults unless the user explicitly changes direction:
 
 - Do not start with a closed SaaS.
 - Do not start with a Mac app.
+- Do not start with a phone app.
 - Do not build a giant research framework first.
+- Do not build coding, writing, work, phone, or multi-profile flows in v0.
 - Do not claim novel algorithms unless the code actually implements them.
 - Do not overbuild PDF parsing, arbitrary document ingestion, dashboards, accounts, billing, or cloud training in v0.
 - Do not commit generated models, datasets, checkpoints, API keys, `.env` files, or local machine config.
@@ -63,8 +77,8 @@ The user is exploring and is not deeply technical.
 
 The next useful work is:
 
-1. Polish README and launch narrative.
-2. Define the exact Colab v0 flow.
-3. Create a minimal notebook skeleton.
-4. Create a minimal Python package skeleton only when it supports the notebook.
-5. Validate the first flow with the smallest possible teacher/student path.
+1. Keep the personal model factory positioning clear.
+2. Keep v0 scoped to the notes / school model.
+3. Choose one real teacher-generation path for TXT/MD notes.
+4. Keep the deterministic mock teacher as a safe fallback.
+5. Validate the first flow with the smallest possible teacher/student path before adding new model profiles.

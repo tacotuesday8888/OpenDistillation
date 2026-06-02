@@ -6,7 +6,7 @@ Make OpenDistillation easier to understand, sharper in scope, and more compellin
 
 ## Key Question
 
-Would a new visitor understand in one minute why this project exists and what they get after running it?
+Would a new visitor understand in one minute that OpenDistillation is a future personal model factory, while v0 is only a narrow notes-model prototype?
 
 ## Responsibilities
 
@@ -20,11 +20,17 @@ Would a new visitor understand in one minute why this project exists and what th
 
 Position OpenDistillation as:
 
-> An open-source way to turn your docs into a tiny local model.
+> An open-source personal model factory for the AI PC and AI phone era.
+
+Then immediately narrow v0 to:
+
+> One Colab-first notes / school model path from TXT/MD input.
 
 Avoid positioning it as:
 
 > A complete LLM distillation research framework.
+
+Also avoid implying that coding, writing, work, or phone models are already implemented.
 
 ## Outputs
 

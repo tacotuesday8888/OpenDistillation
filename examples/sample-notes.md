@@ -1,9 +1,11 @@
 # Sample Notes
 
-OpenDistillation is a project about turning user-provided documents into a small local model.
+OpenDistillation is a personal model factory for the AI PC and AI phone era.
 
-The first demo should use simple text or Markdown files. The tool should split the document into chunks, ask a teacher model to create question-answer pairs, and train a small student model from those examples.
+The long-term idea is to help people build small personal models for different parts of life: notes and school, coding, writing, work, and eventually phone-local routines.
 
-The final experience should feel simple: a user uploads notes, waits for the training flow, and gets a small model they can run locally.
+The first demo should stay much narrower. It should use simple text or Markdown notes, split those notes into chunks, ask a teacher path to create question-answer pairs, and prepare a small notes model from those examples.
 
-Good first users are students, indie developers, and AI tinkerers who want to build a personal model without learning every detail of model distillation.
+The current skeleton uses a deterministic mock teacher. It does not train a real model, download large weights, call paid APIs, or export GGUF files yet.
+
+The final experience should feel simple: a user starts with notes, inspects the generated examples, trains or adapts a small model later, and gets a clear path toward running it locally.

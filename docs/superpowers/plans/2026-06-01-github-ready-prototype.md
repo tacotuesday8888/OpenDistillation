@@ -17,7 +17,7 @@
 
 - [x] **Step 1: Explain the project in the first screen**
 
-Make the README open with the promise "Upload docs. Distill a tiny local model. Run it locally."
+Make the README open with the personal model factory positioning while clearly narrowing v0 to the notes / school model.
 
 - [x] **Step 2: Separate current status from future plans**
 
@@ -41,7 +41,7 @@ State the TXT/MD-only Colab prototype path and list excluded work such as SaaS, 
 
 - [x] **Step 1: Use one product promise everywhere**
 
-Use "Upload docs. Distill a tiny local model. Run it locally." as the shared public promise.
+Use the personal model factory framing as the long-term public promise, and the notes / school model as the v0 promise.
 
 - [x] **Step 2: Specify the v0 Colab flow**
 

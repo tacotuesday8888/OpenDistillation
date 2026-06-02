@@ -5,7 +5,7 @@ The v0 skeleton is designed so the notebook flow can stay stable while real engi
 Current flow:
 
 ```text
-TXT/MD file
+TXT/MD notes file
   -> load_text_document()
   -> chunk_text()
   -> TeacherEngine.generate()
@@ -21,7 +21,7 @@ Current helpers:
 - `load_text_document(filename, content)`
 - `chunk_text(text, max_chars=700)`
 
-These produce a `LoadedTextDocument` and ordered `TextChunk` objects with stable IDs. Later ingestion work can add PDF, DOCX, folders, or web pages by producing the same plain text and chunk objects, but those formats are outside v0.
+These produce a `LoadedTextDocument` and ordered `TextChunk` objects with stable IDs. The v0 path treats those chunks as notes chunks. Later ingestion work can add coding, writing, work, phone, PDF, DOCX, folders, or web page inputs by producing compatible source text and chunk objects, but those formats are outside v0.
 
 ## Teacher Generation
 
@@ -39,7 +39,7 @@ Later real teacher engines can sit behind the same `TeacherEngine.generate()` me
 - A hosted open-source teacher endpoint, if that is more reliable for beginners.
 - A batch generation job that still returns the same JSONL rows.
 
-Any real teacher engine must declare whether it sends user text to a remote endpoint.
+Any real teacher engine must declare whether it sends user notes to a remote endpoint.
 
 ## Dataset Validation
 

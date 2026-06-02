@@ -1,12 +1,12 @@
 # First Demo Implementation Plan
 
-This plan turns the v0 Colab flow into small implementation milestones. It is intentionally narrow and does not build a SaaS, Mac app, account system, cloud backend, or broad training platform.
+This plan turns the v0 notes-model Colab flow into small implementation milestones. It is intentionally narrow and does not build a SaaS, Mac app, phone app, account system, cloud backend, broad training platform, or multi-profile personal model system.
 
 ## Demo Target
 
-The first demo should prove this path:
+The first demo should prove this notes / school model path:
 
-> Upload one text file, generate a small training dataset, fine-tune one small student model, compare before/after answers, and show the local run path.
+> Upload one TXT/MD notes file, generate a small training dataset, fine-tune one small student model later, compare before/after answers later, and show the local run path later.
 
 The demo is successful if the user understands the whole workflow, even if the trained model is small and imperfect.
 
@@ -18,6 +18,7 @@ The demo is successful if the user understands the whole workflow, even if the t
 - Show intermediate outputs after every major step.
 - Save generated datasets and model artifacts only in ignored local/runtime paths.
 - Label unimplemented export or training pieces honestly.
+- Do not add coding, writing, work, phone, or multi-profile flows before the notes model works.
 
 ## Milestone 1: Colab Skeleton
 
@@ -49,11 +50,11 @@ Acceptance criteria:
 
 Status: implemented as `notebooks/opendistillation_v0_demo.ipynb`.
 
-## Milestone 2: TXT/MD Loading And Chunking
+## Milestone 2: TXT/MD Notes Loading And Chunking
 
 Purpose:
 
-> Turn uploaded text into ordered chunks that can be used for teacher generation.
+> Turn uploaded notes into ordered chunks that can be used for teacher generation.
 
 Files:
 
@@ -78,11 +79,11 @@ Acceptance criteria:
 
 Status: implemented in `src/opendistillation/text.py`.
 
-## Milestone 3: Dataset Schema And Teacher Generation
+## Milestone 3: Dataset Schema And Mock Teacher Generation
 
 Purpose:
 
-> Generate a small, inspectable JSONL dataset from chunks.
+> Generate a small, inspectable JSONL dataset from notes chunks.
 
 Files:
 
@@ -94,7 +95,7 @@ Files:
 Initial JSONL row:
 
 ```json
-{"instruction":"Question about the user's document","response":"Answer grounded in the document","source_chunk_id":"chunk-0001"}
+{"instruction":"Question about the user's notes","response":"Answer grounded in the notes","source_chunk_id":"chunk-0001"}
 ```
 
 Tasks:
@@ -120,7 +121,7 @@ Status: implemented for the skeleton with `MockTeacherEngine`; real teacher-mode
 
 Purpose:
 
-> Fine-tune one small student model with the generated dataset.
+> Fine-tune one small student model with the generated notes dataset.
 
 Files:
 
@@ -147,7 +148,7 @@ Acceptance criteria:
 
 Purpose:
 
-> Show that the trained model learned something from the uploaded document.
+> Show that the trained model learned something from the uploaded notes.
 
 Files:
 
@@ -164,7 +165,7 @@ Tasks:
 Acceptance criteria:
 
 - The notebook shows a concrete before/after answer.
-- The comparison uses the user's uploaded content.
+- The comparison uses the user's uploaded notes.
 - The output does not claim broad benchmark improvement.
 
 ## Milestone 6: Export And Local Run Path

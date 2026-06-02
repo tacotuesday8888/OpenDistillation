@@ -17,8 +17,9 @@ Use this before making the repository public or inviting outside contributors.
 
 - [x] README explains the value in the first screen.
 - [x] README has an honest current status section.
-- [x] README defines the narrow v0 scope.
+- [x] README defines the narrow notes-model v0 scope.
 - [x] README does not imply the training pipeline already exists.
+- [x] README labels coding, writing, work, and phone models as future directions.
 - [x] Product vision, roadmap, and first-demo flow agree with each other.
 - [x] First-demo implementation plan exists.
 
@@ -41,15 +42,15 @@ Use this before making the repository public or inviting outside contributors.
 Short version:
 
 ```text
-OpenDistillation turns your docs into a tiny local model.
+OpenDistillation is a personal model factory for the AI PC and AI phone era.
 
-Upload notes in Colab, generate training examples, fine-tune a small student model, and run the result locally.
+The first path is intentionally small: a Colab notes-model flow for TXT/MD notes, mock QA data, and a clear path toward a tiny local model.
 ```
 
 Longer version:
 
 ```text
-OpenDistillation is an open-source project for making personal model distillation feel like a product workflow instead of a pile of disconnected training tools.
+OpenDistillation is an open-source workflow for building small personal models for specific parts of life: notes, coding, writing, work, and eventually phone-local routines.
 
-The first milestone is intentionally small: one Colab notebook, TXT/MD input, generated question-answer data, one small student model, and a clear path toward llama.cpp or Ollama-style local running.
+The first milestone is not a broad platform. It is one notes / school model path: TXT/MD input, generated question-answer data, one small student model later, and an honest path toward llama.cpp or Ollama-style local running.
 ```
