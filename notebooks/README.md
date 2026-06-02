@@ -10,7 +10,7 @@ notebooks/opendistillation_v0_demo.ipynb
 
 The current skeleton proves the first safe part of the notes / school model flow:
 
-> Load a `.txt` or `.md` notes file, preview and chunk it, generate deterministic mock training examples, and prepare an optional short TRL/PEFT LoRA training run that stays skipped by default.
+> Load a `.txt` or `.md` notes file, preview and chunk it, generate deterministic mock training examples, prepare an optional short TRL/PEFT LoRA training run, and prepare a before/after comparison that stays skipped by default.
 
 ## Notebook Rules
 
@@ -30,8 +30,9 @@ With training skipped by default, the notebook should run top to bottom on CPU a
 - Chunk preview.
 - Mock teacher generation.
 - Optional student fine-tuning section with `RUN_TRAINING = False` by default.
-- Placeholder sections for comparison and export.
+- Optional before/after comparison section that skips when training is skipped.
+- Placeholder section for export.
 
 Later real engines should plug in through the interfaces described in `docs/engine-integration-points.md`.
 
-The optional training section is not part of the CPU smoke path. It requires a Colab GPU runtime and installing the Hugging Face training packages listed in the notebook. It saves adapters under `outputs/`, which is ignored by git.
+The optional training and comparison sections are not part of the CPU smoke path. They require a Colab GPU runtime and installing the Hugging Face training packages listed in the notebook. Training saves adapters under `outputs/`, which is ignored by git.

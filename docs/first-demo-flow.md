@@ -129,7 +129,25 @@ Expected output:
 - A clear "training skipped" message while `RUN_TRAINING = False`.
 - A reminder that Colab GPU verification is still required.
 
-### Step 8: Export Placeholder
+### Step 8: Before/After Comparison
+
+The notebook compares one generated question against the base model and the trained LoRA adapter after optional training.
+
+Default behavior:
+
+- Do not load a model while `RUN_TRAINING = False`.
+- Skip comparison when no adapter exists.
+- Use the first generated dataset question.
+- Show the generated reference answer, base-model answer, and trained-adapter answer when training has run.
+- Label the comparison as a qualitative sanity check, not a benchmark.
+
+Expected output:
+
+- A clear "comparison skipped" message while training is skipped.
+- A clear comparison plan after training creates an adapter.
+- A side-by-side style text output for question, reference answer, base answer, and trained-adapter answer.
+
+### Step 9: Export Placeholder
 
 The notebook shows where GGUF/local-runtime export will plug in later.
 
@@ -148,7 +166,7 @@ Expected output:
 
 - The notebook tells one honest notes-model story.
 - The user sees uploaded or sample notes become mock training examples.
-- The user sees where a real teacher, optional training, export, and local-run pieces fit.
+- The user sees where a real teacher, optional training, before/after comparison, export, and local-run pieces fit.
 - All unimplemented pieces are labeled honestly.
 - The demo does not imply coding, writing, work, or phone models already exist.
 
@@ -172,13 +190,13 @@ Included now:
 - JSONL dataset schema helpers.
 - Local deterministic mock teacher.
 - Optional TRL/PEFT LoRA training entry point, skipped by default.
+- Optional before/after comparison entry point, skipped by default.
 - Export placeholder.
 
 Planned later in v0:
 
 - One real teacher path for notes.
-- Colab GPU smoke test for the optional short training path.
-- One before/after comparison.
+- Colab GPU smoke test for the optional short training and comparison path.
 - Local-run guidance.
 
 Excluded:

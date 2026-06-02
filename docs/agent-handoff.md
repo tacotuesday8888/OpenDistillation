@@ -6,7 +6,7 @@
 
 ## Current State
 
-OpenDistillation is GitHub-ready at the documentation and prototype-skeleton level, with a bounded optional training entry point. It does not have a verified Colab GPU training run yet.
+OpenDistillation is GitHub-ready at the documentation and prototype-skeleton level, with bounded optional training and comparison entry points. It does not have a verified Colab GPU training/comparison run yet.
 
 The repo now contains:
 
@@ -17,6 +17,7 @@ The repo now contains:
 - Runnable v0 skeleton notebook.
 - Minimal Python helpers for TXT/MD loading, chunking, dataset validation, and mock teacher generation.
 - Optional TRL `SFTTrainer` + PEFT LoRA training engine for `Qwen/Qwen2.5-0.5B-Instruct`, skipped by default in the notebook.
+- Optional before/after comparison engine for one generated question, skipped by default in the notebook.
 - First-demo implementation plan.
 - GitHub issue forms.
 - Starter milestone and issue plan.
@@ -41,7 +42,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task should choose and test the first real teacher path for the notes model, or run a small Colab GPU smoke test for the existing optional training cell if training verification is the active milestone.
+The next task should choose and test the first real teacher path for the notes model, or run a small Colab GPU smoke test for the existing optional training and comparison cells if training verification is the active milestone.
 
 ## Important Guardrails
 

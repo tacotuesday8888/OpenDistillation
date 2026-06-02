@@ -11,6 +11,7 @@ TXT/MD notes file
   -> TeacherEngine.generate()
   -> validate_dataset() / rows_to_jsonl()
   -> optional SFTLoRATrainingEngine
+  -> optional BeforeAfterComparisonEngine
   -> future export engine
 ```
 
@@ -94,6 +95,44 @@ Requires Colab/GPU verification:
 - Student model download.
 - The actual `SFTLoRATrainingEngine.train()` call.
 - Adapter quality, memory use, and runtime.
+
+## Before/After Comparison Engine
+
+The first comparison boundary is:
+
+```text
+validated JSONL rows + PEFT adapter output -> BeforeAfterComparisonEngine -> base answer + trained-adapter answer
+```
+
+Current interface:
+
+- `BeforeAfterComparisonRequest`
+- `BeforeAfterComparisonResult`
+- `BeforeAfterComparisonEngine.compare(request)`
+- `build_comparison_request(rows, training_result, config=...)`
+
+Current default:
+
+- Question source: the first validated generated dataset row.
+- Reference answer: the response from that generated dataset row.
+- Base answer: `Qwen/Qwen2.5-0.5B-Instruct` loaded with Transformers.
+- Trained answer: the same base model with the saved PEFT LoRA adapter loaded through `PeftModel.from_pretrained()`.
+- Default notebook behavior: comparison is skipped unless optional training creates an adapter.
+
+Verified locally:
+
+- Comparison request validation.
+- Missing adapter-path handling before any model imports.
+- Optional dependency error messages.
+- Fake base-vs-adapter generation without downloading models.
+- Notebook default path with comparison skipped.
+
+Requires Colab/GPU verification:
+
+- Real base-model generation.
+- Real PEFT adapter loading.
+- Real trained-adapter generation.
+- Whether the answer changes in a useful way after the short training run.
 
 ## Future Export Engines
 

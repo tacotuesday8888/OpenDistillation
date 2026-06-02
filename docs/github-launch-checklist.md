@@ -34,8 +34,9 @@ Use this before making the repository public or inviting outside contributors.
 - [ ] Choose real teacher path.
 - [x] Choose student model and training backend.
 - [x] Add a bounded optional short training path.
+- [x] Add before/after comparison wiring.
 - [ ] Smoke-test short training in Colab with GPU.
-- [ ] Add before/after comparison.
+- [ ] Smoke-test before/after comparison in Colab with GPU.
 - [ ] Verify or honestly defer GGUF export.
 
 ## Launch Copy

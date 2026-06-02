@@ -154,7 +154,7 @@ Purpose:
 
 Files:
 
-- Add `src/opendistillation/evaluate.py` if helper code is needed.
+- Add `src/opendistillation/comparison.py` if helper code is needed.
 - Update `notebooks/opendistillation_v0_demo.ipynb`.
 
 Tasks:
@@ -169,6 +169,8 @@ Acceptance criteria:
 - The notebook shows a concrete before/after answer.
 - The comparison uses the user's uploaded notes.
 - The output does not claim broad benchmark improvement.
+
+Status: implemented as an optional `BeforeAfterComparisonEngine` using Transformers generation and PEFT adapter loading. Local tests cover request construction, dependency handling, missing adapter handling, and fake base-vs-adapter generation without model downloads. The notebook default remains CPU-runnable with comparison skipped. A real Colab GPU before/after output still requires smoke testing.
 
 ## Milestone 6: Export And Local Run Path
 

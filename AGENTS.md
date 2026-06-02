@@ -22,9 +22,9 @@ Do not turn this into a broad research framework or multi-profile platform befor
 
 The project has a Colab-first prototype skeleton.
 
-It can load and chunk TXT/MD notes, validate a JSONL dataset schema, generate deterministic mock QA examples, and prepare an optional short TRL/PEFT LoRA training run. It does not have real teacher-model calls, a verified Colab GPU training run, export, before/after comparison, or multiple model profiles yet.
+It can load and chunk TXT/MD notes, validate a JSONL dataset schema, generate deterministic mock QA examples, prepare an optional short TRL/PEFT LoRA training run, and prepare an optional before/after comparison. It does not have real teacher-model calls, a verified Colab GPU training/comparison run, export, or multiple model profiles yet.
 
-The next major milestones are one real teacher-generation path for the notes model and a Colab GPU smoke test for the optional training cell, not a Mac app, SaaS, phone app, or full training platform.
+The next major milestones are one real teacher-generation path for the notes model and a Colab GPU smoke test for the optional training/comparison cells, not a Mac app, SaaS, phone app, or full training platform.
 
 ## Product Defaults
 
@@ -81,4 +81,4 @@ The next useful work is:
 2. Keep v0 scoped to the notes / school model.
 3. Choose one real teacher-generation path for TXT/MD notes.
 4. Keep the deterministic mock teacher as a safe fallback.
-5. Smoke-test the existing Qwen2.5-0.5B TRL/PEFT training path in Colab before adding new model profiles.
+5. Smoke-test the existing Qwen2.5-0.5B TRL/PEFT training and comparison path in Colab before adding new model profiles.

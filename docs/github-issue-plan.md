@@ -169,6 +169,8 @@ Acceptance criteria:
 - Both answers are shown side by side.
 - The comparison is labeled as a sanity check, not a benchmark.
 
+Status: implemented locally as an optional notebook section using the first generated dataset question. Remaining work is a Colab GPU smoke test with a real adapter.
+
 ### 11. Verify GGUF or local-run export path
 
 Labels: `prototype`, `research`

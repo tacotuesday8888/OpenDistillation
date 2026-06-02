@@ -13,7 +13,7 @@ The first journey is a notes / school model only:
 3. Generate question-answer examples with a safe teacher path.
 4. Save and preview the dataset.
 5. Prepare or run a small student fine-tune through one efficient backend.
-6. Show a simple before/after result later.
+6. Show a simple before/after result when optional training has produced an adapter.
 7. Export or document the path to local running later.
 
 ## Engineering Principles

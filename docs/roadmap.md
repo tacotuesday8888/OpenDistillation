@@ -78,7 +78,7 @@ Deliverables:
 - One recommended student model: `Qwen/Qwen2.5-0.5B-Instruct`.
 - One efficient supervised fine-tuning path: TRL `SFTTrainer` with PEFT LoRA.
 - Small default training run, skipped unless the notebook user opts in.
-- Before/after prompt comparison.
+- Before/after prompt comparison, skipped unless training creates an adapter.
 - Clear warnings about runtime, GPU, and quality limits.
 
 Exit criteria:
@@ -86,7 +86,7 @@ Exit criteria:
 - The notebook demonstrates a visible behavior change on the sample notes.
 - The run stays small enough for a beginner Colab demo.
 
-Current status: the bounded training engine and notebook entry point exist, and local tests cover configuration and dataset formatting. The actual Colab GPU run and before/after comparison are not verified yet.
+Current status: the bounded training engine, comparison engine, and notebook entry points exist. Local tests cover configuration, dataset formatting, comparison request behavior, and fake base-vs-adapter generation. The actual Colab GPU training run and real before/after output are not verified yet.
 
 ## Phase 4: Local Notes-Model Run Path
 

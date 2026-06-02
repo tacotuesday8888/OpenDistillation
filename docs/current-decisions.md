@@ -24,6 +24,7 @@ This file records decisions that should not be reopened without a concrete reaso
 - The first training backend is Hugging Face TRL `SFTTrainer` with PEFT LoRA adapters.
 - The first training path is optional in the notebook and defaults to skipped. It should run only after the user opts into a Colab GPU runtime.
 - The first training path does not use Unsloth or bitsandbytes by default. Those are future optimizations after the plain TRL/PEFT path is smoke-tested.
+- The first before/after comparison uses the first generated dataset question, Hugging Face Transformers chat generation, and PEFT `PeftModel.from_pretrained()` to load the trained LoRA adapter.
 
 ## Not Decided Yet
 
@@ -46,7 +47,7 @@ Use this notes-model v0 flow as the default implementation plan:
 7. The dataset is previewed, saved, and downloadable.
 8. Optional training prepares `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
 9. A short supervised fine-tuning run starts only when the user sets `RUN_TRAINING = True` in a Colab GPU runtime.
-10. The notebook compares base-model and trained-model answers.
+10. The notebook compares the base-model answer and trained-adapter answer for one generated question.
 11. The notebook saves the output.
 12. The notebook exports to GGUF or shows the exact export command and limitation.
 13. The user gets local run instructions.
@@ -60,6 +61,7 @@ Verified locally in this repository:
 - Dataset validation and JSONL serialization.
 - Mock teacher generation.
 - Training configuration, request construction, and TRL/PEFT dataset formatting tests.
+- Before/after comparison request construction, adapter-path validation, dependency handling, and fake base-vs-adapter generation tests.
 - Notebook JSON parsing and the default CPU path where training remains skipped.
 
 Requires a Colab GPU smoke test:
@@ -67,13 +69,16 @@ Requires a Colab GPU smoke test:
 - Downloading `Qwen/Qwen2.5-0.5B-Instruct`.
 - Installing the optional Hugging Face training packages.
 - Running `SFTLoRATrainingEngine.train()`.
-- Confirming adapter quality, runtime, and memory use.
+- Running the before/after comparison against the real base model and adapter.
+- Confirming adapter quality, comparison output, runtime, and memory use.
 
 Why this path:
 
 - Qwen's model card lists `Qwen/Qwen2.5-0.5B-Instruct` as a 0.5B-parameter instruction model supported by current Hugging Face Transformers.
 - TRL documents `SFTTrainer` for supervised fine-tuning and prompt/completion datasets.
 - TRL documents direct PEFT adapter training through `peft_config=LoraConfig()`.
+- PEFT documents loading saved adapters with `PeftModel.from_pretrained()` for inference.
+- Transformers documents chat generation with `apply_chat_template()` and `generate()`.
 - PEFT LoRA keeps the trained artifact small.
 - bitsandbytes and Unsloth are useful memory/speed tools, but they introduce more install, quantization, and hardware assumptions than the first beginner path needs.
 
@@ -82,7 +87,9 @@ Sources checked on 2026-06-02:
 - [Qwen/Qwen2.5-0.5B-Instruct model card](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct)
 - [TRL SFTTrainer docs](https://huggingface.co/docs/trl/en/sft_trainer)
 - [PEFT LoRA guide](https://huggingface.co/docs/peft/developer_guides/lora)
+- [PEFT PeftModel docs](https://huggingface.co/docs/peft/package_reference/peft_model)
 - [Transformers Trainer docs](https://huggingface.co/docs/transformers/trainer)
+- [Transformers text generation docs](https://huggingface.co/docs/transformers/llm_tutorial)
 - [Accelerate docs](https://huggingface.co/docs/accelerate/index)
 - [bitsandbytes docs](https://huggingface.co/docs/bitsandbytes/index)
 - [Unsloth fine-tuning guide](https://docs.unsloth.ai/get-started/fine-tuning-llms-guide)
