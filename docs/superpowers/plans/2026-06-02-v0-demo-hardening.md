@@ -234,7 +234,7 @@ git diff --stat
 git diff
 ```
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 Run:
 
