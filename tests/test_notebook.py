@@ -16,6 +16,8 @@ class NotebookSkeletonTests(unittest.TestCase):
         self.assertIn("https://github.com/tacotuesday8888/OpenDistillation.git", sources)
         self.assertIn('"clone", "--depth", "1"', sources)
         self.assertIn("Upload or load a TXT/MD file", sources)
+        self.assertIn("USE_SAMPLE_NOTES = True", sources)
+        self.assertIn("Set `USE_SAMPLE_NOTES = False`", sources)
         self.assertIn("Chunk the document", sources)
         self.assertIn("Generate mock training examples", sources)
         self.assertIn("Optional short student fine-tuning", sources)

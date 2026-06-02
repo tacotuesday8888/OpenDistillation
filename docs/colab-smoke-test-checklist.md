@@ -20,7 +20,7 @@ Use this checklist before marking the optional training and before/after compari
 
 ## Default Notes Flow
 
-- [ ] Use `examples/sample-notes.md` or upload one `.txt` notes file.
+- [ ] Keep `USE_SAMPLE_NOTES = True` for the default smoke test, or set it to `False` only if uploading one `.txt` notes file.
 - [ ] Confirm the notebook prints file name, extension, character count, word count, and preview.
   - Expected sample file output: `File: sample-notes.md`, `Extension: .md`, and a notes preview.
 - [ ] Confirm the chunking cell prints multiple stable chunk IDs.

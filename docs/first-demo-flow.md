@@ -43,14 +43,14 @@ Expected output:
 
 ### Step 3: Upload Or Load A Notes File
 
-The user uploads one `.txt` or `.md` notes file, or uses the sample notes file when running locally.
+The notebook loads `examples/sample-notes.md` by default so a beginner can run the first demo in Colab without a file picker. The user can set `USE_SAMPLE_NOTES = False` to upload one `.txt` or `.md` notes file instead.
 
 Validation rules:
 
 - Reject unsupported extensions.
 - Reject empty files.
 - Show a beginner-readable warning if the file is too short.
-- Keep the uploaded content local to the notebook runtime unless a future teacher path explicitly sends prompts to a remote endpoint.
+- Keep the sample or uploaded content local to the notebook runtime unless a future teacher path explicitly sends prompts to a remote endpoint.
 
 Expected output:
 
