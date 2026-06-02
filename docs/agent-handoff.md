@@ -6,7 +6,7 @@
 
 ## Current State
 
-OpenDistillation is GitHub-ready at the documentation and prototype-skeleton level, with bounded optional training and comparison entry points. It does not have a verified Colab GPU training/comparison run yet.
+OpenDistillation is GitHub-ready at the documentation and prototype-skeleton level, with bounded optional training and comparison entry points. A recovered Colab T4 runtime completed one 1-step training/comparison smoke test, but a clean/fresh GitHub-opened Colab runtime is not verified yet.
 
 The repo now contains:
 
@@ -20,7 +20,7 @@ The repo now contains:
 - Optional before/after comparison engine for one generated question, skipped by default in the notebook.
 - Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
 - Manual Colab GPU smoke-test checklist.
-- Smoke-test results file recording the first real Colab T4 attempt and the dependency blocker found before model download/training.
+- Smoke-test results file recording the first real Colab T4 attempt, two dependency/config blockers, and one recovered-runtime training/comparison pass.
 - First-demo implementation plan.
 - GitHub issue forms.
 - Starter milestone and issue plan.
@@ -45,7 +45,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task should run a small Colab GPU smoke test for the existing optional training and comparison cells. After that, choose and test the first real teacher path for the notes model.
+The next task should run the same small Colab GPU smoke test from a clean/fresh GitHub-opened runtime. After that, choose and test the first real teacher path for the notes model.
 
 ## Important Guardrails
 

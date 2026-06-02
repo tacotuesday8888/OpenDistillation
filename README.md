@@ -47,14 +47,14 @@ What exists now:
 - Runtime checks and plain-language setup messages for the optional Colab GPU path.
 - A first-demo implementation plan.
 - A manual Colab GPU smoke-test checklist.
-- A smoke-test results file that records the first real Colab T4 attempt and the current dependency blocker.
+- A smoke-test results file that records the first real Colab T4 attempt, the dependency blockers found, and a recovered-runtime training/comparison pass.
 - GitHub issue forms and a starter issue plan.
 - Guardrails to avoid committing generated datasets, checkpoints, model weights, or secrets.
 
 What does not exist yet:
 
 - Real teacher-model calls.
-- A verified Colab GPU training and comparison run.
+- A clean/fresh Colab GPU training and comparison run from the GitHub notebook.
 - Multiple personal model profiles.
 - Coding, writing, work, or phone model flows.
 - A CLI.

@@ -155,7 +155,7 @@ Acceptance criteria:
 - Output artifacts stay in ignored runtime paths.
 - Missing GPU and out-of-memory failures are explained plainly.
 
-Status: bounded local engine and notebook entry point exist. Remaining work is a Colab GPU smoke test.
+Status: bounded local engine and notebook entry point exist. A recovered Colab T4 runtime completed one 1-step training run and created an adapter. Remaining work is a clean/fresh Colab GPU smoke test from the GitHub notebook.
 
 ### 10. Add before/after comparison
 
@@ -169,7 +169,7 @@ Acceptance criteria:
 - Both answers are shown side by side.
 - The comparison is labeled as a sanity check, not a benchmark.
 
-Status: implemented locally as an optional notebook section using the first generated dataset question. Remaining work is a Colab GPU smoke test with a real adapter.
+Status: implemented locally as an optional notebook section using the first generated dataset question. A recovered Colab T4 runtime printed one real base-vs-adapter comparison. Remaining work is a clean/fresh Colab GPU smoke test with a real adapter.
 
 ### 11. Run manual Colab GPU smoke test for optional training and comparison
 

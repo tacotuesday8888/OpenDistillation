@@ -73,16 +73,15 @@ Verified locally in this repository:
 - Notebook default install path where `INSTALL_TRAINING_DEPS = False`.
 - Notebook setup structure for the fresh Colab clone fallback.
 - Ignore rules for generated datasets, adapters, checkpoints, model weights, Hugging Face caches, notebook checkpoints, and common trainer artifacts.
+- Recovered Colab T4 run after dependency fixes: model download, 1-step LoRA training, adapter creation, and before/after comparison completed once.
 
-Requires a Colab GPU smoke test:
+Requires a clean/fresh Colab GPU smoke test:
 
-- Downloading `Qwen/Qwen2.5-0.5B-Instruct`.
-- Installing the optional Hugging Face training packages without upgrading Colab's preinstalled GPU `torch`.
-- Confirming the runtime check prints the Colab GPU name.
-- Running `SFTLoRATrainingEngine.train()`.
-- Running the before/after comparison against the real base model and adapter.
-- Confirming adapter quality, comparison output, runtime, and memory use.
-- `docs/colab-smoke-test-results.md` currently records the first real Colab T4 attempt and the dependency blocker found before model download/training.
+- Installing the optional Hugging Face training packages from a clean GitHub-opened notebook without upgrading Colab's preinstalled GPU `torch`.
+- Confirming the runtime check prints the Colab GPU name from that clean runtime.
+- Repeating `SFTLoRATrainingEngine.train()` and the before/after comparison from that clean runtime.
+- Confirming adapter quality, comparison output, runtime, and memory use from the clean runtime.
+- `docs/colab-smoke-test-results.md` currently records the first real Colab T4 attempt, two blockers, and one recovered-runtime pass.
 
 Why this path:
 

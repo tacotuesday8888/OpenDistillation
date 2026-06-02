@@ -4,7 +4,12 @@ Date: 2026-06-02
 
 ## Result
 
-Real Colab GPU training is **not verified yet**.
+Fresh Colab GPU training from a clean runtime is **not verified yet**.
+
+Recovered-runtime Colab GPU training and before/after comparison **did pass** after two fixes were pushed:
+
+- Do not upgrade Colab's preinstalled GPU `torch` package.
+- Do not pass `assistant_only_loss=True` for TRL prompt/completion rows.
 
 A real Colab GPU runtime was reached through Chrome on 2026-06-02, but the optional training path did not reach model download or training. The first run failed during runtime readiness because the broad install command upgraded Colab's preinstalled `torch` package and left `torchvision` mismatched.
 
@@ -80,6 +85,23 @@ Repo change from this evidence:
 - `assistant_only_loss` is no longer passed to TRL `SFTConfig`.
 - Local tests now assert that this argument is absent.
 
+## Recovered Runtime Success
+
+After the `assistant_only_loss` fix was pushed, the same recovered Colab T4 runtime pulled the latest `main` and completed the bounded smoke test:
+
+```text
+Question: What is the main point of chunk-0001?
+Base model answer: I'm sorry, but I cannot answer your question as you have not provided any context or information about what "chunk-0001" refers to.
+Trained adapter answer: The main point of chunk-0001 is that it's an example of a "chunk" in the context of natural language processing (NLP).
+
+Training starts: yes
+Adapter output created: True
+Before/after comparison output: yes
+Runtime seconds: 29.0
+```
+
+The trained answer is not a quality claim. This was a 1-step sanity check showing that model download, LoRA adapter creation, and base-vs-adapter comparison can execute on a T4 runtime after the dependency fixes.
+
 ## Smoke-Test Fields
 
 Fill these in after running `docs/colab-smoke-test-checklist.md` in Colab:
@@ -99,6 +121,23 @@ Exact error messages:
 Docs updated after run:
 ```
 
+Recovered-runtime values from 2026-06-02:
+
+```text
+Colab runtime type: Python 3, T4 GPU
+GPU type: Tesla T4
+Dependency install result: recovered after avoiding torch upgrade and removing mismatched torchvision from the already-modified runtime
+Model download result: completed during recovered-runtime run
+Training starts: yes
+Adapter output created: yes
+Adapter output path: /content/OpenDistillation/outputs/notes-lora-smoke-recovered/adapter
+Before/after comparison output: yes
+Runtime: 29.0 seconds
+Peak memory or memory failure: no memory failure observed in recovered-runtime run
+Exact error messages before fixes: operator torchvision::nms does not exist; assistant_only_loss=True but no assistant tokens
+Docs updated after run: yes
+```
+
 ## Current Expected Outcome
 
 The notebook is expected to:
@@ -111,4 +150,4 @@ The notebook is expected to:
 - Save any adapter output under `outputs/notes-lora/adapter`.
 - Run before/after comparison only after training creates an adapter.
 
-The actual Qwen download, TRL/PEFT training run, adapter output, and before/after comparison remain unverified until a real Colab GPU run records results here.
+The actual Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a recovered Colab T4 runtime. A clean/fresh Colab GPU run from the GitHub notebook still needs to be recorded before the default Colab path is called fully verified.
