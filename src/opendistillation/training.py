@@ -112,7 +112,6 @@ def build_sft_config_kwargs(
         "max_steps": request.max_steps,
         "max_length": selected_config.max_length,
         "completion_only_loss": True,
-        "assistant_only_loss": True,
         "eos_token": selected_config.eos_token,
         "packing": False,
         "logging_strategy": "steps",

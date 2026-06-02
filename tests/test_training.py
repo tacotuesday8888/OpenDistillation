@@ -135,7 +135,7 @@ class TrainingPathTests(unittest.TestCase):
         self.assertEqual(sft_kwargs["max_length"], 512)
         self.assertEqual(sft_kwargs["eos_token"], "<|im_end|>")
         self.assertEqual(sft_kwargs["completion_only_loss"], True)
-        self.assertEqual(sft_kwargs["assistant_only_loss"], True)
+        self.assertNotIn("assistant_only_loss", sft_kwargs)
         self.assertEqual(sft_kwargs["push_to_hub"], False)
         self.assertEqual(sft_kwargs["report_to"], "none")
         self.assertEqual(lora_kwargs["r"], 8)

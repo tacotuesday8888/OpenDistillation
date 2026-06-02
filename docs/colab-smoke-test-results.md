@@ -65,6 +65,21 @@ The notebook and runtime helpers now avoid the failure mode above:
 - Runtime diagnostics now report installed-package import failures separately from truly missing packages.
 - The checklist now calls out the `torchvision::nms` mismatch and the restart/no-torch-upgrade recovery path.
 
+## Recovered Runtime Attempt
+
+After the dependency recovery, the pushed repo was pulled into the same Colab T4 runtime. The runtime check passed far enough to enter TRL dataset preprocessing, but training still did not start because the SFT config requested assistant-token masking for a prompt/completion dataset:
+
+```text
+RuntimeError: You're using `assistant_only_loss=True`, but at least one example has no assistant tokens.
+This usually means the tokenizer's chat template doesn't generate assistant masks.
+```
+
+Repo change from this evidence:
+
+- `build_sft_config_kwargs()` now keeps `completion_only_loss=True` for prompt/completion rows.
+- `assistant_only_loss` is no longer passed to TRL `SFTConfig`.
+- Local tests now assert that this argument is absent.
+
 ## Smoke-Test Fields
 
 Fill these in after running `docs/colab-smoke-test-checklist.md` in Colab:
