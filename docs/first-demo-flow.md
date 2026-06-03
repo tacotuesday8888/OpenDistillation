@@ -169,7 +169,7 @@ Expected output:
 
 ### Manual Colab Smoke Test
 
-The optional training and comparison wiring is verified once with the multi-question report after `docs/colab-smoke-test-checklist.md` evidence was collected in Colab. The first quality result was unchanged: all three trained-adapter answers matched the base-model answers. Follow-up local diagnosis found the comparison path could accidentally compare the adapter-enabled model to itself; the comparison helper now disables the adapter for the base answer and spreads questions across chunks. The demo still needs a second Colab quality smoke before claiming useful note learning.
+The optional training and comparison wiring is verified with two multi-question Colab reports after `docs/colab-smoke-test-checklist.md` evidence was collected. The first quality result was unchanged: all three trained-adapter answers matched the base-model answers. Follow-up local diagnosis found the comparison path could accidentally compare the adapter-enabled model to itself; the comparison helper now disables the adapter for the base answer and spreads questions across chunks. The second Colab quality smoke used that fixed comparison path. All three trained-adapter answers changed, but they were still generic or hallucinated instead of useful note-grounded answers. The demo should not claim useful note learning yet.
 
 The checklist records:
 
@@ -235,8 +235,7 @@ Included now:
 
 Planned later in v0:
 
-- Re-run the bounded Colab quality smoke after the adapter-disabled comparison fix.
-- Teacher output quality hardening after the first unchanged quality evidence.
+- Teacher row, sample-notes, comparison-prompt, or bounded-training hardening after the second smoke showed adapter-visible movement but no useful note learning.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance.
 

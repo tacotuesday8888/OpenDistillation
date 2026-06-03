@@ -125,11 +125,12 @@ Verified once in a clean GitHub-opened Colab T4 runtime:
 - Student model download.
 - The actual `SFTLoRATrainingEngine.train()` call.
 - Adapter output creation, memory use, and runtime.
-- A later 3-step quality smoke from 16 mock-teacher rows created `/content/OpenDistillation-quality-smoke-outputs/notes-lora-quality-smoke/adapter` on a Tesla T4.
+- A 3-step quality smoke from 16 mock-teacher rows created `/content/OpenDistillation-quality-smoke-outputs/notes-lora-quality-smoke/adapter` on a Tesla T4.
+- A second 3-step quality smoke after the adapter-disabled comparison fix created `/content/OpenDistillation-quality-smoke-outputs/notes-lora-adapter-disabled/adapter` on a Colab T4 runtime.
 
 Still unverified:
 
-- Adapter quality beyond an unchanged qualitative wiring check.
+- Adapter quality beyond changed-but-not-improved qualitative smoke checks.
 
 ## Before/After Model Quality Engine
 
@@ -165,16 +166,17 @@ Verified locally:
 - Deterministic reference-overlap scoring.
 - Notebook default path with comparison skipped.
 
-Verified once in a clean GitHub-opened Colab T4 runtime:
+Verified in Colab T4 runtime:
 
 - Real base-model generation.
 - Real PEFT adapter loading.
 - Real trained-adapter generation.
 - The multi-question report with three generated dataset questions.
+- The adapter-disabled base-answer path after the comparison fix.
 
 Still unverified:
 
-- Whether the answer changes in a useful way in Colab after the adapter-disabled comparison fix; the first three-question Colab quality smoke produced identical base and trained answers before that fix.
+- Whether the answer changes in a useful way in Colab. The first three-question quality smoke produced identical base and trained answers before the adapter-disabled comparison fix; the second produced changed but still generic or hallucinated trained answers.
 
 ## Future Export Engines
 

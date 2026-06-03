@@ -10,9 +10,9 @@ The optional real-teacher Colab path is **verified once** on 2026-06-03. The ver
 
 The uploaded-notes Colab rehearsal is **verified once** on 2026-06-03 for both one `.txt` file and one `.md` file. Each ran through validation, chunking, mock-teacher rows, dataset save, training skipped, and comparison skipped with status-log evidence.
 
-The first quality-loop update is **verified locally and once in Colab T4** on 2026-06-03. The default sample-notes path produced varied mock-teacher rows and a deterministic dataset quality report. The Colab GPU quality smoke run trained a 3-step LoRA adapter and ran the new three-question model-quality report, but the trained-adapter answers were identical to the base-model answers, so the recorded quality result is **unchanged / no visible improvement**.
+The first quality-loop update is **verified locally and twice in Colab T4** on 2026-06-03. The default sample-notes path produced varied mock-teacher rows and a deterministic dataset quality report. The first Colab GPU quality smoke run trained a 3-step LoRA adapter and ran the new three-question model-quality report, but the trained-adapter answers were identical to the base-model answers, so that recorded quality result was **unchanged / no visible improvement**.
 
-Follow-up local diagnosis on 2026-06-03 found a comparison bug: the PEFT adapter was loaded before base-answer generation, and PEFT documents that the passed base model may be modified in place. That means the first quality smoke may have compared the adapter-enabled model to itself. The local comparison helper now generates base answers inside PEFT's `disable_adapter()` context and chooses questions from distinct source chunks first. A second Colab T4 quality smoke is needed before claiming whether answers improved, stayed unchanged, or became worse after this fix.
+Follow-up local diagnosis on 2026-06-03 found a comparison bug: the PEFT adapter was loaded before base-answer generation, and PEFT documents that the passed base model may be modified in place. That means the first quality smoke may have compared the adapter-enabled model to itself. The local comparison helper now generates base answers inside PEFT's `disable_adapter()` context and chooses questions from distinct source chunks first. The second Colab T4 quality smoke ran after that fix. All three trained-adapter answers changed, so the fixed comparison path can now see adapter-side movement. The answer quality was **not improved / worse overall** because the trained answers were still generic or hallucinated.
 
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
@@ -23,6 +23,141 @@ The clean run passed after three fixes were pushed:
 - Load `examples/sample-notes.md` by default in Colab so the first smoke path does not block on a file picker.
 
 The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
+
+## Colab GPU Quality Smoke: Adapter-Disabled Comparison Follow-Up
+
+Date: 2026-06-03
+
+Verified path:
+
+```text
+sample-notes.md -> mock-local-teacher rows -> deterministic dataset quality report -> 3-step Qwen2.5-0.5B LoRA adapter -> adapter-disabled 3-question before/after report
+```
+
+Runtime and repo state:
+
+```text
+Notebook URL: https://colab.research.google.com/github/tacotuesday8888/OpenDistillation/blob/main/notebooks/opendistillation_v0_demo.ipynb
+Git commit used by Colab clone: 6a98c92599d1defa2b4a61510f7372f399f5fd87
+Runtime: Colab T4 GPU
+torch: 2.11.0+cu128
+transformers: 4.57.6
+datasets: 4.8.5
+trl: 0.29.1
+peft: 0.18.1
+accelerate: 1.13.0
+```
+
+Live-only settings:
+
+```text
+INSTALL_TRAINING_DEPS = True
+USE_SAMPLE_NOTES = True
+RUN_REAL_TEACHER = False
+RUN_TRAINING = True
+training max_steps = 3
+comparison max_examples = 3
+```
+
+Dataset quality evidence:
+
+```text
+Input file: sample-notes.md
+Characters: 941
+Approx. words: 152
+Chunks: 4
+Teacher engine: mock-local-teacher
+Generated examples: 16
+Rows: 16 total, 16 schema-valid
+Chunk coverage: 4/4
+Duplicate questions: 0
+Near-duplicate questions: 0
+Very short answers: 0
+Very long answers: 0
+Issues: 0
+```
+
+Training evidence:
+
+```text
+Training ran: true
+Student model: Qwen/Qwen2.5-0.5B-Instruct
+Training engine: trl-sfttrainer-peft-lora
+Max steps: 3
+Adapter path: /content/OpenDistillation-quality-smoke-outputs/notes-lora-adapter-disabled/adapter
+Adapter exists: true
+Adapter files: README.md, adapter_config.json, adapter_model.safetensors, added_tokens.json, chat_template.jinja, merges.txt, special_tokens_map.json, tokenizer.json, tokenizer_config.json, training_args.bin, vocab.json
+Training elapsed runtime: 23.9 seconds
+```
+
+Comparison evidence:
+
+```text
+Comparison ran: true
+Comparison engine: transformers-peft-before-after
+Comparison questions: 3
+Question source chunks: chunk-0001, chunk-0002, chunk-0003
+Base/trained answer result: changed
+Reference-overlap deltas: +0.031, +0.027, -0.026
+Overlap signal: changed_mixed_overlap
+Comparison elapsed runtime: 18.5 seconds
+Quality judgment: not improved / worse overall. The adapter changed every answer, but the changes were not useful note-grounded improvements.
+```
+
+Questions and answers:
+
+```text
+1. Factual recall: what detail from chunk-0001 should be remembered?
+Base answer:
+To provide you with the most accurate and relevant answer, I would need to know which specific chunk of text or information you are referring to. Could you please specify which chunk you want me to remember?
+Trained adapter answer:
+The first sentence of the text is "I am a large language model trained by Alibaba Cloud."
+Overlap: base 0.121, trained 0.152, delta +0.031
+
+2. Factual recall: what detail from chunk-0002 should be remembered?
+Base answer:
+To provide you with the most accurate and relevant answer, I would need to know which specific chunk of text or information you are referring to. Could you please specify which chunk-0002 is being referred to? This will help me determine the necessary details to remember for your recall task.
+Trained adapter answer:
+The details that should be remembered from chunk-0002 include the following:
+1. The name of the person who wrote this text.
+2. The title or subject of the text.
+3. The date and time when the text was written.
+These three pieces of information will help you remember the key details about the text.
+Overlap: base 0.167, trained 0.194, delta +0.027
+
+3. Factual recall: what detail from chunk-0003 should be remembered?
+Base answer:
+To provide you with the most accurate and relevant answer, I would need to know which specific chunk of text or information you are referring to. Could you please specify which chunk-0003 is being referred to? This will help me determine the necessary details to remember for your recall task.
+Trained adapter answer:
+The details that should be remembered from chunk-0003 include the following:
+1. The name of the entity: "China"
+2. The country: "People's Republic of China"
+3. The capital city: Beijing
+4. The official language: Mandarin Chinese
+5. The largest city: Shanghai
+6. The population: Approximately 1.4 billion people (as of 2021)
+7. The economic status: A major global economy
+Overlap: base 0.077, trained 0.051, delta -0.026
+```
+
+Interpretation:
+
+- The original identical-answer result is explained by a real comparison-path bug, not only by short training.
+- The fixed comparison now proves adapter-visible movement because all three trained answers differ from the base answers.
+- The movement is not useful yet. The first trained answer talks about Alibaba Cloud, the second gives generic metadata to remember, and the third hallucinates China facts.
+- The next notes-only quality work should improve the generated teacher targets, reference questions, sample facts, or bounded training settings before any export/local-runtime work.
+
+Status evidence recovered from the live Colab output and `/tmp/opendistillation_second_quality_smoke.json`:
+
+```text
+OD_SECOND_SMOKE {"run_label": "second-quality-smoke-adapter-disabled", "stage": "setup", "status": "started"}
+OD_SECOND_SMOKE {"commit": "6a98c92599d1defa2b4a61510f7372f399f5fd87", "stage": "repo", "status": "ready", "workdir": "/content/OpenDistillation-quality-smoke-6a98c92"}
+OD_SECOND_SMOKE {"command": "python -m pip install -U 'transformers<5' datasets 'trl<1' 'peft<0.19' accelerate", "packages": ["transformers<5", "datasets", "trl<1", "peft<0.19", "accelerate"], "stage": "install", "status": "started"}
+OD_SECOND_SMOKE {"adapter_exists": true, "adapter_files": ["README.md", "adapter_config.json", "adapter_model.safetensors", "added_tokens.json", "chat_template.jinja", "merges.txt", "special_tokens_map.json", "tokenizer.json", "tokenizer_config.json", "training_args.bin", "vocab.json"], "adapter_path": "/content/OpenDistillation-quality-smoke-outputs/notes-lora-adapter-disabled/adapter", "elapsed_seconds": 23.9, "stage": "training", "status": "succeeded"}
+OD_SECOND_SMOKE {"answer_result": "changed", "elapsed_seconds": 18.5, "overlap_signal": "changed_mixed_overlap", "question_count": 3, "stage": "comparison", "status": "succeeded"}
+```
+
+Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
 ## Colab GPU Quality Smoke: Multi-Question Report
 
@@ -188,7 +323,7 @@ OD_STATUS stage=comparison status=skipped ... "reason": "training_result_is_none
 
 What remains unverified:
 
-- Whether the trained adapter answers can improve in a useful, note-grounded way after the first unchanged quality smoke.
+- Whether the trained adapter answers can improve in a useful, note-grounded way after the second smoke showed changed but not improved answers.
 - Real-teacher output quality beyond the earlier tiny 1-row smoke test.
 
 ## Real Teacher End-to-End Success
