@@ -39,12 +39,12 @@ What exists now:
 
 - Public positioning and project docs.
 - A scoped v0 notes-model Colab flow.
-- A runnable prototype notebook for TXT/MD loading, chunking, dataset validation, mock QA generation, and opt-in real teacher generation.
+- A runnable prototype notebook for TXT/MD loading, chunking, dataset validation, dataset quality reporting, mock QA generation, and opt-in real teacher generation.
 - Minimal Python helpers under `src/opendistillation/`.
 - Helper interfaces for teacher, training, comparison, and future export engines.
 - An optional local open-source teacher engine using `Qwen/Qwen2.5-1.5B-Instruct` through Hugging Face Transformers.
 - A bounded optional training engine using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA.
-- A before/after comparison helper that can compare one base-model answer with one trained-adapter answer after opt-in training.
+- A before/after comparison helper that can compare up to three base-model answers with trained-adapter answers after opt-in training.
 - Runtime checks and plain-language setup messages for optional Hugging Face, CUDA, teacher, training, and comparison failures.
 - Notebook `OD_STATUS` markers and a runtime status log so Colab output-frame failures do not erase the state of long optional cells.
 - A first-demo implementation plan.
@@ -55,7 +55,7 @@ What exists now:
 
 What does not exist yet:
 
-- Meaningful model-quality evidence beyond tiny smoke tests.
+- A recorded Colab GPU quality smoke test for the new multi-question quality report.
 - Multiple personal model profiles.
 - Coding, writing, work, or phone model flows.
 - A CLI.
@@ -78,7 +78,8 @@ Current prototype constraints:
 - **Teacher:** deterministic local mock teacher by default; optional local `Qwen/Qwen2.5-1.5B-Instruct` teacher after `RUN_REAL_TEACHER = True`.
 - **Dataset:** JSONL rows with `instruction`, `response`, and `source_chunk_id`.
 - **Training:** optional short TRL/PEFT LoRA entry point; skipped by default and verified once in a clean GitHub-opened Colab T4 runtime.
-- **Comparison:** optional base-vs-adapter answer comparison after training; skipped by default and verified once with mock-teacher rows and once after real-teacher row generation.
+- **Quality:** deterministic dataset checks for row count, chunk coverage, duplicate questions, answer length, missing fields, and source chunk IDs.
+- **Comparison:** optional bounded base-vs-adapter quality report after training; skipped by default and verified locally with fake model dependencies. The older one-question comparison path was verified once in Colab with mock-teacher rows and once after real-teacher row generation.
 - **Export:** placeholder only; no GGUF or local runtime output yet.
 
 Remaining v0 constraints after the current prototype:
@@ -109,9 +110,9 @@ The planned notes-model notebook flow is specified in [`docs/first-demo-flow.md`
 3. Preview and validate the text.
 4. Split it into short chunks.
 5. Generate question-answer examples with the mock teacher, or opt into the local Qwen teacher.
-6. Preview and save the JSONL dataset in the notebook runtime.
+6. Preview, quality-check, and save the JSONL dataset in the notebook runtime.
 7. Show an optional short training plan that stays skipped by default.
-8. If training runs, compare one base-model answer with one trained-adapter answer.
+8. If training runs, compare up to three base-model answers with trained-adapter answers.
 9. Show clear placeholders for export and local running.
 
 The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers and creates `/tmp/opendistillation_status.jsonl` for recoverable status markers. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke tests for mock-teacher training/comparison and real-teacher end-to-end wiring are recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md). That file also records the first uploaded-notes rehearsal: both `.txt` and `.md` upload paths passed through validation, chunking, mock teacher, dataset save, training skipped, and comparison skipped.
@@ -157,9 +158,9 @@ The current prototype covers the safe first slice of the notes / school model:
 5. Validate and serialize the JSONL dataset.
 6. Optionally generate real QA rows with the local Qwen teacher.
 7. Prepare a short optional LoRA fine-tuning request from those rows.
-8. Prepare an optional before/after comparison from the first generated question.
+8. Prepare an optional bounded before/after quality report from up to three generated questions.
 
-The next implementation work is to turn the verified notebook into the first public demo release candidate and plan the narrow GGUF/local-runtime handoff. Do that as scoped docs, issues, and a small prototype plan first; do not broaden beyond the notes model or build export before the demo flow is stable.
+The next implementation work is to run and document one Colab GPU quality smoke test for the new report shape, then decide whether teacher prompt/data quality needs another small tightening pass before the first public demo release candidate. Do not broaden beyond the notes model or build export before the demo flow is stable.
 
 Future personal model types should reuse the same broad workflow, but they should not be implemented until the notes model path works.
 

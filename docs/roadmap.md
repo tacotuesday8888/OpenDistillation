@@ -59,15 +59,15 @@ Deliverables:
 - Clear local-versus-remote labeling.
 - TXT/MD loader and chunker reused from the prototype.
 - JSONL dataset schema.
-- Dataset preview and download step.
+- Dataset preview, quality report, and download step.
 
 Exit criteria:
 
 - A sample notes file creates a valid dataset.
-- The user can inspect examples before training.
+- The user can inspect examples and dataset quality before training.
 - The mock teacher remains available as a safe deterministic fallback.
 
-Current status: implemented as an opt-in `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`, with `RUN_REAL_TEACHER = False` keeping the default notebook path safe. Local tests cover request construction, JSONL parsing, schema validation, dependency failures, model-load failures, generation/CUDA-memory failures, and invalid-output failures without downloading a model. A Colab T4 smoke test passed once with one sample-note chunk, one valid generated QA row, a 1-step LoRA adapter, and before/after comparison; broader teacher-output quality remains unproven.
+Current status: implemented as an opt-in `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`, with `RUN_REAL_TEACHER = False` keeping the default notebook path safe. Local tests cover request construction, JSONL parsing, schema validation, dataset quality reporting, dependency failures, model-load failures, generation/CUDA-memory failures, and invalid-output failures without downloading a model. A Colab T4 smoke test passed once with one sample-note chunk, one valid generated QA row, a 1-step LoRA adapter, and before/after comparison; broader teacher-output quality remains unproven.
 
 ## Phase 3: Short Notes-Model Training Path
 
@@ -80,7 +80,7 @@ Deliverables:
 - One recommended student model: `Qwen/Qwen2.5-0.5B-Instruct`.
 - One efficient supervised fine-tuning path: TRL `SFTTrainer` with PEFT LoRA.
 - Small default training run, skipped unless the notebook user opts in.
-- Before/after prompt comparison, skipped unless training creates an adapter.
+- Bounded before/after quality report, skipped unless training creates an adapter.
 - Clear warnings about runtime, GPU, and quality limits.
 - Manual Colab GPU smoke-test checklist.
 
@@ -89,7 +89,7 @@ Exit criteria:
 - The notebook demonstrates a visible behavior change on the sample notes.
 - The run stays small enough for a beginner Colab demo.
 
-Current status: the bounded training engine, comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, and fake base-vs-adapter generation. A clean GitHub-opened Colab T4 runtime completed the optional dependency install, sample-notes flow, mock-generated dataset, LoRA adapter training, and real before/after output once. The output is a qualitative wiring check, not a benchmark.
+Current status: the bounded training engine, multi-question comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, reference-overlap scoring, and fake base-vs-adapter generation. A clean GitHub-opened Colab T4 runtime completed the optional dependency install, sample-notes flow, mock-generated dataset, LoRA adapter training, and real before/after output once before the multi-question report existed. The new report shape needs a fresh Colab quality smoke run. The output is a qualitative wiring check, not a benchmark.
 
 ## Phase 4: Local Notes-Model Run Path
 

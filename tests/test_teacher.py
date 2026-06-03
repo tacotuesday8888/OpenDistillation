@@ -60,6 +60,11 @@ class MockTeacherTests(unittest.TestCase):
         self.assertIn("response", prompt)
         self.assertIn("source_chunk_id", prompt)
         self.assertIn("2 question-answer pairs", prompt)
+        self.assertIn("factual recall", prompt)
+        self.assertIn("explanation", prompt)
+        self.assertIn("flashcard", prompt)
+        self.assertIn("misconception-check", prompt)
+        self.assertIn("Do not invent facts outside the source chunk", prompt)
 
     def test_generate_mock_qa_pairs_is_deterministic_and_valid(self):
         chunks = [
@@ -86,6 +91,36 @@ class MockTeacherTests(unittest.TestCase):
         self.assertEqual(len(first), 4)
         self.assertEqual({row["source_chunk_id"] for row in first}, {"chunk-0001", "chunk-0002"})
         validate_dataset(first)
+
+    def test_teacher_request_default_uses_quality_loop_example_count(self):
+        request = TeacherRequest(chunks=[_teacher_chunk()])
+
+        self.assertEqual(request.examples_per_chunk, 4)
+
+    def test_teacher_prompt_default_uses_quality_loop_example_count(self):
+        prompt = build_teacher_prompt(_teacher_chunk())
+
+        self.assertIn("4 question-answer pairs", prompt)
+
+    def test_mock_teacher_generates_varied_quality_loop_question_styles(self):
+        chunk = TextChunk(
+            id="chunk-0001",
+            index=0,
+            text="Mitochondria release usable energy from food during cellular respiration.",
+            char_count=76,
+            word_count=9,
+        )
+
+        rows = generate_mock_qa_pairs([chunk], examples_per_chunk=4)
+
+        instructions = [row["instruction"].lower() for row in rows]
+        self.assertEqual(len(rows), 4)
+        self.assertIn("factual recall", instructions[0])
+        self.assertIn("explain", instructions[1])
+        self.assertIn("flashcard", instructions[2])
+        self.assertIn("misconception", instructions[3])
+        self.assertTrue(all(row["source_chunk_id"] == "chunk-0001" for row in rows))
+        validate_dataset(rows)
 
     def test_mock_teacher_engine_exposes_future_engine_interface_metadata(self):
         chunk = TextChunk(

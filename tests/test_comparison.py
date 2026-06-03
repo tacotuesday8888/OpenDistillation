@@ -139,6 +139,47 @@ class ComparisonPathTests(unittest.TestCase):
         self.assertEqual(request.adapter_path, Path("outputs/notes-lora/adapter"))
         self.assertEqual(request.max_new_tokens, 24)
 
+    def test_build_comparison_request_selects_bounded_question_set(self):
+        rows = [
+            {
+                "instruction": f"Question {index}",
+                "response": f"Reference answer {index} from the notes.",
+                "source_chunk_id": f"chunk-000{index}",
+            }
+            for index in range(1, 5)
+        ]
+        training_result = TrainingResult(
+            engine_name="trl-sfttrainer-peft-lora",
+            output_path=Path("outputs/notes-lora/adapter"),
+            created_model_artifact=True,
+        )
+
+        request = build_comparison_request(rows, training_result, max_examples=3)
+
+        self.assertEqual(len(request.examples), 3)
+        self.assertEqual([example.question for example in request.examples], ["Question 1", "Question 2", "Question 3"])
+        self.assertEqual(request.question, "Question 1")
+
+    def test_build_comparison_request_rejects_non_positive_example_limit(self):
+        training_result = TrainingResult(
+            engine_name="trl-sfttrainer-peft-lora",
+            output_path=Path("outputs/notes-lora/adapter"),
+            created_model_artifact=True,
+        )
+
+        with self.assertRaisesRegex(ComparisonConfigurationError, "max_examples must be at least 1"):
+            build_comparison_request(
+                [
+                    {
+                        "instruction": "Question",
+                        "response": "Answer",
+                        "source_chunk_id": "chunk-0001",
+                    }
+                ],
+                training_result,
+                max_examples=0,
+            )
+
     def test_build_comparison_request_rejects_invalid_dataset_rows(self):
         training_result = TrainingResult(
             engine_name="trl-sfttrainer-peft-lora",
@@ -326,6 +367,58 @@ class ComparisonPathTests(unittest.TestCase):
         self.assertEqual(FakeTokenizerFactory.tokenizer.messages[0]["content"], "Question from generated data")
         self.assertEqual(FakeAutoModelFactory.calls[-1][0], DEFAULT_STUDENT_MODEL)
         self.assertEqual(FakePeftModelFactory.calls[-1][1], str(adapter_path))
+
+    def test_compare_generates_bounded_multi_question_quality_items(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            adapter_path = Path(tmpdir) / "adapter"
+            adapter_path.mkdir()
+            request = build_comparison_request(
+                [
+                    {
+                        "instruction": "Question one",
+                        "response": "Reference answer one from the notes.",
+                        "source_chunk_id": "chunk-0001",
+                    },
+                    {
+                        "instruction": "Question two",
+                        "response": "Reference answer two from the notes.",
+                        "source_chunk_id": "chunk-0002",
+                    },
+                ],
+                TrainingResult(
+                    engine_name="trl-sfttrainer-peft-lora",
+                    output_path=adapter_path,
+                    created_model_artifact=True,
+                ),
+                max_examples=2,
+            )
+
+            def fake_import(module_name):
+                if module_name == "torch":
+                    return FakeTorch
+                if module_name == "transformers":
+                    return FakeModule(
+                        AutoModelForCausalLM=FakeAutoModelFactory,
+                        AutoTokenizer=FakeTokenizerFactory,
+                    )
+                if module_name == "peft":
+                    return FakeModule(PeftModel=FakePeftModelFactory)
+                if module_name == "accelerate":
+                    return FakeModule()
+                raise ModuleNotFoundError(name=module_name)
+
+            with patch("opendistillation.comparison.import_module", side_effect=fake_import):
+                result = BeforeAfterComparisonEngine().compare(request)
+
+        self.assertEqual(len(result.items), 2)
+        self.assertEqual([item.question for item in result.items], ["Question one", "Question two"])
+        self.assertEqual(result.items[0].base_answer, "base answer")
+        self.assertEqual(result.items[0].trained_answer, "trained answer")
+        self.assertIsInstance(result.items[0].base_reference_overlap, float)
+        self.assertIsInstance(result.items[0].trained_reference_overlap, float)
+        self.assertGreaterEqual(result.items[0].base_reference_overlap, 0.0)
+        self.assertLessEqual(result.items[0].base_reference_overlap, 1.0)
+        self.assertEqual(result.question, "Question one")
 
 
 if __name__ == "__main__":

@@ -24,12 +24,20 @@ from .teacher import (
     parse_teacher_jsonl_output,
 )
 from .text import LoadedTextDocument, TextChunk, TextValidationError, chunk_text, load_text_document
+from .quality import (
+    DatasetQualityIssue,
+    DatasetQualityReport,
+    analyze_dataset_quality,
+    format_dataset_quality_report,
+)
 from .comparison import (
     BeforeAfterComparisonEngine,
+    BeforeAfterComparisonItem,
     BeforeAfterComparisonRequest,
     BeforeAfterComparisonResult,
     ComparisonConfigurationError,
     ComparisonDependencyError,
+    ComparisonExample,
     build_comparison_request,
 )
 from .runtime import (
@@ -54,13 +62,17 @@ from .training import (
 
 __all__ = [
     "DatasetValidationError",
+    "DatasetQualityIssue",
+    "DatasetQualityReport",
     "DEFAULT_STUDENT_MODEL",
     "DEFAULT_REAL_TEACHER_MODEL",
     "BeforeAfterComparisonEngine",
+    "BeforeAfterComparisonItem",
     "BeforeAfterComparisonRequest",
     "BeforeAfterComparisonResult",
     "ComparisonConfigurationError",
     "ComparisonDependencyError",
+    "ComparisonExample",
     "OPTIONAL_COMPARISON_PACKAGES",
     "OPTIONAL_TRAINING_INSTALL_PACKAGES",
     "OPTIONAL_TRAINING_PACKAGES",
@@ -94,9 +106,11 @@ __all__ = [
     "build_training_request",
     "check_training_runtime",
     "chunk_text",
+    "analyze_dataset_quality",
     "explain_teacher_failure",
     "explain_runtime_failure",
     "format_sft_rows",
+    "format_dataset_quality_report",
     "format_runtime_check",
     "generate_mock_qa_pairs",
     "load_text_document",

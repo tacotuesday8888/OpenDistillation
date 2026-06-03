@@ -16,6 +16,21 @@ Each line is one JSON object:
 
 The helper code validates that all three fields exist and are non-empty strings. Extra fields are not kept in the public v0 schema.
 
+## Dataset Quality Checks
+
+Schema validation only proves that rows have the right shape. The notebook now also runs deterministic quality checks that do not download models or call any API:
+
+- Row count.
+- Number of schema-valid rows.
+- Source chunk coverage.
+- Missing or unexpected `source_chunk_id` values.
+- Duplicate questions.
+- Near-duplicate questions within the same source chunk.
+- Very short or very long answers.
+- Missing required fields.
+
+These checks are dataset-quality signals, not model-quality signals. They help a beginner decide whether the generated rows are worth training on before spending GPU time.
+
 ## Current Generators
 
 The notebook uses `MockTeacherEngine`, a deterministic local generator, by default. It is the safe path for local and CPU runs.
@@ -34,6 +49,6 @@ The notebook also includes an opt-in real teacher path:
 - Switch: `RUN_REAL_TEACHER = True`.
 - Data behavior: model weights download from Hugging Face; notes text is not sent to a paid or proprietary remote API.
 
-Both generators must return validated rows with `instruction`, `response`, and `source_chunk_id`. The real teacher parser rejects invalid JSONL, missing fields, empty fields, and rows with the wrong `source_chunk_id`.
+Both generators must return validated rows with `instruction`, `response`, and `source_chunk_id`. The current prompt/templates ask for varied study rows: factual recall, explanation, flashcard, and misconception-check questions. The real teacher parser rejects invalid JSONL, missing fields, empty fields, and rows with the wrong `source_chunk_id`.
 
 Any future remote teacher path must clearly say when uploaded notes leave the notebook runtime.

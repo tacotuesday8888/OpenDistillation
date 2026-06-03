@@ -31,28 +31,80 @@ class ComparisonConfigurationError(ValueError):
 
 
 @dataclass(frozen=True)
-class BeforeAfterComparisonRequest:
-    """Input for comparing base-model and adapter-model answers."""
+class ComparisonExample:
+    """One generated dataset example selected for model comparison."""
 
     question: str
     reference_response: str
     source_chunk_id: str
+
+
+@dataclass(frozen=True)
+class BeforeAfterComparisonRequest:
+    """Input for comparing base-model and adapter-model answers."""
+
+    examples: tuple[ComparisonExample, ...]
     student_model: str
     adapter_path: Path
     max_new_tokens: int = 96
 
+    @property
+    def question(self) -> str:
+        return self.examples[0].question
+
+    @property
+    def reference_response(self) -> str:
+        return self.examples[0].reference_response
+
+    @property
+    def source_chunk_id(self) -> str:
+        return self.examples[0].source_chunk_id
+
 
 @dataclass(frozen=True)
-class BeforeAfterComparisonResult:
-    """Output from a simple base-versus-adapter comparison."""
+class BeforeAfterComparisonItem:
+    """One before/after answer pair with simple quality signals."""
 
     question: str
     reference_response: str
     base_answer: str
     trained_answer: str
-    adapter_path: Path
     source_chunk_id: str
+    base_reference_overlap: float
+    trained_reference_overlap: float
+
+    @property
+    def overlap_delta(self) -> float:
+        return self.trained_reference_overlap - self.base_reference_overlap
+
+
+@dataclass(frozen=True)
+class BeforeAfterComparisonResult:
+    """Output from a bounded base-versus-adapter comparison."""
+
+    items: tuple[BeforeAfterComparisonItem, ...]
+    adapter_path: Path
     notes: list[str] = field(default_factory=list)
+
+    @property
+    def question(self) -> str:
+        return self.items[0].question
+
+    @property
+    def reference_response(self) -> str:
+        return self.items[0].reference_response
+
+    @property
+    def base_answer(self) -> str:
+        return self.items[0].base_answer
+
+    @property
+    def trained_answer(self) -> str:
+        return self.items[0].trained_answer
+
+    @property
+    def source_chunk_id(self) -> str:
+        return self.items[0].source_chunk_id
 
 
 def build_comparison_request(
@@ -61,21 +113,30 @@ def build_comparison_request(
     *,
     config: SFTLoRAConfig | None = None,
     max_new_tokens: int = 96,
+    max_examples: int = 3,
 ) -> BeforeAfterComparisonRequest:
-    """Pick one generated dataset question for a before/after comparison."""
+    """Pick a bounded set of generated dataset questions for comparison."""
 
     if max_new_tokens < 1:
         raise ComparisonConfigurationError("max_new_tokens must be at least 1")
+    if max_examples < 1:
+        raise ComparisonConfigurationError("max_examples must be at least 1")
     if not training_result.created_model_artifact:
         raise ComparisonConfigurationError("comparison requires a training result with a model artifact")
 
     selected_config = config or SFTLoRAConfig()
     validated_rows = validate_dataset(rows)
-    first_row = validated_rows[0]
+    selected_rows = validated_rows[:max_examples]
+    examples = tuple(
+        ComparisonExample(
+            question=row["instruction"],
+            reference_response=row["response"],
+            source_chunk_id=row["source_chunk_id"],
+        )
+        for row in selected_rows
+    )
     return BeforeAfterComparisonRequest(
-        question=first_row["instruction"],
-        reference_response=first_row["response"],
-        source_chunk_id=first_row["source_chunk_id"],
+        examples=examples,
         student_model=selected_config.student_model,
         adapter_path=Path(training_result.output_path),
         max_new_tokens=max_new_tokens,
@@ -96,6 +157,8 @@ class BeforeAfterComparisonEngine:
             "engine": self.name,
             "student_model": request.student_model,
             "question": request.question,
+            "question_count": len(request.examples),
+            "questions": [example.question for example in request.examples],
             "source_chunk_id": request.source_chunk_id,
             "adapter_path": str(request.adapter_path),
             "max_new_tokens": request.max_new_tokens,
@@ -115,34 +178,43 @@ class BeforeAfterComparisonEngine:
 
         base_model = AutoModelForCausalLM.from_pretrained(request.student_model, device_map="auto")
         base_model.eval()
-        base_answer = _generate_chat_answer(
-            base_model,
-            tokenizer,
-            torch_module,
-            request.question,
-            request.max_new_tokens,
-        )
-
         trained_model = PeftModel.from_pretrained(base_model, str(request.adapter_path))
         trained_model.eval()
-        trained_answer = _generate_chat_answer(
-            trained_model,
-            tokenizer,
-            torch_module,
-            request.question,
-            request.max_new_tokens,
-        )
+        items: list[BeforeAfterComparisonItem] = []
+        for example in request.examples:
+            base_answer = _generate_chat_answer(
+                base_model,
+                tokenizer,
+                torch_module,
+                example.question,
+                request.max_new_tokens,
+            )
+            trained_answer = _generate_chat_answer(
+                trained_model,
+                tokenizer,
+                torch_module,
+                example.question,
+                request.max_new_tokens,
+            )
+            items.append(
+                BeforeAfterComparisonItem(
+                    question=example.question,
+                    reference_response=example.reference_response,
+                    base_answer=base_answer,
+                    trained_answer=trained_answer,
+                    source_chunk_id=example.source_chunk_id,
+                    base_reference_overlap=_reference_overlap(example.reference_response, base_answer),
+                    trained_reference_overlap=_reference_overlap(example.reference_response, trained_answer),
+                )
+            )
 
         return BeforeAfterComparisonResult(
-            question=request.question,
-            reference_response=request.reference_response,
-            base_answer=base_answer,
-            trained_answer=trained_answer,
+            items=tuple(items),
             adapter_path=request.adapter_path,
-            source_chunk_id=request.source_chunk_id,
             notes=[
-                "This is a qualitative sanity check, not a benchmark.",
+                "This is a qualitative quality smoke report, not a benchmark.",
                 "The reference answer is generated by the current teacher path.",
+                "Reference-overlap scores are crude lexical signals; read the answers before trusting them.",
             ],
         )
 
@@ -245,12 +317,28 @@ def _generate_chat_answer(
     return decoded[0].strip()
 
 
+def _reference_overlap(reference: str, answer: str) -> float:
+    reference_tokens = set(_tokenize_for_overlap(reference))
+    answer_tokens = set(_tokenize_for_overlap(answer))
+    if not reference_tokens or not answer_tokens:
+        return 0.0
+    return round(len(reference_tokens & answer_tokens) / len(reference_tokens), 3)
+
+
+def _tokenize_for_overlap(text: str) -> list[str]:
+    import re
+
+    return re.findall(r"\b[\w'-]+\b", text.lower())
+
+
 __all__ = [
     "BeforeAfterComparisonEngine",
+    "BeforeAfterComparisonItem",
     "BeforeAfterComparisonRequest",
     "BeforeAfterComparisonResult",
     "COMPARISON_DEPENDENCIES",
     "COMPARISON_ENGINE_NAME",
+    "ComparisonExample",
     "ComparisonConfigurationError",
     "ComparisonDependencyError",
     "build_comparison_request",

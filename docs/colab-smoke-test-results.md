@@ -10,6 +10,8 @@ The optional real-teacher Colab path is **verified once** on 2026-06-03. The ver
 
 The uploaded-notes Colab rehearsal is **verified once** on 2026-06-03 for both one `.txt` file and one `.md` file. Each ran through validation, chunking, mock-teacher rows, dataset save, training skipped, and comparison skipped with status-log evidence.
 
+The first quality-loop update is **verified locally** on 2026-06-03. The default sample-notes path produced varied mock-teacher rows and a deterministic dataset quality report. A fresh Colab GPU quality smoke test for the new multi-question model-quality report has not run yet.
+
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
 The clean run passed after three fixes were pushed:
@@ -19,6 +21,45 @@ The clean run passed after three fixes were pushed:
 - Load `examples/sample-notes.md` by default in Colab so the first smoke path does not block on a file picker.
 
 The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
+
+## Local Quality Loop Verification
+
+Date: 2026-06-03
+
+This is a local default-path verification, not a Colab GPU model-quality run.
+
+```text
+Input file: sample-notes.md
+Chunks: 4
+Teacher engine: mock-local-teacher
+Examples per chunk: 4
+Generated examples: 16
+Dataset quality rows: 16 total, 16 schema-valid
+Chunk coverage: 4/4
+Duplicate questions: 0
+Near-duplicate questions: 0
+Very short answers: 0
+Very long answers: 0
+Training: skipped
+Model quality report: skipped because training did not run
+Export: skipped
+```
+
+Status evidence from the local notebook execution:
+
+```text
+OD_STATUS stage=teacher status=succeeded ... "generated_examples": 16
+OD_STATUS stage=dataset_quality status=reported ... "rows": 16, "valid_rows": 16, "covered_chunks": 4, "expected_chunks": 4, "issues": 0
+OD_STATUS stage=dataset status=saved ... "rows": 16
+OD_STATUS stage=training status=skipped
+OD_STATUS stage=comparison status=skipped ... "reason": "training_result_is_none"
+```
+
+What remains unverified:
+
+- Running the new multi-question model-quality report in Colab after opt-in training.
+- Whether the trained adapter answers improve in a useful, note-grounded way across several generated questions.
+- Real-teacher output quality beyond the earlier tiny 1-row smoke test.
 
 ## Real Teacher End-to-End Success
 
@@ -376,12 +417,14 @@ The notebook is expected to:
 - Print `Using project root: /content/OpenDistillation` after setup in Colab.
 - Keep `INSTALL_TRAINING_DEPS = False` and `RUN_TRAINING = False` as safe defaults.
 - Keep `RUN_REAL_TEACHER = False` as the safe teacher default.
+- Generate four varied mock-teacher rows per chunk by default.
+- Print a deterministic dataset quality report and `OD_STATUS stage=dataset_quality status=reported`.
 - Save the current generated dataset to `/tmp/opendistillation_training_data.jsonl`.
 - Load `Qwen/Qwen2.5-1.5B-Instruct` for teacher generation only after `RUN_REAL_TEACHER = True`.
 - Install the bounded Hugging Face training package set only after `INSTALL_TRAINING_DEPS = True`, without upgrading Colab's preinstalled GPU `torch`.
 - Start the optional training path only after `RUN_TRAINING = True` and a CUDA GPU is detected.
 - Save any adapter output under `outputs/notes-lora/adapter`.
-- Run before/after comparison only after training creates an adapter.
+- Run the bounded before/after model-quality report only after training creates an adapter.
 
 The actual student-model Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime using mock-teacher rows. The real-teacher path has also passed once on a T4 using one sample-note chunk and a 1-step adapter verification. GGUF export and local runtime instructions remain unverified and deferred.
 

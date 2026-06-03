@@ -86,6 +86,7 @@ The notebook uses a deterministic local mock teacher by default so it can run wi
 Default behavior:
 
 - Generate a small number of examples per chunk.
+- Use varied study-question styles: factual recall, explanation, flashcard, and misconception-check.
 - Keep the output schema simple.
 - Prefer readability over pretending the examples are production quality.
 - Label whether the teacher engine sends text to a remote endpoint.
@@ -108,7 +109,7 @@ Initial JSONL shape:
 
 The schema is documented in `docs/dataset-schema.md`.
 
-### Step 6: Review Dataset
+### Step 6: Review Dataset Quality
 
 The user sees the dataset before optional training.
 
@@ -117,6 +118,8 @@ Expected output:
 - Count of training examples.
 - First 5 examples.
 - Simple validation of required fields.
+- Deterministic dataset quality report covering row count, chunk coverage, duplicate or near-duplicate questions, answer length sanity, missing fields, and source chunk IDs.
+- A plain-language reminder that dataset quality is not the same as model quality.
 
 ### Step 7: Optional Training Entry Point
 
@@ -141,23 +144,25 @@ Expected output:
 - `OD_STATUS` markers for training configuration, runtime check, start, success, failure, blocked, or skipped states.
 - A reminder that short adapter runs prove wiring and artifact creation, not model quality.
 
-### Step 8: Before/After Comparison
+### Step 8: Before/After Model Quality Report
 
-The notebook compares one generated question against the base model and the trained LoRA adapter after optional training.
+The notebook compares up to three generated questions against the base model and the trained LoRA adapter after optional training.
 
 Default behavior:
 
 - Do not load a model while `RUN_TRAINING = False`.
 - Skip comparison when no adapter exists.
-- Use the first generated dataset question.
+- Use a bounded set of generated dataset questions.
 - Show the generated reference answer, base-model answer, and trained-adapter answer when training has run.
-- Label the comparison as a qualitative sanity check, not a benchmark.
+- Print a crude reference-overlap signal for each answer pair.
+- Label the comparison as a qualitative smoke report, not a benchmark.
 
 Expected output:
 
 - A clear "comparison skipped" message while training is skipped.
 - A clear comparison plan after training creates an adapter.
 - A side-by-side style text output for question, reference answer, base answer, and trained-adapter answer.
+- A clear note that overlap scores are lexical hints and must be read with the answers.
 - Plain-language setup messages if adapter loading or generation fails.
 - `OD_STATUS` markers for comparison skipped, configured, started, succeeded, or failed states.
 
@@ -219,16 +224,18 @@ Included now:
 - Plain text preview.
 - Simple chunking.
 - JSONL dataset schema helpers.
+- Deterministic dataset quality report.
 - Local deterministic mock teacher, enabled by default.
 - Optional local Qwen real teacher, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL/PEFT LoRA training entry point, skipped by default.
-- Optional before/after comparison entry point, skipped by default.
+- Optional bounded before/after model quality report, skipped by default.
 - Runtime readiness checks, `OD_STATUS` markers, runtime status log, and manual Colab smoke-test checklist.
 - Export placeholder.
 
 Planned later in v0:
 
-- Teacher output quality hardening after the first one-row real-teacher smoke test.
+- Fresh Colab GPU quality smoke test for the new dataset quality report and bounded model-quality report.
+- Teacher output quality hardening after the first quality smoke evidence.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance.
 

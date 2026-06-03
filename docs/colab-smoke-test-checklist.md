@@ -34,6 +34,8 @@ Use this checklist before marking the optional real teacher, training, or before
   - Expected output includes `Teacher engine: mock-local-teacher` and `Sends text to remote endpoint: False`.
 - [ ] Confirm the JSONL preview shows `instruction`, `response`, and `source_chunk_id`.
   - Expected output includes a runtime temp JSONL path, not a committed repository path.
+- [ ] Confirm the dataset quality report prints separately from model quality.
+  - Expected output includes row count, schema-valid rows, chunk coverage, duplicate/near-duplicate question counts, answer checks, and `OD_STATUS stage=dataset_quality status=reported`.
 
 ## Optional Real Teacher
 
@@ -73,14 +75,14 @@ Use this checklist before marking the optional real teacher, training, or before
 - [ ] If the run fails, record the exact error and whether the notebook's failure message explains the next step.
   - For memory failures, paste the exact CUDA out-of-memory line and the notebook's recovery message.
 
-## Before/After Comparison
+## Before/After Model Quality Report
 
 - [ ] Run the comparison cell after training succeeds.
   - Expected markers include `OD_STATUS stage=comparison status=configured`, `OD_STATUS stage=comparison status=started`, and `OD_STATUS stage=comparison status=succeeded`.
-- [ ] Confirm the question and generated reference answer are shown.
-- [ ] Confirm both base-model answer and trained-adapter answer are shown.
-  - Expected headings: `Question:`, `Reference answer from generated dataset:`, `Base model answer:`, and `Trained adapter answer:`.
-- [ ] Confirm the notebook labels this as a qualitative sanity check, not a benchmark.
+- [ ] Confirm up to three questions and generated reference answers are shown.
+- [ ] Confirm both base-model answers and trained-adapter answers are shown with crude reference-overlap values.
+  - Expected headings include `Model quality report`, `Question:`, `Reference answer:`, `Base answer`, and `Trained adapter answer`.
+- [ ] Confirm the notebook labels this as a qualitative smoke report, not a benchmark.
 - [ ] Record whether comparison quality is visibly different, unchanged, or broken.
   - Paste the question and both answers in `docs/colab-smoke-test-results.md`.
 
@@ -101,16 +103,18 @@ Dependency install result:
 Real teacher run: skipped/succeeded/failed
 Real teacher model download/load result:
 Real teacher generated rows:
+Dataset quality report:
 Status log markers:
 Model download result:
 Training starts: yes/no
 Adapter output created: yes/no
 Adapter output path:
-Before/after comparison output: yes/no
+Before/after model quality report output: yes/no
 Runtime:
 Peak memory or memory failure:
 Exact error messages:
-Question used for comparison:
-Base model answer:
-Trained adapter answer:
+Questions used for comparison:
+Base model answers:
+Trained adapter answers:
+Reference-overlap values:
 ```

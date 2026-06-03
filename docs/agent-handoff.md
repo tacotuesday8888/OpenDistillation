@@ -6,7 +6,7 @@
 
 ## Current State
 
-OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, an opt-in local real teacher path, and bounded optional training and comparison entry points. A clean GitHub-opened Colab T4 runtime completed one optional training/comparison smoke test from the sample notes path, a later T4 verification completed the real-teacher path from sample notes through before/after comparison, and the first uploaded-notes rehearsal has one `.txt` pass and one `.md` pass through the default mock-teacher path.
+OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, deterministic dataset quality reporting, an opt-in local real teacher path, and bounded optional training and comparison entry points. A clean GitHub-opened Colab T4 runtime completed one optional training/comparison smoke test from the sample notes path, a later T4 verification completed the real-teacher path from sample notes through before/after comparison, and the first uploaded-notes rehearsal has one `.txt` pass and one `.md` pass through the default mock-teacher path.
 
 The repo now contains:
 
@@ -15,10 +15,10 @@ The repo now contains:
 - Roadmap.
 - Exact v0 notes-model Colab flow.
 - Runnable v0 prototype notebook.
-- Minimal Python helpers for TXT/MD loading, chunking, dataset validation, mock teacher generation, and opt-in real teacher generation.
+- Minimal Python helpers for TXT/MD loading, chunking, dataset validation, dataset quality reporting, mock teacher generation, and opt-in real teacher generation.
 - Optional `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL `SFTTrainer` + PEFT LoRA training engine for `Qwen/Qwen2.5-0.5B-Instruct`, skipped by default in the notebook.
-- Optional before/after comparison engine for one generated question, skipped by default in the notebook.
+- Optional multi-question before/after quality report, skipped by default in the notebook.
 - Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
 - Manual Colab GPU smoke-test checklist.
 - Smoke-test results file recording the first real Colab T4 blockers, the recovered-runtime pass, one clean GitHub-opened T4 training/comparison pass, one real-teacher end-to-end T4 verification, the first uploaded `.txt` rehearsal pass, the first uploaded `.md` rehearsal pass, and earlier historical upload-control blockers.
@@ -46,7 +46,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task should prepare the first public demo release candidate: tighten the demo script, issue/milestone status, launch checklist, and narrow GGUF/local-runtime handoff plan without implementing export or broadening beyond TXT/MD notes.
+The next task should run and document the first Colab GPU quality smoke test for the new report shape without implementing export or broadening beyond TXT/MD notes.
 
 ## Important Guardrails
 

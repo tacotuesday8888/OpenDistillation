@@ -25,8 +25,9 @@ This file records decisions that should not be reopened without a concrete reaso
 - The first student model is `Qwen/Qwen2.5-0.5B-Instruct`.
 - The first training backend is Hugging Face TRL `SFTTrainer` with PEFT LoRA adapters.
 - The first training path is optional in the notebook and defaults to skipped. It should run only after the user opts into a Colab GPU runtime.
-- The first training path does not use Unsloth or bitsandbytes by default. Those are future optimizations after the plain TRL/PEFT path is smoke-tested.
-- The first before/after comparison uses the first generated dataset question, Hugging Face Transformers chat generation, and PEFT `PeftModel.from_pretrained()` to load the trained LoRA adapter.
+- The first training path does not use Unsloth or bitsandbytes by default. Those are future optimizations after the quality loop can show whether the adapter is learning from notes.
+- The first before/after quality report uses up to three generated dataset questions, Hugging Face Transformers chat generation, and PEFT `PeftModel.from_pretrained()` to load the trained LoRA adapter.
+- The first dataset-quality loop uses deterministic local checks only. Hugging Face Evaluate and LightEval are deferred until the project has a stable held-out notes evaluation set.
 - The notebook includes an explicit `INSTALL_TRAINING_DEPS = False` switch so the default local path never installs packages, downloads models, or starts training by accident.
 - The optional Colab install command does not upgrade Colab's preinstalled GPU `torch` package. The runtime still checks that `torch` and CUDA are available before training starts.
 - The notebook setup clones the GitHub repository in fresh Colab runtimes before importing local helpers.
@@ -53,10 +54,10 @@ Use this notes-model v0 flow as the default implementation plan:
 4. OpenDistillation chunks the notes.
 5. The mock teacher generates question-answer pairs by default.
 6. The user can opt into `HuggingFaceLocalTeacherEngine` for local Qwen-generated rows with the same schema.
-7. The dataset is previewed, saved, and downloadable.
+7. The dataset is previewed, quality-checked, saved, and downloadable.
 8. Optional training prepares `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
 9. A short supervised fine-tuning run starts only when the user sets `RUN_TRAINING = True` in a Colab GPU runtime.
-10. The notebook compares the base-model answer and trained-adapter answer for one generated question.
+10. The notebook compares base-model answers and trained-adapter answers for up to three generated questions.
 11. The notebook saves the output.
 12. The notebook exports to GGUF or shows the exact export command and limitation.
 13. The user gets local run instructions.
@@ -68,13 +69,16 @@ Do not build coding, writing, work, or phone model flows until the notes model p
 Verified locally in this repository:
 
 - Dataset validation and JSONL serialization.
+- Dataset quality reporting for row count, chunk coverage, duplicate or near-duplicate questions, answer length sanity, missing fields, and source chunk IDs.
 - Mock teacher generation.
+- Mock teacher question-style variety for factual recall, explanation, flashcard, and misconception-check rows.
 - Optional real teacher selection, JSONL parsing, schema validation, and failure classification using fake no-download dependencies.
 - Training configuration, request construction, and TRL/PEFT dataset formatting tests.
-- Before/after comparison request construction, adapter-path validation, dependency handling, and fake base-vs-adapter generation tests.
+- Before/after comparison request construction, adapter-path validation, dependency handling, bounded multi-question selection, reference-overlap scoring, and fake base-vs-adapter generation tests.
 - Optional runtime helper behavior for install-command text, missing-package checks, GPU/no-GPU formatting, and beginner-readable failure explanations.
 - Optional runtime helper behavior for installed-package import failures, including the Colab `torchvision::nms` mismatch seen after upgrading `torch`.
 - Notebook JSON parsing and the default CPU path where training remains skipped.
+- Notebook default CPU path with dataset quality report: sample notes produced 4 chunks, 16 mock-teacher rows, 16 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, training skipped, comparison skipped, and export skipped.
 - Notebook default install path where `INSTALL_TRAINING_DEPS = False`.
 - Notebook setup structure for the fresh Colab clone fallback.
 - Notebook status markers for setup, optional install, teacher generation, dataset save, optional training, and optional comparison.
@@ -93,8 +97,9 @@ Still deferred or unverified:
 
 - Real teacher output quality beyond a tiny 1-row smoke test.
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
+- Fresh Colab GPU quality smoke test for the new 16-row dataset quality report and multi-question before/after quality report.
 - GGUF export and local runtime instructions.
-- Adapter quality beyond a qualitative wiring check.
+- Adapter quality beyond deterministic local quality helpers and earlier qualitative wiring checks.
 - Larger uploaded notes files and higher row counts beyond the tiny TXT/MD rehearsal files.
 - `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, and the real-teacher end-to-end T4 verification.
 
@@ -108,7 +113,15 @@ Why this path:
 - Transformers documents chat-style text generation through message dictionaries and the text-generation pipeline.
 - `Qwen/Qwen2.5-1.5B-Instruct` is an Apache-2.0 Qwen2.5 chat/instruct model with about 1.5B parameters, which keeps the first real teacher path small enough for the v0 Colab experiment and inside the open-source constraint.
 - PEFT LoRA keeps the trained artifact small.
-- bitsandbytes and Unsloth are useful memory/speed tools, but they introduce more install, quantization, and hardware assumptions than the first beginner path needs.
+- bitsandbytes and Unsloth are useful memory/speed tools, but they introduce more install, quantization, and hardware assumptions than the first beginner quality loop needs.
+
+Sources checked on 2026-06-03:
+
+- [Transformers chat basics](https://huggingface.co/docs/transformers/conversations)
+- [TRL SFTTrainer docs](https://huggingface.co/docs/trl/en/sft_trainer)
+- [PEFT task types](https://huggingface.co/docs/peft/main/package_reference/peft_types)
+- [Hugging Face Evaluate overview](https://huggingface.co/docs/evaluate/index)
+- [TRL Unsloth integration](https://huggingface.co/docs/trl/en/unsloth_integration)
 
 Sources checked on 2026-06-02:
 

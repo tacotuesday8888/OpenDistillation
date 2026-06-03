@@ -15,6 +15,12 @@ from .text import TextChunk
 
 
 DEFAULT_REAL_TEACHER_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
+QUESTION_STYLE_GUIDE = (
+    "factual recall",
+    "explanation",
+    "flashcard",
+    "misconception-check",
+)
 
 
 @dataclass(frozen=True)
@@ -26,7 +32,7 @@ class TeacherRequest:
     """
 
     chunks: list[TextChunk]
-    examples_per_chunk: int = 2
+    examples_per_chunk: int = 4
 
 
 @dataclass(frozen=True)
@@ -159,7 +165,7 @@ class HuggingFaceLocalTeacherEngine:
         return _extract_generated_text(response)
 
 
-def build_teacher_prompt(chunk: TextChunk, *, examples_per_chunk: int = 2) -> str:
+def build_teacher_prompt(chunk: TextChunk, *, examples_per_chunk: int = 4) -> str:
     """Build the prompt shape used by the real teacher path."""
 
     if examples_per_chunk < 1:
@@ -167,7 +173,13 @@ def build_teacher_prompt(chunk: TextChunk, *, examples_per_chunk: int = 2) -> st
 
     return (
         f"Create {examples_per_chunk} question-answer pairs for {chunk.id}.\n"
-        "Return JSONL rows with exactly these fields: instruction, response, source_chunk_id.\n\n"
+        "Return exactly one JSON object per line as JSONL.\n"
+        "Return JSONL rows with exactly these fields: instruction, response, source_chunk_id.\n"
+        "Use varied study-question styles in this order when possible: "
+        + ", ".join(QUESTION_STYLE_GUIDE)
+        + ".\n"
+        "Each instruction should name the task naturally, and each response must be grounded in the source chunk.\n"
+        "Do not invent facts outside the source chunk. Do not add any fields beyond the schema.\n\n"
         f"Source chunk:\n{chunk.text}"
     )
 
@@ -237,7 +249,7 @@ def explain_teacher_failure(exc: BaseException) -> list[str]:
 def generate_mock_qa_pairs(
     chunks: Iterable[TextChunk],
     *,
-    examples_per_chunk: int = 2,
+    examples_per_chunk: int = 4,
 ) -> list[dict[str, str]]:
     """Generate safe deterministic QA rows without model calls or network access."""
 
@@ -330,12 +342,20 @@ def _generate_rows(
         excerpt = _excerpt(chunk.text)
         templates = [
             (
-                f"What is the main point of {chunk.id}?",
-                f"The main point is: {excerpt}",
+                f"Factual recall: what detail from {chunk.id} should be remembered?",
+                f"The key factual detail is: {excerpt}",
             ),
             (
-                f"Which detail from {chunk.id} should be remembered?",
-                f"Remember this detail from the source text: {excerpt}",
+                f"Explain the main idea of {chunk.id} in plain language.",
+                f"In plain language, the source says: {excerpt}",
+            ),
+            (
+                f"Flashcard: what should the front and back say for {chunk.id}?",
+                f"Front: What does this note say? Back: {excerpt}",
+            ),
+            (
+                f"What misconception should be avoided after reading {chunk.id}?",
+                f"Do not misread the note as saying something unsupported. The grounded point is: {excerpt}",
             ),
         ]
 

@@ -10,6 +10,7 @@ TXT/MD notes file
   -> chunk_text()
   -> TeacherEngine.generate()
   -> validate_dataset() / rows_to_jsonl()
+  -> analyze_dataset_quality()
   -> optional SFTLoRATrainingEngine
   -> optional BeforeAfterComparisonEngine
   -> future export engine
@@ -28,7 +29,7 @@ These produce a `LoadedTextDocument` and ordered `TextChunk` objects with stable
 
 Current interface:
 
-- `TeacherRequest(chunks, examples_per_chunk=2)`
+- `TeacherRequest(chunks, examples_per_chunk=4)`
 - `TeacherEngine.generate(request)`
 - `MockTeacherEngine`
 - `HuggingFaceLocalTeacherEngine`
@@ -38,6 +39,8 @@ Current interface:
 The notebook uses `MockTeacherEngine` by default, which is local and deterministic.
 
 The first optional real teacher engine is `HuggingFaceLocalTeacherEngine`, which loads `Qwen/Qwen2.5-1.5B-Instruct` through Hugging Face Transformers. It sits behind the same `TeacherEngine.generate()` method and returns the same validated JSONL schema.
+
+Both teacher paths now aim for four grounded study-question styles before training: factual recall, explanation, flashcard, and misconception-check. The public row schema remains unchanged.
 
 Current teacher defaults:
 
@@ -52,6 +55,7 @@ Later teacher engines can still sit behind the same interface, but v0 should not
 Verified locally:
 
 - Mock teacher generation.
+- Mock teacher row variety across factual recall, explanation, flashcard, and misconception-check styles.
 - Real teacher request construction, JSONL parsing, schema validation, and failure handling with fake no-download dependencies.
 
 Verified once in Colab T4:
@@ -60,17 +64,23 @@ Verified once in Colab T4:
 
 Still unverified:
 
-- Real teacher output quality on the sample notes file.
+- Real teacher output quality beyond the first tiny smoke run.
 
-## Dataset Validation
+## Dataset Validation And Quality
 
 Current helpers:
 
 - `validate_dataset_row(row)`
 - `validate_dataset(rows)`
 - `rows_to_jsonl(rows)`
+- `analyze_dataset_quality(rows, expected_chunk_ids=...)`
+- `format_dataset_quality_report(report)`
 
 Training engines should consume the validated schema from `docs/dataset-schema.md`. If a later backend needs a different internal format, convert from this schema at the boundary instead of changing the notebook flow.
+
+The quality helper is deterministic and local. It checks row count, valid row count, chunk coverage, missing fields, unexpected source chunk IDs, duplicate questions, near-duplicate questions within the same source chunk, and answer length sanity. It is intentionally not a model benchmark.
+
+Hugging Face Evaluate and LightEval were considered for this goal, but not added. They are useful open-source evaluation tools, but this project does not yet have a stable held-out notes benchmark; adding another dependency before that would make the Colab path more fragile without proving more.
 
 ## Training Engine
 
@@ -100,7 +110,7 @@ Current default:
 
 This choice keeps the first path beginner-readable. TRL provides the supervised fine-tuning wrapper, PEFT keeps the trainable output small, and Qwen2.5-0.5B-Instruct is within the target 0.5B-1.5B student range.
 
-Unsloth and bitsandbytes are not enabled by default. They may become later optimization paths after more evidence than one plain TRL/PEFT adapter smoke run, because they add extra quantization, install, and hardware assumptions.
+Unsloth and bitsandbytes are not enabled by default. They may become later speed or memory optimization paths after the quality loop can show whether an adapter is actually learning from notes, because they add extra quantization, install, and hardware assumptions.
 
 Verified locally:
 
@@ -120,12 +130,12 @@ Still unverified:
 
 - Adapter quality beyond a qualitative wiring check.
 
-## Before/After Comparison Engine
+## Before/After Model Quality Engine
 
 The first comparison boundary is:
 
 ```text
-validated JSONL rows + PEFT adapter output -> BeforeAfterComparisonEngine -> base answer + trained-adapter answer
+validated JSONL rows + PEFT adapter output -> BeforeAfterComparisonEngine -> base answers + trained-adapter answers
 ```
 
 Current interface:
@@ -137,18 +147,21 @@ Current interface:
 
 Current default:
 
-- Question source: the first validated generated dataset row.
+- Question source: up to three validated generated dataset rows.
 - Reference answer: the response from that generated dataset row.
 - Base answer: `Qwen/Qwen2.5-0.5B-Instruct` loaded with Transformers.
 - Trained answer: the same base model with the saved PEFT LoRA adapter loaded through `PeftModel.from_pretrained()`.
+- Quality signal: a simple lexical reference-overlap value for each base and trained answer.
 - Default notebook behavior: comparison is skipped unless optional training creates an adapter.
 
 Verified locally:
 
 - Comparison request validation.
+- Bounded multi-question request construction.
 - Missing adapter-path handling before any model imports.
 - Optional dependency error messages.
-- Fake base-vs-adapter generation without downloading models.
+- Fake base-vs-adapter generation across multiple questions without downloading models.
+- Deterministic reference-overlap scoring.
 - Notebook default path with comparison skipped.
 
 Verified once in a clean GitHub-opened Colab T4 runtime:
@@ -159,7 +172,7 @@ Verified once in a clean GitHub-opened Colab T4 runtime:
 
 Still unverified:
 
-- Whether the answer changes in a useful way after more real-teacher rows and more meaningful training data.
+- Whether the answer changes in a useful way after the new multi-question quality report runs in Colab with more real-teacher rows and more meaningful training data.
 
 ## Future Export Engines
 
