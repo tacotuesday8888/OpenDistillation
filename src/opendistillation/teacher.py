@@ -340,30 +340,19 @@ def _generate_rows(
     rows: list[dict[str, str]] = []
     for chunk in chunks:
         excerpt = _excerpt(chunk.text)
-        templates = [
-            (
-                f"Factual recall: what detail from {chunk.id} should be remembered?",
-                f"The key factual detail is: {excerpt}",
-            ),
-            (
-                f"Explain the main idea of {chunk.id} in plain language.",
-                f"In plain language, the source says: {excerpt}",
-            ),
-            (
-                f"Flashcard: what should the front and back say for {chunk.id}?",
-                f"Front: What does this note say? Back: {excerpt}",
-            ),
-            (
-                f"What misconception should be avoided after reading {chunk.id}?",
-                f"Do not misread the note as saying something unsupported. The grounded point is: {excerpt}",
-            ),
-        ]
+        fact_pairs = _extract_key_value_facts(chunk.text)
+        templates = _fact_templates(chunk, fact_pairs) if fact_pairs else _excerpt_templates(chunk, excerpt)
 
         for example_index in range(examples_per_chunk):
             question, answer = templates[example_index % len(templates)]
             if example_index >= len(templates):
-                question = f"What supporting fact {example_index + 1} appears in {chunk.id}?"
-                answer = f"A supporting fact from the source text is: {excerpt}"
+                if fact_pairs:
+                    label, value = fact_pairs[example_index % len(fact_pairs)]
+                    question = f"What exact value is attached to {label.lower()} in {chunk.id}?"
+                    answer = f"The exact value attached to {label.lower()} is {value}."
+                else:
+                    question = f"What supporting fact {example_index + 1} appears in {chunk.id}?"
+                    answer = f"A supporting fact from the source text is: {excerpt}"
             rows.append(
                 {
                     "instruction": question,
@@ -373,6 +362,84 @@ def _generate_rows(
             )
 
     return validate_dataset(rows)
+
+
+def _excerpt_templates(chunk: TextChunk, excerpt: str) -> list[tuple[str, str]]:
+    return [
+        (
+            f"Factual recall: what detail from {chunk.id} should be remembered?",
+            f"The key factual detail is: {excerpt}",
+        ),
+        (
+            f"Explain the main idea of {chunk.id} in plain language.",
+            f"In plain language, the source says: {excerpt}",
+        ),
+        (
+            f"Flashcard: what should the front and back say for {chunk.id}?",
+            f"Front: What does this note say? Back: {excerpt}",
+        ),
+        (
+            f"What misconception should be avoided after reading {chunk.id}?",
+            f"Do not misread the note as saying something unsupported. The grounded point is: {excerpt}",
+        ),
+    ]
+
+
+def _fact_templates(chunk: TextChunk, fact_pairs: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    style_builders = (
+        lambda label, value: (
+            f"What exact value does {chunk.id} give for {label}?",
+            f"The {label} is {value}.",
+        ),
+        lambda label, value: (
+            f"Answer plainly: identify {label} from the note.",
+            f"The note identifies {label} as {value}.",
+        ),
+        lambda label, value: (
+            f"Create a front/back flashcard for {label} from {chunk.id}.",
+            f"Front: What is {label}? Back: {value}.",
+        ),
+        lambda label, value: (
+            f"Which made-up value should be rejected for {label} in {chunk.id}?",
+            f"Reject invented values; the source says {label} is {value}.",
+        ),
+        lambda label, value: (
+            f"Use only the source note: what should someone remember about {label}?",
+            f"Remember that {label} is {value}.",
+        ),
+        lambda label, value: (
+            f"In a review quiz for {chunk.id}, how should {label} be answered?",
+            f"Answer with {value} for {label}.",
+        ),
+    )
+
+    templates: list[tuple[str, str]] = []
+    for index in range(len(fact_pairs) * len(style_builders)):
+        fact_index = index % len(fact_pairs)
+        style_index = index % len(style_builders)
+        label, value = fact_pairs[fact_index]
+        normalized_label = label.lower()
+        templates.append(style_builders[style_index](normalized_label, value))
+    return templates
+
+
+def _extract_key_value_facts(text: str) -> list[tuple[str, str]]:
+    facts: list[tuple[str, str]] = []
+    for raw_line in text.splitlines():
+        cleaned_line = raw_line.strip().lstrip("-*").strip()
+        for sentence in re.split(r"(?<=\.)\s+", cleaned_line):
+            candidate = sentence.strip()
+            if ":" not in candidate or candidate.startswith("#"):
+                continue
+            label, value = candidate.split(":", 1)
+            label = label.strip()
+            value = value.strip().rstrip(".")
+            if not label or not value:
+                continue
+            if len(label.split()) > 6:
+                continue
+            facts.append((label, value))
+    return facts
 
 
 def _excerpt(text: str, *, max_chars: int = 220) -> str:

@@ -13,7 +13,7 @@ The first demo should be small, slow if necessary, and honest. It should not pre
 ## Default User Input
 
 - One `.txt` or `.md` notes file.
-- Recommended sample: `examples/sample-notes.md`.
+- Recommended sample: `examples/sample-notes.md`, a tiny fact-card file with concrete unlikely details such as `Glass Harbor`, `copper-lantern-47`, `llama-harbor-alpha`, `4:17 PM`, and `ultramarine`.
 - Minimum useful size: roughly 500-2,000 words.
 - Unsupported in v0: PDF, DOCX, web pages, images, folders, private drives, databases, coding repositories, workspaces, phone data, and multi-profile inputs.
 
@@ -85,8 +85,8 @@ The notebook uses a deterministic local mock teacher by default so it can run wi
 
 Default behavior:
 
-- Generate a small number of examples per chunk.
-- Use varied study-question styles: factual recall, explanation, flashcard, and misconception-check.
+- Generate six examples per chunk for the committed sample notes.
+- Use fact-aware study rows for simple `Label: value` notes, with the generic excerpt fallback still available for normal uploaded notes.
 - Keep the output schema simple.
 - Prefer readability over pretending the examples are production quality.
 - Label whether the teacher engine sends text to a remote endpoint.
@@ -120,6 +120,7 @@ Expected output:
 - Simple validation of required fields.
 - Deterministic dataset quality report covering row count, chunk coverage, duplicate or near-duplicate questions, answer length sanity, missing fields, and source chunk IDs.
 - A plain-language reminder that dataset quality is not the same as model quality.
+- Four held-out sample-fact comparison questions when the committed sample notes are loaded. These questions use different wording from the mock-teacher training rows.
 
 ### Step 7: Optional Training Entry Point
 
@@ -134,6 +135,7 @@ Default behavior:
 - Show a plan for `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
 - Require `RUN_TRAINING = True` before model download or adapter training begins.
 - Run a readiness check before training that reports missing optional packages and whether a CUDA GPU is available.
+- Use a bounded 30-step optional training plan for the current sample-fact experiment.
 - Save any adapter output under `outputs/`, which is ignored by git.
 
 Expected output:
@@ -146,13 +148,13 @@ Expected output:
 
 ### Step 8: Before/After Model Quality Report
 
-The notebook compares up to three chunk-diverse generated questions against the base model and the trained LoRA adapter after optional training.
+The notebook compares held-out sample-fact questions against the base model and the trained LoRA adapter after optional training. For uploaded notes, it falls back to generated questions and prefers distinct source chunks before reusing a chunk.
 
 Default behavior:
 
 - Do not load a model while `RUN_TRAINING = False`.
 - Skip comparison when no adapter exists.
-- Use a bounded set of generated dataset questions, preferring distinct source chunks before reusing a chunk.
+- Use four held-out questions for `examples/sample-notes.md`, or up to four generated dataset questions for uploaded notes.
 - Generate the base-model answer with the LoRA adapter disabled, then generate the trained-adapter answer with the adapter enabled.
 - Show the generated reference answer, base-model answer, and trained-adapter answer when training has run.
 - Print a crude reference-overlap signal for each answer pair.
@@ -170,6 +172,8 @@ Expected output:
 ### Manual Colab Smoke Test
 
 The optional training and comparison wiring is verified with two multi-question Colab reports after `docs/colab-smoke-test-checklist.md` evidence was collected. The first quality result was unchanged: all three trained-adapter answers matched the base-model answers. Follow-up local diagnosis found the comparison path could accidentally compare the adapter-enabled model to itself; the comparison helper now disables the adapter for the base answer and spreads questions across chunks. The second Colab quality smoke used that fixed comparison path. All three trained-adapter answers changed, but they were still generic or hallucinated instead of useful note-grounded answers. The demo should not claim useful note learning yet.
+
+The next bounded quality smoke uses the fact-rich sample notes, 24 mock rows, the four held-out sample-fact questions, and a 30-step optional LoRA run. Its result should be recorded as better, unchanged, or worse, based on the actual base and trained answers.
 
 The checklist records:
 
@@ -230,12 +234,13 @@ Included now:
 - Optional local Qwen real teacher, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL/PEFT LoRA training entry point, skipped by default.
 - Optional bounded chunk-diverse before/after model quality report, skipped by default.
+- Held-out sample-fact comparison rows for the committed sample notes.
 - Runtime readiness checks, `OD_STATUS` markers, runtime status log, and manual Colab smoke-test checklist.
 - Export placeholder.
 
 Planned later in v0:
 
-- Teacher row, sample-notes, comparison-prompt, or bounded-training hardening after the second smoke showed adapter-visible movement but no useful note learning.
+- Final evidence from the 24-row / 30-step sample-fact Colab quality smoke.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance.
 

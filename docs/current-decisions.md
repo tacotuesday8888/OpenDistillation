@@ -26,7 +26,8 @@ This file records decisions that should not be reopened without a concrete reaso
 - The first training backend is Hugging Face TRL `SFTTrainer` with PEFT LoRA adapters.
 - The first training path is optional in the notebook and defaults to skipped. It should run only after the user opts into a Colab GPU runtime.
 - The first training path does not use Unsloth or bitsandbytes by default. Those are future optimizations after the quality loop can show whether the adapter is learning from notes.
-- The first before/after quality report uses up to three chunk-diverse generated dataset questions, Hugging Face Transformers chat generation, PEFT `PeftModel.from_pretrained()` to load the trained LoRA adapter, and PEFT `disable_adapter()` for the base-model side of the comparison.
+- The first before/after quality report uses Hugging Face Transformers chat generation, PEFT `PeftModel.from_pretrained()` to load the trained LoRA adapter, and PEFT `disable_adapter()` for the base-model side of the comparison. It uses four held-out fact questions for the committed sample notes and up to four generated chunk-diverse questions for uploaded notes.
+- The committed sample-notes quality experiment uses fact-rich notes, six mock rows per chunk, four held-out sample-fact comparison questions, and a bounded optional 30-step LoRA run. Uploaded/user notes keep the generated chunk-diverse comparison fallback.
 - The first dataset-quality loop uses deterministic local checks only. Hugging Face Evaluate and LightEval are deferred until the project has a stable held-out notes evaluation set.
 - The notebook includes an explicit `INSTALL_TRAINING_DEPS = False` switch so the default local path never installs packages, downloads models, or starts training by accident.
 - The optional Colab install command does not upgrade Colab's preinstalled GPU `torch` package. The runtime still checks that `torch` and CUDA are available before training starts.
@@ -57,7 +58,7 @@ Use this notes-model v0 flow as the default implementation plan:
 7. The dataset is previewed, quality-checked, saved, and downloadable.
 8. Optional training prepares `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
 9. A short supervised fine-tuning run starts only when the user sets `RUN_TRAINING = True` in a Colab GPU runtime.
-10. The notebook compares base-model answers and trained-adapter answers for up to three chunk-diverse generated questions.
+10. The notebook compares base-model answers and trained-adapter answers using held-out sample-fact questions for the committed sample notes, or chunk-diverse generated questions for uploaded notes.
 11. The notebook saves the output.
 12. The notebook exports to GGUF or shows the exact export command and limitation.
 13. The user gets local run instructions.
@@ -79,6 +80,7 @@ Verified locally in this repository:
 - Optional runtime helper behavior for installed-package import failures, including the Colab `torchvision::nms` mismatch seen after upgrading `torch`.
 - Notebook JSON parsing and the default CPU path where training remains skipped.
 - Notebook default CPU path with dataset quality report: sample notes produced 4 chunks, 16 mock-teacher rows, 16 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, training skipped, comparison skipped, and export skipped.
+- Current notebook default CPU path with the fact-rich sample notes: sample notes produced 4 chunks, 24 mock-teacher rows, 24 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, 0 long answers, 4 held-out sample-fact comparison rows, training skipped, and comparison skipped.
 - Notebook default install path where `INSTALL_TRAINING_DEPS = False`.
 - Notebook setup structure for the fresh Colab clone fallback.
 - Notebook status markers for setup, optional install, teacher generation, dataset save, optional training, and optional comparison.
@@ -100,6 +102,7 @@ Still deferred or unverified:
 - Real teacher output quality beyond a tiny 1-row smoke test.
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
 - Whether a tiny Colab adapter run can produce visibly more note-grounded answers after the adapter-disabled comparison fix. The second smoke produced visible answer movement, but not useful note grounding.
+- Whether the new 24-row / 30-step sample-fact Colab smoke produces better, unchanged, or worse note-grounded answers.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond deterministic local quality helpers and the two three-question Colab quality smokes.
 - Larger uploaded notes files and higher row counts beyond the tiny TXT/MD rehearsal files.

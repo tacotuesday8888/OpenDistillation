@@ -6,6 +6,7 @@ Optional model training and comparison helpers stay lazy-loaded.
 
 from .dataset import DatasetValidationError, rows_to_jsonl, validate_dataset, validate_dataset_row
 from .engines import ExportEngine, ExportRequest, ExportResult, TrainingEngine, TrainingRequest, TrainingResult
+from .evaluation import SAMPLE_FACT_COMPARISON_ROWS, build_sample_fact_comparison_rows
 from .teacher import (
     DEFAULT_REAL_TEACHER_MODEL,
     HuggingFaceLocalTeacherEngine,
@@ -98,9 +99,11 @@ __all__ = [
     "TrainingResult",
     "SFTLoRAConfig",
     "SFTLoRATrainingEngine",
+    "SAMPLE_FACT_COMPARISON_ROWS",
     "TrainingConfigurationError",
     "TrainingDependencyError",
     "build_comparison_request",
+    "build_sample_fact_comparison_rows",
     "build_pip_install_command",
     "build_teacher_prompt",
     "build_training_request",

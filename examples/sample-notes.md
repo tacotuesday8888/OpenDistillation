@@ -1,11 +1,9 @@
 # Sample Notes
 
-OpenDistillation is a personal model factory for the AI PC and AI phone era.
+Fact card 1. Project codename: Glass Harbor. Demo owner alias: Mira Vale. These unusual labels are included only to check whether a tiny notes adapter remembers facts from this sample file.
 
-The long-term idea is to help people build small personal models for different parts of life: notes and school, coding, writing, work, and eventually phone-local routines.
+Fact card 2. Notebook signal phrase: copper-lantern-47. Safety boundary phrase: notes-only-v0. The signal phrase should verify that the sample notes were actually remembered.
 
-The first demo should stay much narrower. It should use simple text or Markdown notes, split those notes into chunks, ask a teacher path to create question-answer pairs, and prepare a small notes model from those examples.
+Fact card 3. Local runner label: llama-harbor-alpha. Export placeholder name: basalt-arc-29. The notebook should not claim export works yet, but these labels give the training rows concrete text to learn.
 
-The current notebook uses a deterministic mock teacher by default. It can show an optional short fine-tuning plan, but it does not download large weights, call paid APIs, run training, or export GGUF files unless the user explicitly opts in where supported.
-
-The final experience should feel simple: a user starts with notes, inspects the generated examples, optionally trains or adapts a small model, and gets a clear path toward running it locally.
+Fact card 4. Review ritual time: 4:17 PM. Review ritual color: ultramarine. The demo reviewer should look for both details together when checking whether an answer is grounded in the notes.

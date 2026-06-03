@@ -122,6 +122,32 @@ class MockTeacherTests(unittest.TestCase):
         self.assertTrue(all(row["source_chunk_id"] == "chunk-0001" for row in rows))
         validate_dataset(rows)
 
+    def test_mock_teacher_turns_key_value_facts_into_direct_grounded_rows(self):
+        chunk = TextChunk(
+            id="chunk-0001",
+            index=0,
+            text=(
+                "Project codename: Glass Harbor.\n"
+                "Notebook signal phrase: copper-lantern-47.\n"
+                "Review ritual color: ultramarine."
+            ),
+            char_count=111,
+            word_count=11,
+        )
+
+        rows = generate_mock_qa_pairs([chunk], examples_per_chunk=6)
+
+        joined_questions = " ".join(row["instruction"] for row in rows)
+        joined_answers = " ".join(row["response"] for row in rows)
+        self.assertIn("project codename", joined_questions.lower())
+        self.assertIn("notebook signal phrase", joined_questions.lower())
+        self.assertIn("review ritual color", joined_questions.lower())
+        self.assertIn("Glass Harbor", joined_answers)
+        self.assertIn("copper-lantern-47", joined_answers)
+        self.assertIn("ultramarine", joined_answers)
+        self.assertTrue(all(row["source_chunk_id"] == "chunk-0001" for row in rows))
+        validate_dataset(rows)
+
     def test_mock_teacher_engine_exposes_future_engine_interface_metadata(self):
         chunk = TextChunk(
             id="chunk-0001",

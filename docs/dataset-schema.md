@@ -33,7 +33,7 @@ These checks are dataset-quality signals, not model-quality signals. They help a
 
 ## Current Generators
 
-The notebook uses `MockTeacherEngine`, a deterministic local generator, by default. It is the safe path for local and CPU runs.
+The notebook uses `MockTeacherEngine`, a deterministic local generator, by default. It is the safe path for local and CPU runs. When a chunk contains simple `Label: value` facts, the mock teacher creates direct note-grounded study rows for those facts. For normal prose or uploaded notes without that shape, it keeps the older excerpt-based fallback.
 
 It does not:
 
@@ -49,6 +49,8 @@ The notebook also includes an opt-in real teacher path:
 - Switch: `RUN_REAL_TEACHER = True`.
 - Data behavior: model weights download from Hugging Face; notes text is not sent to a paid or proprietary remote API.
 
-Both generators must return validated rows with `instruction`, `response`, and `source_chunk_id`. The current prompt/templates ask for varied study rows: factual recall, explanation, flashcard, and misconception-check questions. The real teacher parser rejects invalid JSONL, missing fields, empty fields, and rows with the wrong `source_chunk_id`.
+Both generators must return validated rows with `instruction`, `response`, and `source_chunk_id`. The current prompt/templates ask for varied study rows and avoid duplicate or near-duplicate questions in the committed sample-notes path. The real teacher parser rejects invalid JSONL, missing fields, empty fields, and rows with the wrong `source_chunk_id`.
+
+The committed `examples/sample-notes.md` file also has four fixed held-out comparison rows. They use the same schema but different question wording from the mock-teacher training rows. These rows are used only when the committed sample facts are present; uploaded notes fall back to generated comparison questions.
 
 Any future remote teacher path must clearly say when uploaded notes leave the notebook runtime.

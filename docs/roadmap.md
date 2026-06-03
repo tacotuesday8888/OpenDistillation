@@ -80,7 +80,7 @@ Deliverables:
 - One recommended student model: `Qwen/Qwen2.5-0.5B-Instruct`.
 - One efficient supervised fine-tuning path: TRL `SFTTrainer` with PEFT LoRA.
 - Small default training run, skipped unless the notebook user opts in.
-- Bounded chunk-diverse before/after quality report, skipped unless training creates an adapter.
+- Bounded before/after quality report, skipped unless training creates an adapter. The sample-notes path uses held-out fact questions; uploaded notes use chunk-diverse generated questions.
 - Clear warnings about runtime, GPU, and quality limits.
 - Manual Colab GPU smoke-test checklist.
 
@@ -89,7 +89,7 @@ Exit criteria:
 - The notebook demonstrates a visible, useful behavior change on the sample notes.
 - The run stays small enough for a beginner Colab demo.
 
-Current status: the bounded training engine, chunk-diverse comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, reference-overlap scoring, fake base-vs-adapter generation, source-chunk diversity, and adapter-disabled base generation. A clean GitHub-opened Colab T4 runtime completed the optional dependency install, sample-notes flow, mock-generated dataset, LoRA adapter training, and real before/after output once before the multi-question report existed. A later Tesla T4 quality smoke ran the new 16-row dataset quality report, 3-step LoRA training, and 3-question before/after report; all trained-adapter answers were identical to the base answers. Follow-up diagnosis found the comparison path could compare against the adapter-enabled model on both sides; the local helper now uses PEFT's adapter-disabled inference path for base answers. A second T4 smoke after that fix made all three trained answers change, but they were generic or hallucinated rather than useful notes answers. Phase 3's useful behavior-change exit criterion is not met yet.
+Current status: the bounded training engine, sample-fact/chunk-diverse comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, reference-overlap scoring, fake base-vs-adapter generation, source-chunk diversity, held-out sample questions, and adapter-disabled base generation. A clean GitHub-opened Colab T4 runtime completed the optional dependency install, sample-notes flow, mock-generated dataset, LoRA adapter training, and real before/after output once before the multi-question report existed. A later Tesla T4 quality smoke ran the 16-row dataset quality report, 3-step LoRA training, and 3-question before/after report; all trained-adapter answers were identical to the base answers. Follow-up diagnosis found the comparison path could compare against the adapter-enabled model on both sides; the local helper now uses PEFT's adapter-disabled inference path for base answers. A second T4 smoke after that fix made all three trained answers change, but they were generic or hallucinated rather than useful notes answers. The current local sample-fact experiment produces 4 chunks, 24 schema-valid mock rows, 4/4 chunk coverage, zero duplicate or near-duplicate questions, zero answer-length warnings, and 4 held-out fact questions. The 24-row / 30-step Colab quality smoke is the next evidence gate. Phase 3's useful behavior-change exit criterion is not met yet.
 
 ## Phase 4: Local Notes-Model Run Path
 
