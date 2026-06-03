@@ -79,10 +79,13 @@ Verified locally in this repository:
 - Ignore rules for generated datasets, adapters, checkpoints, model weights, Hugging Face caches, notebook checkpoints, and common trainer artifacts.
 - Recovered Colab T4 run after dependency fixes: model download, 1-step LoRA training, adapter creation, and before/after comparison completed once.
 - Clean GitHub-opened Colab T4 run: bounded optional dependency install succeeded without upgrading `torch`, `USE_SAMPLE_NOTES = True` loaded the sample notes, `RUN_TRAINING = True` created `/content/OpenDistillation/outputs/notes-lora/adapter`, and before/after comparison printed both answers.
+- Real-teacher Colab attempt on 2026-06-03 opened the GitHub notebook from `origin/main` at `740d105`, but Chrome/Colab control timed out before runtime selection, teacher model load, QA generation, dataset validation, training, or comparison evidence could be collected.
 
 Still deferred or unverified:
 
 - Clean Colab GPU smoke-test evidence for `RUN_REAL_TEACHER = True`.
+- Whether `Qwen/Qwen2.5-1.5B-Instruct` can load and generate valid v0 rows on a fresh Colab T4 runtime.
+- Whether a real-teacher-generated dataset can continue into the verified LoRA training/comparison path without memory cleanup or other small fixes.
 - Real teacher output quality beyond local fake-dependency tests.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond a qualitative wiring check.

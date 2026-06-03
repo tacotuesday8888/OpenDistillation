@@ -6,6 +6,8 @@ Date: 2026-06-02
 
 Fresh Colab GPU training from a clean GitHub-opened runtime is **verified once** on 2026-06-02.
 
+The optional real-teacher Colab path is **not verified**. A 2026-06-03 attempt opened the GitHub notebook from `origin/main` at commit `740d105`, but Chrome control timed out before a fresh runtime could be selected, before a GPU type could be recorded for that attempt, and before the real teacher could be run. No real-teacher QA rows, dataset validation output, LoRA adapter, or before/after comparison output were produced or observed in that attempt.
+
 The clean run passed after three fixes were pushed:
 
 - Do not upgrade Colab's preinstalled GPU `torch` package.
@@ -13,6 +15,63 @@ The clean run passed after three fixes were pushed:
 - Load `examples/sample-notes.md` by default in Colab so the first smoke path does not block on a file picker.
 
 The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
+
+## Real Teacher Colab Attempt: Browser-Control Failure
+
+Date: 2026-06-03
+
+This attempt was intended to verify:
+
+```text
+sample TXT/MD notes -> Qwen/Qwen2.5-1.5B-Instruct real teacher QA generation -> dataset validation -> Qwen/Qwen2.5-0.5B-Instruct LoRA training -> before/after comparison
+```
+
+Repo state before the attempt:
+
+```text
+local branch: main
+local HEAD: 740d10541bdb2284a5656ec779303b7626a058c1
+origin/main: 740d10541bdb2284a5656ec779303b7626a058c1
+worktree: clean
+safe notebook defaults preserved:
+- INSTALL_TRAINING_DEPS = False
+- RUN_REAL_TEACHER = False
+- RUN_TRAINING = False
+```
+
+Chrome opened this GitHub Colab notebook:
+
+```text
+https://colab.research.google.com/github/tacotuesday8888/OpenDistillation/blob/main/notebooks/opendistillation_v0_demo.ipynb
+```
+
+The attempt did not reach the model/runtime portion. Browser control failed before the smoke cell could be inserted or run:
+
+```text
+Chrome tab opened under the real-teacher verification session.
+Reading the Colab DOM timed out after 60 seconds.
+Claiming the Colab tab timed out after 60 seconds.
+Listing Chrome agent tabs timed out after 60 seconds.
+Chrome extension health check via open-tabs timed out after 30 seconds.
+Computer Use tools were not surfaced in the available tool set for this turn, so there was no second UI-control path to continue the run.
+```
+
+Recorded values for this attempt:
+
+```text
+Fresh runtime: not proven; runtime selection was not reached.
+GPU type: not recorded for this attempt.
+Teacher model: intended Qwen/Qwen2.5-1.5B-Instruct; not loaded in this attempt.
+Real teacher loaded: no evidence.
+QA rows generated: 0 observed.
+Dataset validation result: not reached.
+LoRA training ran: no.
+Adapter output path: none.
+Before/after comparison ran: no.
+Exact failure: Chrome/Colab control became unavailable before runtime/output evidence could be collected.
+```
+
+This is a tooling/control failure, not evidence that `Qwen/Qwen2.5-1.5B-Instruct` is too heavy for a T4. Do not mark the real-teacher path as passed or failed on model grounds until a Colab GPU runtime actually reaches teacher model load/generation.
 
 ## Clean GitHub Runtime Success
 
@@ -246,4 +305,4 @@ The notebook is expected to:
 - Save any adapter output under `outputs/notes-lora/adapter`.
 - Run before/after comparison only after training creates an adapter.
 
-The actual student-model Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime. The optional real teacher implementation exists locally but still needs a clean Colab GPU smoke test. GGUF export and local runtime instructions remain unverified and deferred.
+The actual student-model Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime using mock-teacher rows. The optional real teacher implementation exists locally but still needs a clean Colab GPU smoke test. GGUF export and local runtime instructions remain unverified and deferred.
