@@ -6,7 +6,7 @@
 
 ## Current State
 
-OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, deterministic dataset quality reporting, an opt-in local real teacher path, and bounded optional training and comparison entry points. A clean GitHub-opened Colab T4 runtime completed one optional training/comparison smoke test from the sample notes path, a later T4 verification completed the real-teacher path from sample notes through before/after comparison, and the first uploaded-notes rehearsal has one `.txt` pass and one `.md` pass through the default mock-teacher path.
+OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, deterministic dataset quality reporting, an opt-in local real teacher path, and bounded optional training and comparison entry points. A clean GitHub-opened Colab T4 runtime completed one optional training/comparison smoke test from the sample notes path, a later T4 verification completed the real-teacher path from sample notes through before/after comparison, the first uploaded-notes rehearsal has one `.txt` pass and one `.md` pass through the default mock-teacher path, and the first multi-question Colab GPU quality smoke ran on a Tesla T4. That quality smoke passed wiring but showed unchanged answers: all three trained-adapter answers were identical to the base answers.
 
 The repo now contains:
 
@@ -21,7 +21,7 @@ The repo now contains:
 - Optional multi-question before/after quality report, skipped by default in the notebook.
 - Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
 - Manual Colab GPU smoke-test checklist.
-- Smoke-test results file recording the first real Colab T4 blockers, the recovered-runtime pass, one clean GitHub-opened T4 training/comparison pass, one real-teacher end-to-end T4 verification, the first uploaded `.txt` rehearsal pass, the first uploaded `.md` rehearsal pass, and earlier historical upload-control blockers.
+- Smoke-test results file recording the first real Colab T4 blockers, the recovered-runtime pass, one clean GitHub-opened T4 training/comparison pass, one real-teacher end-to-end T4 verification, the first uploaded `.txt` rehearsal pass, the first uploaded `.md` rehearsal pass, the first multi-question quality smoke, and earlier historical upload-control blockers.
 - First-demo implementation plan.
 - GitHub issue forms.
 - Starter milestone and issue plan.
@@ -46,7 +46,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task should run and document the first Colab GPU quality smoke test for the new report shape without implementing export or broadening beyond TXT/MD notes.
+The next task should improve the first notes-model learning signal without implementing export or broadening beyond TXT/MD notes. Start from the unchanged Tesla T4 quality smoke: 16 mock-teacher rows, 3 training steps, 3 comparison questions, and no visible answer change.
 
 ## Important Guardrails
 

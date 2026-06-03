@@ -10,7 +10,7 @@ The optional real-teacher Colab path is **verified once** on 2026-06-03. The ver
 
 The uploaded-notes Colab rehearsal is **verified once** on 2026-06-03 for both one `.txt` file and one `.md` file. Each ran through validation, chunking, mock-teacher rows, dataset save, training skipped, and comparison skipped with status-log evidence.
 
-The first quality-loop update is **verified locally** on 2026-06-03. The default sample-notes path produced varied mock-teacher rows and a deterministic dataset quality report. A fresh Colab GPU quality smoke test for the new multi-question model-quality report has not run yet.
+The first quality-loop update is **verified locally and once in Colab T4** on 2026-06-03. The default sample-notes path produced varied mock-teacher rows and a deterministic dataset quality report. The Colab GPU quality smoke run trained a 3-step LoRA adapter and ran the new three-question model-quality report, but the trained-adapter answers were identical to the base-model answers, so the quality result is **unchanged / no visible improvement**.
 
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
@@ -21,6 +21,135 @@ The clean run passed after three fixes were pushed:
 - Load `examples/sample-notes.md` by default in Colab so the first smoke path does not block on a file picker.
 
 The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
+
+## Colab GPU Quality Smoke: Multi-Question Report
+
+Date: 2026-06-03
+
+Verified path:
+
+```text
+sample-notes.md -> mock-local-teacher rows -> deterministic dataset quality report -> 3-step Qwen2.5-0.5B LoRA adapter -> 3-question before/after report
+```
+
+Runtime and repo state:
+
+```text
+Notebook URL: https://colab.research.google.com/github/tacotuesday8888/OpenDistillation/blob/main/notebooks/opendistillation_v0_demo.ipynb
+Git commit used by Colab clone: 276a8d3e050379a78212fa02f787ac7a0b44e245
+Runtime: T4 GPU
+GPU: Tesla T4
+torch: 2.11.0+cu128
+transformers: 4.57.6
+datasets: 4.8.5
+trl: 0.29.1
+peft: 0.18.1
+accelerate: 1.13.0
+```
+
+Live-only settings:
+
+```text
+INSTALL_TRAINING_DEPS = True
+USE_SAMPLE_NOTES = True
+RUN_REAL_TEACHER = False
+RUN_TRAINING = True
+training max_steps = 3
+comparison max_examples = 3
+```
+
+Dataset quality evidence:
+
+```text
+Input file: sample-notes.md
+Characters: 941
+Approx. words: 152
+Chunks: 4
+Teacher engine: mock-local-teacher
+Generated examples: 16
+Rows: 16 total, 16 schema-valid
+Chunk coverage: 4/4
+Duplicate questions: 0
+Near-duplicate questions: 0
+Very short answers: 0
+Very long answers: 0
+Issues: 0
+Dataset runtime path: /tmp/opendistillation_quality_smoke_training_data.jsonl
+```
+
+Training evidence:
+
+```text
+Training ran: true
+Student model: Qwen/Qwen2.5-0.5B-Instruct
+Training engine: trl-sfttrainer-peft-lora
+Max steps: 3
+Adapter path: /content/OpenDistillation-quality-smoke-outputs/notes-lora-quality-smoke/adapter
+Adapter exists: true
+Adapter files: README.md, adapter_config.json, adapter_model.safetensors, added_tokens.json, chat_template.jinja, merges.txt, special_tokens_map.json, tokenizer.json, tokenizer_config.json, training_args.bin, vocab.json
+Elapsed runtime: 98.2 seconds
+```
+
+Comparison evidence:
+
+```text
+Comparison ran: true
+Comparison questions: 3
+Base/trained answer result: unchanged
+Reference-overlap deltas: +0.000, +0.000, +0.000
+Quality judgment: no visible improvement; all trained-adapter answers were identical to the base-model answers.
+```
+
+Questions used:
+
+```text
+1. Factual recall: what detail from chunk-0001 should be remembered?
+2. Explain the main idea of chunk-0001 in plain language.
+3. Flashcard: what should the front and back say for chunk-0001?
+```
+
+Answer excerpts:
+
+```text
+Question 1 base/trained answer:
+The details that should be remembered from chunk-0001 include the following: the name of the entity being referenced, context/background information, and additional relevant details.
+
+Question 2 base/trained answer:
+The main idea of Chunk-0001 is that it is important to have a clear and concise message or instruction for your users.
+
+Question 3 base/trained answer:
+The front and back of the flashcards should be labeled with "chunk-0001" or similar text and use a topic title such as "Introduction to Machine Learning".
+```
+
+These answers are generic and not strongly grounded in the sample notes. Because the adapter answers matched the base answers exactly, this run proves the Colab wiring, dataset-quality report, adapter creation, and comparison report. It does not prove that the tiny adapter learned the notes.
+
+Status evidence recovered from `/tmp/opendistillation_status.jsonl`:
+
+```text
+OD_STATUS stage=setup status=ready ... "git_commit": "276a8d3e050379a78212fa02f787ac7a0b44e245"
+OD_STATUS stage=install status=succeeded ... "torch": "2.11.0+cu128"
+OD_STATUS stage=runtime_check status=ready ... "gpu_name": "Tesla T4"
+OD_STATUS stage=teacher status=succeeded ... "generated_examples": 16
+OD_STATUS stage=dataset_quality status=reported ... "rows": 16, "valid_rows": 16, "covered_chunks": 4, "expected_chunks": 4, "issues": 0
+OD_STATUS stage=dataset status=saved ... "rows": 16
+OD_STATUS stage=training status=started ... "max_steps": 3
+OD_STATUS stage=training status=succeeded ... "created_model_artifact": true
+OD_STATUS stage=comparison status=configured ... "question_count": 3
+OD_STATUS stage=comparison status=succeeded ... "question_count": 3
+```
+
+Initial attempt and fix:
+
+```text
+First attempt failed before dataset quality with:
+ImportError: cannot import name 'analyze_dataset_quality' from 'opendistillation' (/content/OpenDistillation/src/opendistillation/__init__.py)
+
+The same failed attempt also showed torch 2.11.0+cpu, proving the runtime was still CPU.
+```
+
+Root cause: the live Colab runtime still had an older `/content/OpenDistillation/src` path from a previous tab/session, and the runtime dialog had not actually selected T4. The successful retry explicitly selected `T4 GPU`, confirmed `torch 2.11.0+cu128`, cleared stale `opendistillation` imports, forced imports from `/content/OpenDistillation-quality-smoke-276a8d3/src`, and reran the same bounded smoke.
+
+Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
 ## Local Quality Loop Verification
 
@@ -57,8 +186,7 @@ OD_STATUS stage=comparison status=skipped ... "reason": "training_result_is_none
 
 What remains unverified:
 
-- Running the new multi-question model-quality report in Colab after opt-in training.
-- Whether the trained adapter answers improve in a useful, note-grounded way across several generated questions.
+- Whether the trained adapter answers can improve in a useful, note-grounded way after the first unchanged quality smoke.
 - Real-teacher output quality beyond the earlier tiny 1-row smoke test.
 
 ## Real Teacher End-to-End Success

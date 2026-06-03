@@ -162,7 +162,7 @@ Acceptance criteria:
 - Output artifacts stay in ignored runtime paths.
 - Missing GPU and out-of-memory failures are explained plainly.
 
-Status: bounded local engine and notebook entry point exist. A clean GitHub-opened Colab T4 runtime completed the optional training path and created `/content/OpenDistillation/outputs/notes-lora/adapter`. A later real-teacher T4 verification confirmed a 1-step adapter at `/content/OpenDistillation/outputs/notes-lora-real-teacher-smoke/adapter`. The notebook now emits status markers for long optional cells and a deterministic dataset quality report. Remaining work is a fresh Colab quality smoke run, not broadening the training system.
+Status: bounded local engine and notebook entry point exist. A clean GitHub-opened Colab T4 runtime completed the optional training path and created `/content/OpenDistillation/outputs/notes-lora/adapter`. A later real-teacher T4 verification confirmed a 1-step adapter at `/content/OpenDistillation/outputs/notes-lora-real-teacher-smoke/adapter`. The notebook now emits status markers for long optional cells and a deterministic dataset quality report. A 2026-06-03 Tesla T4 quality smoke created `/content/OpenDistillation-quality-smoke-outputs/notes-lora-quality-smoke/adapter` from 16 mock-teacher rows with `max_steps=3`; the adapter answers were unchanged from the base answers, so remaining work is improving the learning signal, not broadening the training system.
 
 ### 10. Add before/after comparison
 
@@ -176,7 +176,7 @@ Acceptance criteria:
 - Both answers are shown side by side.
 - The comparison is labeled as a sanity check, not a benchmark.
 
-Status: implemented locally as an optional notebook section using up to three generated dataset questions with crude reference-overlap signals. An older clean GitHub-opened Colab T4 runtime printed one real base-vs-adapter comparison before the multi-question report existed. The new report shape still needs a fresh Colab quality smoke run. The output is a qualitative sanity check, not a benchmark.
+Status: implemented locally as an optional notebook section using up to three generated dataset questions with crude reference-overlap signals. An older clean GitHub-opened Colab T4 runtime printed one real base-vs-adapter comparison before the multi-question report existed. The new report shape ran once in Colab on 2026-06-03 with three comparison questions; all trained-adapter answers matched the base answers exactly. The output is a qualitative sanity check, not a benchmark.
 
 ### 11. Run manual Colab GPU smoke test for optional training and comparison
 

@@ -125,10 +125,11 @@ Verified once in a clean GitHub-opened Colab T4 runtime:
 - Student model download.
 - The actual `SFTLoRATrainingEngine.train()` call.
 - Adapter output creation, memory use, and runtime.
+- A later 3-step quality smoke from 16 mock-teacher rows created `/content/OpenDistillation-quality-smoke-outputs/notes-lora-quality-smoke/adapter` on a Tesla T4.
 
 Still unverified:
 
-- Adapter quality beyond a qualitative wiring check.
+- Adapter quality beyond an unchanged qualitative wiring check.
 
 ## Before/After Model Quality Engine
 
@@ -169,10 +170,11 @@ Verified once in a clean GitHub-opened Colab T4 runtime:
 - Real base-model generation.
 - Real PEFT adapter loading.
 - Real trained-adapter generation.
+- The multi-question report with three generated dataset questions.
 
 Still unverified:
 
-- Whether the answer changes in a useful way after the new multi-question quality report runs in Colab with more real-teacher rows and more meaningful training data.
+- Whether the answer changes in a useful way after improving the dataset or training signal; the first three-question Colab quality smoke produced identical base and trained answers.
 
 ## Future Export Engines
 

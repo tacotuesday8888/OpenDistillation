@@ -89,7 +89,7 @@ Exit criteria:
 - The notebook demonstrates a visible behavior change on the sample notes.
 - The run stays small enough for a beginner Colab demo.
 
-Current status: the bounded training engine, multi-question comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, reference-overlap scoring, and fake base-vs-adapter generation. A clean GitHub-opened Colab T4 runtime completed the optional dependency install, sample-notes flow, mock-generated dataset, LoRA adapter training, and real before/after output once before the multi-question report existed. The new report shape needs a fresh Colab quality smoke run. The output is a qualitative wiring check, not a benchmark.
+Current status: the bounded training engine, multi-question comparison engine, runtime readiness helpers, manual smoke-test checklist, and notebook entry points exist. Local tests cover configuration, dataset formatting, runtime messages, comparison request behavior, reference-overlap scoring, and fake base-vs-adapter generation. A clean GitHub-opened Colab T4 runtime completed the optional dependency install, sample-notes flow, mock-generated dataset, LoRA adapter training, and real before/after output once before the multi-question report existed. A later Tesla T4 quality smoke ran the new 16-row dataset quality report, 3-step LoRA training, and 3-question before/after report; all trained-adapter answers were identical to the base answers. The report shape is verified as wiring, but Phase 3's visible behavior-change exit criterion is not met yet.
 
 ## Phase 4: Local Notes-Model Run Path
 

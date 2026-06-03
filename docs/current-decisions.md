@@ -92,16 +92,17 @@ Verified locally in this repository:
 - Uploaded `.txt` Colab rehearsal on 2026-06-03 started from clean `origin/main` at `6f7d9c66cacb07dc82571abb85b3232285f6961c`. Computer Use clicked the actual Colab `Choose Files` button and the native macOS Open dialog selected `/private/tmp/opendistillation-upload-rehearsal-notes.txt`. The run reached validation, 1 chunk, `mock-local-teacher`, 2 QA rows, dataset saved to `/tmp/opendistillation_training_data.jsonl`, training skipped, and comparison skipped. The Colab Terminal status log recorded setup ready, install skipped, teacher succeeded, dataset saved, training skipped, and comparison skipped.
 - Earlier uploaded `.md` Colab rehearsal on 2026-06-03 reached the actual Colab upload widget from clean `origin/main` at `6f7d9c66cacb07dc82571abb85b3232285f6961c`, but `/private/tmp/opendistillation-upload-rehearsal-notes.md` could not be attached through the native Open dialog or Chrome file-chooser fallback. That blocker was later resolved and is kept only as historical context.
 - Uploaded `.md` Colab rehearsal on 2026-06-03 started from clean `origin/main` at `0e53cdd1e860a1c93007cb20e4c143c90f0a7af9`. Chrome edited the runtime-only upload cell to `USE_SAMPLE_NOTES = False`; Computer Use clicked the actual Colab `Choose Files` button; the native macOS Open dialog selected `/private/tmp/opendistillation-upload-rehearsal-notes.md` by path/suggestion; and the run reached validation, 1 chunk, `mock-local-teacher`, 2 QA rows, dataset saved to `/tmp/opendistillation_training_data.jsonl`, training skipped, and comparison skipped. The Colab Terminal status log recorded setup ready, install skipped, teacher succeeded, dataset saved, training skipped, and comparison skipped.
+- Colab GPU quality smoke on 2026-06-03 used commit `276a8d3e050379a78212fa02f787ac7a0b44e245`, Tesla T4, sample notes, `mock-local-teacher`, 16 generated rows, dataset quality reporting with 16/16 schema-valid rows, 4/4 chunk coverage, zero duplicate/near-duplicate questions, zero answer-length warnings, a 3-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA adapter, and a 3-question before/after report. The adapter answers were identical to the base answers on all three questions, so the quality result is unchanged and not evidence of useful learning.
 
 Still deferred or unverified:
 
 - Real teacher output quality beyond a tiny 1-row smoke test.
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
-- Fresh Colab GPU quality smoke test for the new 16-row dataset quality report and multi-question before/after quality report.
+- Whether a tiny Colab adapter run can produce visibly more note-grounded answers after the first unchanged quality smoke.
 - GGUF export and local runtime instructions.
-- Adapter quality beyond deterministic local quality helpers and earlier qualitative wiring checks.
+- Adapter quality beyond deterministic local quality helpers and the unchanged three-question Colab quality smoke.
 - Larger uploaded notes files and higher row counts beyond the tiny TXT/MD rehearsal files.
-- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, and the real-teacher end-to-end T4 verification.
+- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, the real-teacher end-to-end T4 verification, the uploaded-notes rehearsals, and the first unchanged multi-question Colab quality smoke.
 
 Why this path:
 

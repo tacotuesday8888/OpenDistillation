@@ -168,7 +168,7 @@ Expected output:
 
 ### Manual Colab Smoke Test
 
-The optional training and comparison path should be called verified only after `docs/colab-smoke-test-checklist.md` is completed.
+The optional training and comparison wiring is verified once with the multi-question report after `docs/colab-smoke-test-checklist.md` evidence was collected in Colab. The first quality result was unchanged: all three trained-adapter answers matched the base-model answers, so the demo still needs better learning signal before claiming useful note learning.
 
 The checklist records:
 
@@ -234,8 +234,8 @@ Included now:
 
 Planned later in v0:
 
-- Fresh Colab GPU quality smoke test for the new dataset quality report and bounded model-quality report.
-- Teacher output quality hardening after the first quality smoke evidence.
+- Improve the small notes dataset/training setup after the first Colab quality smoke showed unchanged adapter answers.
+- Teacher output quality hardening after the first unchanged quality evidence.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance.
 
