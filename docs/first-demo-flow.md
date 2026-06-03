@@ -229,7 +229,7 @@ Included now:
 Planned later in v0:
 
 - Teacher output quality hardening after the first one-row real-teacher smoke test.
-- Upload-path smoke tests with user-provided `.txt` and `.md` files.
+- Upload-path smoke tests with user-provided `.txt` and `.md` files after browser file-upload control is unblocked.
 - Local-run guidance.
 
 Excluded:

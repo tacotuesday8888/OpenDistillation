@@ -382,3 +382,49 @@ The notebook is expected to:
 - Run before/after comparison only after training creates an adapter.
 
 The actual student-model Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime using mock-teacher rows. The real-teacher path has also passed once on a T4 using one sample-note chunk and a 1-step adapter verification. GGUF export and local runtime instructions remain unverified and deferred.
+
+## Uploaded Notes Rehearsal Attempt
+
+Date: 2026-06-03
+
+Commit tested:
+
+```text
+7113f87fa915b789cc77bbfb423b405defd9b5ec
+```
+
+Notebook URL:
+
+```text
+https://colab.research.google.com/github/tacotuesday8888/OpenDistillation/blob/main/notebooks/opendistillation_v0_demo.ipynb?cachebust=7113f87
+```
+
+Temporary local files prepared outside the repository:
+
+```text
+/private/tmp/opendistillation-upload-rehearsal-notes.txt
+/private/tmp/opendistillation-upload-rehearsal-notes.md
+```
+
+Confirmed in Colab before the upload blocker:
+
+```text
+Using project root: /content/OpenDistillation
+OD_STATUS stage=setup status=ready details={"stage": "setup", "status": "ready", "project_root": "/content/OpenDistillation", "colab": true}
+OD_STATUS stage=install status=configured details={"stage": "install", "status": "configured", "install_training_deps": false, "packages": ["transformers<5", "datasets", "trl<1", "peft<0.19", "accelerate"], "command": "python -m pip install -U 'transformers<5' datasets 'trl<1' 'peft<0.19' accelerate"}
+OD_STATUS stage=install status=skipped
+```
+
+Result:
+
+- Uploaded `.txt` path: not verified.
+- Uploaded `.md` path: not verified.
+- Teacher success, dataset saved, training skipped, and comparison skipped markers were not reached for uploaded notes.
+
+Blocker:
+
+The public GitHub-backed Colab notebook loaded the current hardened notebook, and the upload cell was temporarily changed in the browser notebook to `USE_SAMPLE_NOTES = False`. Running the cell opened Colab's `google.colab.files.upload()` output frame. Chrome automation could see a visible, enabled `input[type="file"]` inside that output frame and a `Cancel upload` button, but `tab.playwright.waitForEvent("filechooser")` timed out twice when clicking the input. The pending upload was canceled so the runtime was not left busy.
+
+Computer Use was installed after Chrome hit the file-chooser blocker, but tool discovery still did not expose a callable Computer control tool in this thread. No manual user-assisted upload result was used.
+
+This is an automation/control blocker, not evidence that the notebook upload path works or fails for a normal human Colab user. The uploaded-notes path remains unverified until a browser-control path can attach the `.txt` and `.md` files and the notebook reaches teacher, dataset, training-skipped, and comparison-skipped markers.

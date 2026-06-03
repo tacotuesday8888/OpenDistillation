@@ -233,3 +233,5 @@ Acceptance criteria:
 - One uploaded `.md` file runs through the default mock-teacher path.
 - The notebook status log records setup, teacher, dataset, training skipped, and comparison skipped markers.
 - Any confusing beginner-facing text is tightened without adding new model profiles or export work.
+
+Status: attempted on 2026-06-03 at commit `7113f87fa915b789cc77bbfb423b405defd9b5ec`. Colab setup and install-skip markers printed, and the upload cell reached the `files.upload()` output frame. Chrome automation could not attach the local `.txt` file because file-chooser events timed out inside the Colab iframe; Computer Use was installed but did not expose a callable control tool in this thread. No uploaded `.txt` or `.md` pass is claimed yet.

@@ -83,6 +83,7 @@ Verified locally in this repository:
 - Clean GitHub-opened Colab T4 run: bounded optional dependency install succeeded without upgrading `torch`, `USE_SAMPLE_NOTES = True` loaded the sample notes, `RUN_TRAINING = True` created `/content/OpenDistillation/outputs/notes-lora/adapter`, and before/after comparison printed both answers.
 - Real-teacher Colab attempt on 2026-06-03 opened the GitHub notebook from `origin/main` at `740d105`, but Chrome/Colab control timed out before runtime selection, teacher model load, QA generation, dataset validation, training, or comparison evidence could be collected.
 - Real-teacher Colab verification on 2026-06-03 used commit `a04538dfc999047255ddc4747d91d89e9f0ed3f6`, Tesla T4, `Qwen/Qwen2.5-1.5B-Instruct`, one sample-notes chunk, 1 generated QA row, passed dataset validation, confirmed a 1-step LoRA adapter at `/content/OpenDistillation/outputs/notes-lora-real-teacher-smoke/adapter`, and ran before/after comparison.
+- Uploaded-notes Colab rehearsal on 2026-06-03 used commit `7113f87fa915b789cc77bbfb423b405defd9b5ec`. Setup and install-skip status markers printed in Colab, but Chrome file-chooser control timed out on Colab's `files.upload()` iframe before a `.txt` or `.md` file could be attached. Computer Use was installed but no callable Computer control tool was exposed in this thread.
 
 Still deferred or unverified:
 
@@ -90,7 +91,7 @@ Still deferred or unverified:
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond a qualitative wiring check.
-- Upload-path smoke tests for user-provided `.txt` and `.md` files.
+- Upload-path smoke tests for user-provided `.txt` and `.md` files. The latest attempt reached the Colab upload widget but did not attach files, so no upload pass is claimed.
 - `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, and the real-teacher end-to-end T4 verification.
 
 Why this path:

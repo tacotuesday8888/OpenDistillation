@@ -159,7 +159,7 @@ The current prototype covers the safe first slice of the notes / school model:
 7. Prepare a short optional LoRA fine-tuning request from those rows.
 8. Prepare an optional before/after comparison from the first generated question.
 
-The next implementation work is to rehearse the first public demo with one uploaded `.txt` file and one uploaded `.md` file, then tighten any confusing beginner-facing text without broadening v0. GGUF/local export comes after that.
+The next implementation work is to unblock and rerun the first public Colab upload rehearsal with one uploaded `.txt` file and one uploaded `.md` file, then tighten any confusing beginner-facing text without broadening v0. GGUF/local export comes after that.
 
 Future personal model types should reuse the same broad workflow, but they should not be implemented until the notes model path works.
 

@@ -21,7 +21,7 @@ The repo now contains:
 - Optional before/after comparison engine for one generated question, skipped by default in the notebook.
 - Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
 - Manual Colab GPU smoke-test checklist.
-- Smoke-test results file recording the first real Colab T4 blockers, the recovered-runtime pass, one clean GitHub-opened T4 training/comparison pass, and one real-teacher end-to-end T4 verification.
+- Smoke-test results file recording the first real Colab T4 blockers, the recovered-runtime pass, one clean GitHub-opened T4 training/comparison pass, one real-teacher end-to-end T4 verification, and one uploaded-notes rehearsal blocked by browser file attachment.
 - First-demo implementation plan.
 - GitHub issue forms.
 - Starter milestone and issue plan.
@@ -46,7 +46,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task should rehearse the first public Colab demo with uploaded TXT/MD notes while keeping the deterministic mock teacher as the fallback.
+The next task should unblock browser-controlled file attachment in Colab, then rehearse the first public demo with uploaded TXT/MD notes while keeping the deterministic mock teacher as the fallback.
 
 ## Important Guardrails
 
