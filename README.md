@@ -57,6 +57,7 @@ What exists now:
 What does not exist yet:
 
 - Evidence that the tiny adapter meaningfully improves answers on the new fact-rich sample. The first multi-question Colab quality smoke passed wiring, but trained answers were unchanged from base answers. The second smoke fixed the comparison path and made adapter differences visible, but the answers were still generic or hallucinated.
+- A completed Colab T4 answer-quality run for the new 24-row / 30-step sample-fact smoke. The latest attempt reached T4 selection, but Colab refused GPU connection because of usage limits before notebook execution.
 - Multiple personal model profiles.
 - Coding, writing, work, or phone model flows.
 - A CLI.
@@ -116,7 +117,7 @@ The planned notes-model notebook flow is specified in [`docs/first-demo-flow.md`
 8. If training runs, compare held-out sample-fact questions for the committed sample notes, or chunk-diverse generated questions for uploaded notes.
 9. Show clear placeholders for export and local running.
 
-The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers and creates `/tmp/opendistillation_status.jsonl` for recoverable status markers. The default sample-notes path now generates 24 fact-aware mock rows from four short chunks and prints four held-out sample-fact comparison questions. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke tests for mock-teacher training/comparison and real-teacher end-to-end wiring are recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md). That file also records the first uploaded-notes rehearsal, where both `.txt` and `.md` upload paths passed through validation, chunking, mock teacher, dataset save, training skipped, and comparison skipped. The latest completed multi-question quality smoke used a temporary live Colab harness against commit `6a98c92599d1defa2b4a61510f7372f399f5fd87`: the adapter changed all three answers after the comparison fix, but the answers were not better. The new 24-row / 30-step sample-fact smoke is prepared locally and pushed, but the first Colab attempt did not reach notebook execution because browser control timed out.
+The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers and creates `/tmp/opendistillation_status.jsonl` for recoverable status markers. The default sample-notes path now generates 24 fact-aware mock rows from four short chunks and prints four held-out sample-fact comparison questions. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke tests for mock-teacher training/comparison and real-teacher end-to-end wiring are recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md). That file also records the first uploaded-notes rehearsal, where both `.txt` and `.md` upload paths passed through validation, chunking, mock teacher, dataset save, training skipped, and comparison skipped. The latest completed multi-question quality smoke used a temporary live Colab harness against commit `6a98c92599d1defa2b4a61510f7372f399f5fd87`: the adapter changed all three answers after the comparison fix, but the answers were not better. The new 24-row / 30-step sample-fact smoke is prepared locally and pushed. The latest attempt did not run because Colab refused T4 GPU connection due to usage limits before notebook execution.
 
 ## Repository Map
 
@@ -161,7 +162,7 @@ The current prototype covers the safe first slice of the notes / school model:
 7. Prepare a short optional LoRA fine-tuning request from those rows.
 8. Prepare an optional bounded before/after quality report from held-out sample-fact questions or chunk-diverse generated questions.
 
-The next implementation work is to run and judge the bounded sample-fact Colab quality smoke honestly: better, unchanged, or worse. Do not broaden beyond the notes model or build export before the demo flow is stable.
+The next implementation work is to regain Colab GPU access and run the bounded sample-fact quality smoke honestly: better, unchanged, or worse. Do not broaden beyond the notes model or build export before the demo flow is stable.
 
 Future personal model types should reuse the same broad workflow, but they should not be implemented until the notes model path works.
 

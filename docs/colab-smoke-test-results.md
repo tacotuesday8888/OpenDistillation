@@ -14,7 +14,7 @@ The first quality-loop update is **verified locally and twice in Colab T4** on 2
 
 Follow-up local diagnosis on 2026-06-03 found a comparison bug: the PEFT adapter was loaded before base-answer generation, and PEFT documents that the passed base model may be modified in place. That means the first quality smoke may have compared the adapter-enabled model to itself. The local comparison helper now generates base answers inside PEFT's `disable_adapter()` context and chooses questions from distinct source chunks first. The second Colab T4 quality smoke ran after that fix. All three trained-adapter answers changed, so the fixed comparison path can now see adapter-side movement. The answer quality was **not improved / worse overall** because the trained answers were still generic or hallucinated.
 
-The sample-fact learning-signal experiment is **verified locally but not yet verified in Colab** on 2026-06-03. The local path now uses fact-rich sample notes, 24 mock rows, zero dataset-quality issues, four held-out sample-fact questions, and a bounded optional 30-step LoRA plan. A T4 run was attempted after pushing commit `18b6c6c`, but Chrome extension communication timed out before Colab could be operated. No Colab runtime, package versions, training run, adapter path, base/trained answers, overlap deltas, or better/unchanged/worse answer judgment were collected for this new experiment.
+The sample-fact learning-signal experiment is **verified locally but not yet verified in a Colab T4 training run** on 2026-06-03. The local path now uses fact-rich sample notes, 24 mock rows, zero dataset-quality issues, four held-out sample-fact questions, and a bounded optional 30-step LoRA plan. The latest T4 attempt used `google-colab-cli` first, then the Colab browser UI. The CLI proved it could authenticate, create a CPU Colab VM, execute code, and terminate the session, but GPU assignment failed before notebook execution. The browser fallback selected a T4 runtime in Colab, then Colab showed a GPU quota modal: "Cannot connect to GPU backend" and "You cannot currently connect to a GPU due to usage limits in Colab." No package versions, training run, adapter path, base/trained answers, overlap deltas, or better/unchanged/worse answer judgment were collected for this new experiment.
 
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
@@ -30,7 +30,7 @@ The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_T
 
 Date: 2026-06-03
 
-Status: **not run in Colab / answer quality unverified**.
+Status: **blocked by Colab GPU usage limits / answer quality unverified**.
 
 Intended path:
 
@@ -41,7 +41,7 @@ fact-rich sample-notes.md -> mock-local-teacher rows -> deterministic dataset qu
 Repo state prepared for Colab:
 
 ```text
-Git commit pushed before attempt: 18b6c6c
+Git commit pushed before attempt: bef902cd0cd4005ec5931e6190e1247e98fa936b
 Notebook URL intended for run: https://colab.research.google.com/github/tacotuesday8888/OpenDistillation/blob/main/notebooks/opendistillation_v0_demo.ipynb
 Committed safe defaults: INSTALL_TRAINING_DEPS = False, RUN_REAL_TEACHER = False, RUN_TRAINING = False
 Live-only intended settings: INSTALL_TRAINING_DEPS = True, USE_SAMPLE_NOTES = True, RUN_REAL_TEACHER = False, RUN_TRAINING = True
@@ -75,15 +75,42 @@ Held-out questions prepared:
 4. What time and color are paired in the review ritual notes?
 ```
 
-Why Colab did not run:
+CLI evidence:
 
 ```text
-Chrome plugin connection attempt 1: timed out before open-tabs check completed.
-Chrome plugin connection attempt 2: timed out before open-tabs check completed.
-Chrome health checks: Google Chrome running, Chrome installed, Codex Chrome Extension installed/enabled in selected Profile 36, native host manifest present and correct.
-Recovery step: opened a fresh Chrome window for selected Profile 36.
-Chrome plugin retry after recovery: timed out again.
-Computer Use fallback: not sufficient in this session because only click/key actions were exposed, without a usable screen-reading or typing surface for Colab.
+Tool: google-colab-cli 0.5.8.dev4+gff13ccf31
+Auth path: application-default credentials with the Colab scope
+CPU probe command shape: colab --auth adc run /private/tmp/opendistillation_colab_cli_probe.py
+CPU probe result: OD_COLAB_CLI_PROBE {"cuda": false, "gpu": null, "python": "3.12.13", "torch": "2.11.0+cpu", "torch_imported": true}
+CPU session cleanup: session terminated and local sessions.json returned to {}
+T4 probe command shape: colab --auth adc run --gpu T4 /private/tmp/opendistillation_colab_cli_probe.py
+T4 probe result: failed before code execution with Colab backend Service Unavailable and TLS EOF errors while assigning the runtime.
+L4 probe result: also failed before code execution with TLS EOF while assigning the runtime.
+```
+
+Browser fallback evidence:
+
+```text
+Chrome extension control: working again; the Colab tab was visible and operable.
+Notebook opened: https://colab.research.google.com/github/tacotuesday8888/OpenDistillation/blob/main/notebooks/opendistillation_v0_demo.ipynb
+Runtime action: opened "Change runtime type", selected T4 GPU, saved, and clicked "Connect T4".
+Colab modal title: Cannot connect to GPU backend
+Colab modal body: You cannot currently connect to a GPU due to usage limits in Colab.
+Result: no T4 runtime was allocated, so notebook cells were not executed for this smoke.
+```
+
+Recorded values for this attempt:
+
+```text
+Colab ran the sample-fact smoke: no
+GPU type requested: T4
+GPU type allocated: none
+Dataset quality in Colab: not produced
+Training steps completed: 0/30
+Adapter output path: none
+Before/after comparison ran: no
+Answer-quality judgment: blocked, not better/unchanged/worse
+Exact blocker: Colab GPU usage limits prevented T4 connection before notebook execution.
 ```
 
 Remaining unverified for this experiment:

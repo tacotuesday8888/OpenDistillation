@@ -173,7 +173,7 @@ Expected output:
 
 The optional training and comparison wiring is verified with two multi-question Colab reports after `docs/colab-smoke-test-checklist.md` evidence was collected. The first quality result was unchanged: all three trained-adapter answers matched the base-model answers. Follow-up local diagnosis found the comparison path could accidentally compare the adapter-enabled model to itself; the comparison helper now disables the adapter for the base answer and spreads questions across chunks. The second Colab quality smoke used that fixed comparison path. All three trained-adapter answers changed, but they were still generic or hallucinated instead of useful note-grounded answers. The demo should not claim useful note learning yet.
 
-The next bounded quality smoke uses the fact-rich sample notes, 24 mock rows, the four held-out sample-fact questions, and a 30-step optional LoRA run. The 2026-06-03 attempt did not reach notebook execution because browser control timed out, so its answer-quality result remains unverified. When it runs, record the result as better, unchanged, or worse based on the actual base and trained answers.
+The next bounded quality smoke uses the fact-rich sample notes, 24 mock rows, the four held-out sample-fact questions, and a 30-step optional LoRA run. The 2026-06-03 attempt did not reach notebook execution because Colab refused T4 GPU connection due to usage limits, so its answer-quality result remains unverified. When GPU access is available again, record the result as better, unchanged, or worse based on the actual base and trained answers.
 
 The checklist records:
 

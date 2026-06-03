@@ -81,7 +81,7 @@ Verified locally in this repository:
 - Notebook JSON parsing and the default CPU path where training remains skipped.
 - Notebook default CPU path with dataset quality report: sample notes produced 4 chunks, 16 mock-teacher rows, 16 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, training skipped, comparison skipped, and export skipped.
 - Current notebook default CPU path with the fact-rich sample notes: sample notes produced 4 chunks, 24 mock-teacher rows, 24 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, 0 long answers, 4 held-out sample-fact comparison rows, training skipped, and comparison skipped.
-- Sample-fact Colab attempt on 2026-06-03 used pushed commit `18b6c6c` as the intended GitHub source, but Chrome extension communication timed out before Colab could be operated. Chrome itself, the Codex Chrome Extension, and the native host manifest passed health checks; a fresh selected-profile Chrome window was opened; the retry still timed out. No new T4 training or answer-quality evidence was collected for the sample-fact experiment.
+- Sample-fact Colab attempt on 2026-06-03 used pushed commit `bef902cd0cd4005ec5931e6190e1247e98fa936b` as the intended GitHub source. The official Colab CLI authenticated and successfully ran a CPU VM probe, then failed to assign a GPU runtime before code execution. Chrome control then operated the Colab UI, selected T4, and clicked Connect, but Colab showed "Cannot connect to GPU backend" and "You cannot currently connect to a GPU due to usage limits in Colab." No new T4 training or answer-quality evidence was collected for the sample-fact experiment.
 - Notebook default install path where `INSTALL_TRAINING_DEPS = False`.
 - Notebook setup structure for the fresh Colab clone fallback.
 - Notebook status markers for setup, optional install, teacher generation, dataset save, optional training, and optional comparison.
@@ -103,11 +103,11 @@ Still deferred or unverified:
 - Real teacher output quality beyond a tiny 1-row smoke test.
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
 - Whether a tiny Colab adapter run can produce visibly more note-grounded answers after the adapter-disabled comparison fix. The second smoke produced visible answer movement, but not useful note grounding.
-- Whether the new 24-row / 30-step sample-fact Colab smoke produces better, unchanged, or worse note-grounded answers. The 2026-06-03 attempt did not reach Colab execution because browser control timed out.
+- Whether the new 24-row / 30-step sample-fact Colab smoke produces better, unchanged, or worse note-grounded answers. The 2026-06-03 attempt did not reach notebook execution because Colab refused T4 GPU connection due to usage limits.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond deterministic local quality helpers and the two three-question Colab quality smokes.
 - Larger uploaded notes files and higher row counts beyond the tiny TXT/MD rehearsal files.
-- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, the real-teacher end-to-end T4 verification, the uploaded-notes rehearsals, the first unchanged multi-question Colab quality smoke, the second adapter-disabled quality smoke with changed but not improved answers, and the sample-fact smoke attempt that did not reach Colab execution because browser control timed out.
+- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, the real-teacher end-to-end T4 verification, the uploaded-notes rehearsals, the first unchanged multi-question Colab quality smoke, the second adapter-disabled quality smoke with changed but not improved answers, and the sample-fact smoke attempt that was blocked by Colab GPU usage limits before notebook execution.
 
 Why this path:
 
