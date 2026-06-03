@@ -26,7 +26,7 @@ This file records decisions that should not be reopened without a concrete reaso
 - The first training backend is Hugging Face TRL `SFTTrainer` with PEFT LoRA adapters.
 - The first training path is optional in the notebook and defaults to skipped. It should run only after the user opts into a Colab GPU runtime.
 - The first training path does not use Unsloth or bitsandbytes by default. Those are future optimizations after the quality loop can show whether the adapter is learning from notes.
-- The first before/after quality report uses up to three generated dataset questions, Hugging Face Transformers chat generation, and PEFT `PeftModel.from_pretrained()` to load the trained LoRA adapter.
+- The first before/after quality report uses up to three chunk-diverse generated dataset questions, Hugging Face Transformers chat generation, PEFT `PeftModel.from_pretrained()` to load the trained LoRA adapter, and PEFT `disable_adapter()` for the base-model side of the comparison.
 - The first dataset-quality loop uses deterministic local checks only. Hugging Face Evaluate and LightEval are deferred until the project has a stable held-out notes evaluation set.
 - The notebook includes an explicit `INSTALL_TRAINING_DEPS = False` switch so the default local path never installs packages, downloads models, or starts training by accident.
 - The optional Colab install command does not upgrade Colab's preinstalled GPU `torch` package. The runtime still checks that `torch` and CUDA are available before training starts.
@@ -57,7 +57,7 @@ Use this notes-model v0 flow as the default implementation plan:
 7. The dataset is previewed, quality-checked, saved, and downloadable.
 8. Optional training prepares `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
 9. A short supervised fine-tuning run starts only when the user sets `RUN_TRAINING = True` in a Colab GPU runtime.
-10. The notebook compares base-model answers and trained-adapter answers for up to three generated questions.
+10. The notebook compares base-model answers and trained-adapter answers for up to three chunk-diverse generated questions.
 11. The notebook saves the output.
 12. The notebook exports to GGUF or shows the exact export command and limitation.
 13. The user gets local run instructions.
@@ -74,7 +74,7 @@ Verified locally in this repository:
 - Mock teacher question-style variety for factual recall, explanation, flashcard, and misconception-check rows.
 - Optional real teacher selection, JSONL parsing, schema validation, and failure classification using fake no-download dependencies.
 - Training configuration, request construction, and TRL/PEFT dataset formatting tests.
-- Before/after comparison request construction, adapter-path validation, dependency handling, bounded multi-question selection, reference-overlap scoring, and fake base-vs-adapter generation tests.
+- Before/after comparison request construction, adapter-path validation, dependency handling, bounded chunk-diverse question selection, reference-overlap scoring, and fake base-vs-adapter generation tests with the adapter disabled for base answers.
 - Optional runtime helper behavior for install-command text, missing-package checks, GPU/no-GPU formatting, and beginner-readable failure explanations.
 - Optional runtime helper behavior for installed-package import failures, including the Colab `torchvision::nms` mismatch seen after upgrading `torch`.
 - Notebook JSON parsing and the default CPU path where training remains skipped.
@@ -92,7 +92,7 @@ Verified locally in this repository:
 - Uploaded `.txt` Colab rehearsal on 2026-06-03 started from clean `origin/main` at `6f7d9c66cacb07dc82571abb85b3232285f6961c`. Computer Use clicked the actual Colab `Choose Files` button and the native macOS Open dialog selected `/private/tmp/opendistillation-upload-rehearsal-notes.txt`. The run reached validation, 1 chunk, `mock-local-teacher`, 2 QA rows, dataset saved to `/tmp/opendistillation_training_data.jsonl`, training skipped, and comparison skipped. The Colab Terminal status log recorded setup ready, install skipped, teacher succeeded, dataset saved, training skipped, and comparison skipped.
 - Earlier uploaded `.md` Colab rehearsal on 2026-06-03 reached the actual Colab upload widget from clean `origin/main` at `6f7d9c66cacb07dc82571abb85b3232285f6961c`, but `/private/tmp/opendistillation-upload-rehearsal-notes.md` could not be attached through the native Open dialog or Chrome file-chooser fallback. That blocker was later resolved and is kept only as historical context.
 - Uploaded `.md` Colab rehearsal on 2026-06-03 started from clean `origin/main` at `0e53cdd1e860a1c93007cb20e4c143c90f0a7af9`. Chrome edited the runtime-only upload cell to `USE_SAMPLE_NOTES = False`; Computer Use clicked the actual Colab `Choose Files` button; the native macOS Open dialog selected `/private/tmp/opendistillation-upload-rehearsal-notes.md` by path/suggestion; and the run reached validation, 1 chunk, `mock-local-teacher`, 2 QA rows, dataset saved to `/tmp/opendistillation_training_data.jsonl`, training skipped, and comparison skipped. The Colab Terminal status log recorded setup ready, install skipped, teacher succeeded, dataset saved, training skipped, and comparison skipped.
-- Colab GPU quality smoke on 2026-06-03 used commit `276a8d3e050379a78212fa02f787ac7a0b44e245`, Tesla T4, sample notes, `mock-local-teacher`, 16 generated rows, dataset quality reporting with 16/16 schema-valid rows, 4/4 chunk coverage, zero duplicate/near-duplicate questions, zero answer-length warnings, a 3-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA adapter, and a 3-question before/after report. The adapter answers were identical to the base answers on all three questions, so the quality result is unchanged and not evidence of useful learning.
+- Colab GPU quality smoke on 2026-06-03 used commit `276a8d3e050379a78212fa02f787ac7a0b44e245`, Tesla T4, sample notes, `mock-local-teacher`, 16 generated rows, dataset quality reporting with 16/16 schema-valid rows, 4/4 chunk coverage, zero duplicate/near-duplicate questions, zero answer-length warnings, a 3-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA adapter, and a 3-question before/after report. The adapter answers were identical to the base answers on all three questions. Follow-up diagnosis found the comparison code loaded the PEFT adapter before generating the base answer, which could compare the adapter-enabled model to itself because PEFT may modify the passed base model in place. The local comparison path now uses `disable_adapter()` for base answers and chooses distinct source chunks first.
 
 Still deferred or unverified:
 

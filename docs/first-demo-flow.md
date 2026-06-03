@@ -146,13 +146,14 @@ Expected output:
 
 ### Step 8: Before/After Model Quality Report
 
-The notebook compares up to three generated questions against the base model and the trained LoRA adapter after optional training.
+The notebook compares up to three chunk-diverse generated questions against the base model and the trained LoRA adapter after optional training.
 
 Default behavior:
 
 - Do not load a model while `RUN_TRAINING = False`.
 - Skip comparison when no adapter exists.
-- Use a bounded set of generated dataset questions.
+- Use a bounded set of generated dataset questions, preferring distinct source chunks before reusing a chunk.
+- Generate the base-model answer with the LoRA adapter disabled, then generate the trained-adapter answer with the adapter enabled.
 - Show the generated reference answer, base-model answer, and trained-adapter answer when training has run.
 - Print a crude reference-overlap signal for each answer pair.
 - Label the comparison as a qualitative smoke report, not a benchmark.
@@ -168,7 +169,7 @@ Expected output:
 
 ### Manual Colab Smoke Test
 
-The optional training and comparison wiring is verified once with the multi-question report after `docs/colab-smoke-test-checklist.md` evidence was collected in Colab. The first quality result was unchanged: all three trained-adapter answers matched the base-model answers, so the demo still needs better learning signal before claiming useful note learning.
+The optional training and comparison wiring is verified once with the multi-question report after `docs/colab-smoke-test-checklist.md` evidence was collected in Colab. The first quality result was unchanged: all three trained-adapter answers matched the base-model answers. Follow-up local diagnosis found the comparison path could accidentally compare the adapter-enabled model to itself; the comparison helper now disables the adapter for the base answer and spreads questions across chunks. The demo still needs a second Colab quality smoke before claiming useful note learning.
 
 The checklist records:
 
@@ -228,13 +229,13 @@ Included now:
 - Local deterministic mock teacher, enabled by default.
 - Optional local Qwen real teacher, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL/PEFT LoRA training entry point, skipped by default.
-- Optional bounded before/after model quality report, skipped by default.
+- Optional bounded chunk-diverse before/after model quality report, skipped by default.
 - Runtime readiness checks, `OD_STATUS` markers, runtime status log, and manual Colab smoke-test checklist.
 - Export placeholder.
 
 Planned later in v0:
 
-- Improve the small notes dataset/training setup after the first Colab quality smoke showed unchanged adapter answers.
+- Re-run the bounded Colab quality smoke after the adapter-disabled comparison fix.
 - Teacher output quality hardening after the first unchanged quality evidence.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance.

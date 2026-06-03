@@ -10,7 +10,9 @@ The optional real-teacher Colab path is **verified once** on 2026-06-03. The ver
 
 The uploaded-notes Colab rehearsal is **verified once** on 2026-06-03 for both one `.txt` file and one `.md` file. Each ran through validation, chunking, mock-teacher rows, dataset save, training skipped, and comparison skipped with status-log evidence.
 
-The first quality-loop update is **verified locally and once in Colab T4** on 2026-06-03. The default sample-notes path produced varied mock-teacher rows and a deterministic dataset quality report. The Colab GPU quality smoke run trained a 3-step LoRA adapter and ran the new three-question model-quality report, but the trained-adapter answers were identical to the base-model answers, so the quality result is **unchanged / no visible improvement**.
+The first quality-loop update is **verified locally and once in Colab T4** on 2026-06-03. The default sample-notes path produced varied mock-teacher rows and a deterministic dataset quality report. The Colab GPU quality smoke run trained a 3-step LoRA adapter and ran the new three-question model-quality report, but the trained-adapter answers were identical to the base-model answers, so the recorded quality result is **unchanged / no visible improvement**.
+
+Follow-up local diagnosis on 2026-06-03 found a comparison bug: the PEFT adapter was loaded before base-answer generation, and PEFT documents that the passed base model may be modified in place. That means the first quality smoke may have compared the adapter-enabled model to itself. The local comparison helper now generates base answers inside PEFT's `disable_adapter()` context and chooses questions from distinct source chunks first. A second Colab T4 quality smoke is needed before claiming whether answers improved, stayed unchanged, or became worse after this fix.
 
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 

@@ -148,9 +148,9 @@ Current interface:
 
 Current default:
 
-- Question source: up to three validated generated dataset rows.
+- Question source: up to three validated generated dataset rows, preferring distinct source chunks before reusing a chunk.
 - Reference answer: the response from that generated dataset row.
-- Base answer: `Qwen/Qwen2.5-0.5B-Instruct` loaded with Transformers.
+- Base answer: `Qwen/Qwen2.5-0.5B-Instruct` loaded with Transformers and generated through the PEFT model with the LoRA adapter disabled.
 - Trained answer: the same base model with the saved PEFT LoRA adapter loaded through `PeftModel.from_pretrained()`.
 - Quality signal: a simple lexical reference-overlap value for each base and trained answer.
 - Default notebook behavior: comparison is skipped unless optional training creates an adapter.
@@ -161,7 +161,7 @@ Verified locally:
 - Bounded multi-question request construction.
 - Missing adapter-path handling before any model imports.
 - Optional dependency error messages.
-- Fake base-vs-adapter generation across multiple questions without downloading models.
+- Fake base-vs-adapter generation across multiple questions without downloading models, including a regression test for PEFT adapter-disabled base inference.
 - Deterministic reference-overlap scoring.
 - Notebook default path with comparison skipped.
 
@@ -174,7 +174,7 @@ Verified once in a clean GitHub-opened Colab T4 runtime:
 
 Still unverified:
 
-- Whether the answer changes in a useful way after improving the dataset or training signal; the first three-question Colab quality smoke produced identical base and trained answers.
+- Whether the answer changes in a useful way in Colab after the adapter-disabled comparison fix; the first three-question Colab quality smoke produced identical base and trained answers before that fix.
 
 ## Future Export Engines
 

@@ -40,13 +40,43 @@ class FakeModel:
         self.device = "cpu"
         self.eval_called = False
         self.generate_kwargs = None
+        self.adapter_enabled = False
 
     def eval(self):
         self.eval_called = True
 
     def generate(self, input_ids, **kwargs):
         self.generate_kwargs = kwargs
+        if self.adapter_enabled:
+            return FakeGeneratedIds("trained answer")
         return FakeGeneratedIds(self.generated_text)
+
+
+class FakePeftModel:
+    def __init__(self, base_model):
+        self.base_model = base_model
+        self.device = base_model.device
+        self.eval_called = False
+
+    def eval(self):
+        self.eval_called = True
+
+    def disable_adapter(self):
+        peft_model = self
+
+        class DisabledAdapter:
+            def __enter__(self):
+                self.previous_state = peft_model.base_model.adapter_enabled
+                peft_model.base_model.adapter_enabled = False
+
+            def __exit__(self, exc_type, exc, traceback):
+                peft_model.base_model.adapter_enabled = self.previous_state
+                return False
+
+        return DisabledAdapter()
+
+    def generate(self, input_ids, **kwargs):
+        return self.base_model.generate(input_ids, **kwargs)
 
 
 class FakeTokenizer:
@@ -93,7 +123,8 @@ class FakePeftModelFactory:
     @classmethod
     def from_pretrained(cls, base_model, adapter_path, **kwargs):
         cls.calls.append((base_model, adapter_path, kwargs))
-        return FakeModel("trained answer")
+        base_model.adapter_enabled = True
+        return FakePeftModel(base_model)
 
 
 class FakeTorch:
@@ -159,6 +190,46 @@ class ComparisonPathTests(unittest.TestCase):
         self.assertEqual(len(request.examples), 3)
         self.assertEqual([example.question for example in request.examples], ["Question 1", "Question 2", "Question 3"])
         self.assertEqual(request.question, "Question 1")
+
+    def test_build_comparison_request_prefers_distinct_source_chunks(self):
+        rows = [
+            {
+                "instruction": "Question 1 from chunk one",
+                "response": "Reference answer 1 from the notes.",
+                "source_chunk_id": "chunk-0001",
+            },
+            {
+                "instruction": "Question 2 from chunk one",
+                "response": "Reference answer 2 from the notes.",
+                "source_chunk_id": "chunk-0001",
+            },
+            {
+                "instruction": "Question 3 from chunk two",
+                "response": "Reference answer 3 from the notes.",
+                "source_chunk_id": "chunk-0002",
+            },
+            {
+                "instruction": "Question 4 from chunk three",
+                "response": "Reference answer 4 from the notes.",
+                "source_chunk_id": "chunk-0003",
+            },
+        ]
+        training_result = TrainingResult(
+            engine_name="trl-sfttrainer-peft-lora",
+            output_path=Path("outputs/notes-lora/adapter"),
+            created_model_artifact=True,
+        )
+
+        request = build_comparison_request(rows, training_result, max_examples=3)
+
+        self.assertEqual(
+            [example.question for example in request.examples],
+            ["Question 1 from chunk one", "Question 3 from chunk two", "Question 4 from chunk three"],
+        )
+        self.assertEqual(
+            [example.source_chunk_id for example in request.examples],
+            ["chunk-0001", "chunk-0002", "chunk-0003"],
+        )
 
     def test_build_comparison_request_rejects_non_positive_example_limit(self):
         training_result = TrainingResult(
@@ -367,6 +438,45 @@ class ComparisonPathTests(unittest.TestCase):
         self.assertEqual(FakeTokenizerFactory.tokenizer.messages[0]["content"], "Question from generated data")
         self.assertEqual(FakeAutoModelFactory.calls[-1][0], DEFAULT_STUDENT_MODEL)
         self.assertEqual(FakePeftModelFactory.calls[-1][1], str(adapter_path))
+
+    def test_compare_disables_adapter_when_generating_base_answer(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            adapter_path = Path(tmpdir) / "adapter"
+            adapter_path.mkdir()
+            request = build_comparison_request(
+                [
+                    {
+                        "instruction": "Question from generated data",
+                        "response": "Reference answer from mock teacher",
+                        "source_chunk_id": "chunk-0001",
+                    }
+                ],
+                TrainingResult(
+                    engine_name="trl-sfttrainer-peft-lora",
+                    output_path=adapter_path,
+                    created_model_artifact=True,
+                ),
+            )
+
+            def fake_import(module_name):
+                if module_name == "torch":
+                    return FakeTorch
+                if module_name == "transformers":
+                    return FakeModule(
+                        AutoModelForCausalLM=FakeAutoModelFactory,
+                        AutoTokenizer=FakeTokenizerFactory,
+                    )
+                if module_name == "peft":
+                    return FakeModule(PeftModel=FakePeftModelFactory)
+                if module_name == "accelerate":
+                    return FakeModule()
+                raise ModuleNotFoundError(name=module_name)
+
+            with patch("opendistillation.comparison.import_module", side_effect=fake_import):
+                result = BeforeAfterComparisonEngine().compare(request)
+
+        self.assertEqual(result.base_answer, "base answer")
+        self.assertEqual(result.trained_answer, "trained answer")
 
     def test_compare_generates_bounded_multi_question_quality_items(self):
         with tempfile.TemporaryDirectory() as tmpdir:
