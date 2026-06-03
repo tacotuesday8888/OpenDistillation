@@ -33,6 +33,7 @@ This file records decisions that should not be reopened without a concrete reaso
 - Runtime readiness checks should explain missing optional packages, installed-package import failures, missing CUDA GPU, adapter-path problems, and likely GPU memory failures in plain language.
 - The manual Colab GPU smoke test should use `docs/colab-smoke-test-checklist.md` before the optional training/comparison path is called verified.
 - `RUN_REAL_TEACHER = False` is the notebook default. Real teacher generation starts only after the user opts in and installs the optional Hugging Face packages.
+- The notebook writes concise `OD_STATUS` markers and `/tmp/opendistillation_status.jsonl` in Colab so the run state can be recovered if Colab's output frame fails.
 
 ## Not Decided Yet
 
@@ -76,6 +77,7 @@ Verified locally in this repository:
 - Notebook JSON parsing and the default CPU path where training remains skipped.
 - Notebook default install path where `INSTALL_TRAINING_DEPS = False`.
 - Notebook setup structure for the fresh Colab clone fallback.
+- Notebook status markers for setup, optional install, teacher generation, dataset save, optional training, and optional comparison.
 - Ignore rules for generated datasets, adapters, checkpoints, model weights, Hugging Face caches, notebook checkpoints, and common trainer artifacts.
 - Recovered Colab T4 run after dependency fixes: model download, 1-step LoRA training, adapter creation, and before/after comparison completed once.
 - Clean GitHub-opened Colab T4 run: bounded optional dependency install succeeded without upgrading `torch`, `USE_SAMPLE_NOTES = True` loaded the sample notes, `RUN_TRAINING = True` created `/content/OpenDistillation/outputs/notes-lora/adapter`, and before/after comparison printed both answers.

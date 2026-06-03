@@ -35,11 +35,12 @@ With training skipped by default, the notebook should run top to bottom on CPU a
 - Optional dependency install section with `INSTALL_TRAINING_DEPS = False` by default.
 - Optional student fine-tuning section with `RUN_TRAINING = False` by default.
 - Runtime readiness messages before any opt-in training starts.
+- `OD_STATUS` markers and a runtime status log at `/tmp/opendistillation_status.jsonl` in Colab.
 - Optional before/after comparison section that skips when training is skipped.
 - Placeholder section for export.
 
 Future engines should plug in through the interfaces described in `docs/engine-integration-points.md`.
 
-The optional training and comparison sections are not part of the CPU smoke path. They require a Colab GPU runtime and installing the Hugging Face training packages listed in the notebook. Training saves adapters under `outputs/`, which is ignored by git. Use `docs/colab-smoke-test-checklist.md` before marking that GPU path verified.
+The optional real teacher, training, and comparison sections are not part of the CPU smoke path. They require a Colab GPU runtime and installing the Hugging Face training packages listed in the notebook. Training saves adapters under `outputs/`, which is ignored by git. Use `docs/colab-smoke-test-checklist.md` before marking that GPU path verified. If the Colab output pane fails, open the Colab Terminal and run `cat /tmp/opendistillation_status.jsonl`.
 
 As of 2026-06-03, the optional sample-notes training/comparison path has passed once from a clean GitHub-opened Colab T4 runtime, and the optional real-teacher path has passed one end-to-end T4 wiring check from sample notes through comparison. See `docs/colab-smoke-test-results.md` for exact package versions, adapter paths, memory notes, output-rendering caveats, and before/after output.

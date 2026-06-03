@@ -46,7 +46,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task should harden the first public Colab demo for the notes model while keeping the deterministic mock teacher as the fallback.
+The next task should rehearse the first public Colab demo with uploaded TXT/MD notes while keeping the deterministic mock teacher as the fallback.
 
 ## Important Guardrails
 

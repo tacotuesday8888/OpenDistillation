@@ -60,6 +60,7 @@ Acceptance criteria:
 - The sample notes path works.
 - The upload path works with one `.txt` and one `.md` file.
 - Notebook clearly labels optional training and export status.
+- Notebook prints `OD_STATUS` markers and writes `/tmp/opendistillation_status.jsonl` in Colab.
 
 ### 3. Harden TXT/MD upload validation messages
 
@@ -161,7 +162,7 @@ Acceptance criteria:
 - Output artifacts stay in ignored runtime paths.
 - Missing GPU and out-of-memory failures are explained plainly.
 
-Status: bounded local engine and notebook entry point exist. A clean GitHub-opened Colab T4 runtime completed the optional training path and created `/content/OpenDistillation/outputs/notes-lora/adapter`. A later real-teacher T4 verification confirmed a 1-step adapter at `/content/OpenDistillation/outputs/notes-lora-real-teacher-smoke/adapter`. Remaining work is quality and demo hardening, not broadening the training system.
+Status: bounded local engine and notebook entry point exist. A clean GitHub-opened Colab T4 runtime completed the optional training path and created `/content/OpenDistillation/outputs/notes-lora/adapter`. A later real-teacher T4 verification confirmed a 1-step adapter at `/content/OpenDistillation/outputs/notes-lora-real-teacher-smoke/adapter`. The notebook now emits status markers for long optional cells. Remaining work is quality and upload-path hardening, not broadening the training system.
 
 ### 10. Add before/after comparison
 
@@ -219,3 +220,16 @@ Acceptance criteria:
 - Launch checklist is complete.
 - No generated datasets, model artifacts, checkpoints, `.env` files, or local machine config are committed.
 - Repository license metadata shows Apache-2.0 before public announcement.
+
+### 14. Rehearse the public demo with uploaded notes
+
+Labels: `prototype`, `good first issue`
+
+Milestone: Public Launch
+
+Acceptance criteria:
+
+- One uploaded `.txt` file runs through the default mock-teacher path.
+- One uploaded `.md` file runs through the default mock-teacher path.
+- The notebook status log records setup, teacher, dataset, training skipped, and comparison skipped markers.
+- Any confusing beginner-facing text is tightened without adding new model profiles or export work.

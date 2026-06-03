@@ -8,9 +8,14 @@ Use this checklist before marking the optional real teacher, training, or before
 - [ ] Choose **Runtime > Change runtime type > GPU** before running the training path.
 - [ ] Run the setup cell and confirm it prints the expected project root.
   - Expected output in Colab: `Using project root: /content/OpenDistillation`
+  - Expected status output: `OD_STATUS stage=setup status=ready`
+  - Expected status log path: `/tmp/opendistillation_status.jsonl`
+  - If the output pane fails, open Colab Terminal and run: `cat /tmp/opendistillation_status.jsonl`
   - If setup fails, paste the full error in `docs/colab-smoke-test-results.md`.
 - [ ] Set `INSTALL_TRAINING_DEPS = True` in the optional dependency install cell.
 - [ ] Run the install cell and record whether the optional Hugging Face teacher/training packages install successfully.
+  - Expected skipped/default marker: `OD_STATUS stage=install status=skipped`
+  - Expected opt-in markers: `OD_STATUS stage=install status=started` and `OD_STATUS stage=install status=succeeded`
   - Runtime packages checked before training: `torch, transformers, datasets, trl, peft, accelerate`
   - Packages installed by the notebook cell: `transformers<5, datasets, trl<1, peft<0.19, accelerate`
   - Expected install command: `python -m pip install -U 'transformers<5' datasets 'trl<1' 'peft<0.19' accelerate`
@@ -35,6 +40,9 @@ Use this checklist before marking the optional real teacher, training, or before
 - [ ] Keep the same Colab GPU runtime after optional Hugging Face dependencies are installed.
 - [ ] Set `RUN_REAL_TEACHER = True`.
 - [ ] Run the teacher cell.
+  - Expected default marker: `OD_STATUS stage=teacher status=mock_started`
+  - Expected opt-in marker: `OD_STATUS stage=teacher status=real_started`
+  - Expected success marker: `OD_STATUS stage=teacher status=succeeded`
 - [ ] Record whether `Qwen/Qwen2.5-1.5B-Instruct` starts downloading and loads successfully.
 - [ ] Confirm the teacher output says `Teacher engine: huggingface-local-teacher`.
 - [ ] Confirm the output says `Sends text to remote endpoint: False`.
@@ -51,6 +59,8 @@ Use this checklist before marking the optional real teacher, training, or before
 
 - [ ] Set `RUN_TRAINING = True`.
 - [ ] Run the training cell.
+  - Expected markers include `OD_STATUS stage=training status=runtime_check_finished`.
+  - If training starts, expected markers include `OD_STATUS stage=training status=started` and `OD_STATUS stage=training status=succeeded`.
 - [ ] Record the runtime check output, including the GPU name.
   - Expected success output includes `GPU detected: <GPU name>` and `Runtime is ready for the optional short training run.`
   - If this says no CUDA GPU is detected, confirm the Colab runtime type is GPU and paste the runtime-check output in `docs/colab-smoke-test-results.md`.
@@ -66,6 +76,7 @@ Use this checklist before marking the optional real teacher, training, or before
 ## Before/After Comparison
 
 - [ ] Run the comparison cell after training succeeds.
+  - Expected markers include `OD_STATUS stage=comparison status=configured`, `OD_STATUS stage=comparison status=started`, and `OD_STATUS stage=comparison status=succeeded`.
 - [ ] Confirm the question and generated reference answer are shown.
 - [ ] Confirm both base-model answer and trained-adapter answer are shown.
   - Expected headings: `Question:`, `Reference answer from generated dataset:`, `Base model answer:`, and `Trained adapter answer:`.
@@ -90,6 +101,7 @@ Dependency install result:
 Real teacher run: skipped/succeeded/failed
 Real teacher model download/load result:
 Real teacher generated rows:
+Status log markers:
 Model download result:
 Training starts: yes/no
 Adapter output created: yes/no

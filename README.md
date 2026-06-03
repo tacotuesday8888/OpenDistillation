@@ -46,6 +46,7 @@ What exists now:
 - A bounded optional training engine using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA.
 - A before/after comparison helper that can compare one base-model answer with one trained-adapter answer after opt-in training.
 - Runtime checks and plain-language setup messages for optional Hugging Face, CUDA, teacher, training, and comparison failures.
+- Notebook `OD_STATUS` markers and a runtime status log so Colab output-frame failures do not erase the state of long optional cells.
 - A first-demo implementation plan.
 - A manual Colab GPU smoke-test checklist.
 - A smoke-test results file that records the first real Colab T4 blockers, a clean GitHub-opened T4 training/comparison pass, and one real-teacher end-to-end T4 verification.
@@ -113,7 +114,7 @@ The planned notes-model notebook flow is specified in [`docs/first-demo-flow.md`
 8. If training runs, compare one base-model answer with one trained-adapter answer.
 9. Show clear placeholders for export and local running.
 
-The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke tests for mock-teacher training/comparison and real-teacher end-to-end wiring are recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md).
+The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers and creates `/tmp/opendistillation_status.jsonl` for recoverable status markers. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke tests for mock-teacher training/comparison and real-teacher end-to-end wiring are recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md).
 
 ## Repository Map
 
@@ -158,7 +159,7 @@ The current prototype covers the safe first slice of the notes / school model:
 7. Prepare a short optional LoRA fine-tuning request from those rows.
 8. Prepare an optional before/after comparison from the first generated question.
 
-The next implementation work is to harden the first public demo experience around the verified notes-only path: clearer Colab run instructions, better output/logging resilience, and honest local-run/export follow-up. GGUF/local export comes after that.
+The next implementation work is to rehearse the first public demo with one uploaded `.txt` file and one uploaded `.md` file, then tighten any confusing beginner-facing text without broadening v0. GGUF/local export comes after that.
 
 Future personal model types should reuse the same broad workflow, but they should not be implemented until the notes model path works.
 

@@ -28,6 +28,8 @@ Expected output:
 - A short explanation of the notes-model demo.
 - A warning that this is an early prototype.
 - Runtime guidance: CPU is enough for the default path; GPU is needed if the user opts into the local real teacher or optional fine-tuning cells.
+- A clear run order for the safe default path and the optional GPU path.
+- A reminder that tiny smoke tests prove wiring, not model quality.
 
 ### Step 2: Runtime Setup
 
@@ -40,6 +42,7 @@ Expected output:
 - A short note that the optional real teacher and optional training paths need the bounded Hugging Face package set plus Colab's existing GPU `torch`.
 - An explicit `INSTALL_TRAINING_DEPS = False` default so local users do not install anything by accident.
 - The exact optional install command for Colab GPU users, without upgrading Colab's preinstalled `torch`.
+- A printed status log path and recovery command: `cat /tmp/opendistillation_status.jsonl`.
 
 ### Step 3: Upload Or Load A Notes File
 
@@ -95,6 +98,7 @@ Expected output:
 - A Colab download helper when running in Colab.
 - A clear label for `mock-local-teacher` or `huggingface-local-teacher`.
 - Plain-language failure messages for missing dependencies, model download/load failures, CUDA or memory failures, and invalid generated rows.
+- `OD_STATUS` markers for configured, started, succeeded, or failed teacher states.
 
 Initial JSONL shape:
 
@@ -134,7 +138,8 @@ Expected output:
 - A clear training plan.
 - A clear "training skipped" message while `RUN_TRAINING = False`.
 - Plain-language setup messages for missing packages, no GPU, missing adapter output, or likely GPU memory failures.
-- A reminder that Colab GPU verification is still required.
+- `OD_STATUS` markers for training configuration, runtime check, start, success, failure, blocked, or skipped states.
+- A reminder that short adapter runs prove wiring and artifact creation, not model quality.
 
 ### Step 8: Before/After Comparison
 
@@ -154,6 +159,7 @@ Expected output:
 - A clear comparison plan after training creates an adapter.
 - A side-by-side style text output for question, reference answer, base answer, and trained-adapter answer.
 - Plain-language setup messages if adapter loading or generation fails.
+- `OD_STATUS` markers for comparison skipped, configured, started, succeeded, or failed states.
 
 ### Manual Colab Smoke Test
 
@@ -168,6 +174,7 @@ The checklist records:
 - Before/after comparison output.
 - Runtime and any memory failure.
 - Confirmation that generated artifacts stay out of git.
+- Status log markers from `/tmp/opendistillation_status.jsonl` if the Colab output frame fails.
 
 ### Step 9: Export Placeholder
 
@@ -216,13 +223,13 @@ Included now:
 - Optional local Qwen real teacher, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL/PEFT LoRA training entry point, skipped by default.
 - Optional before/after comparison entry point, skipped by default.
-- Runtime readiness checks and manual Colab smoke-test checklist.
+- Runtime readiness checks, `OD_STATUS` markers, runtime status log, and manual Colab smoke-test checklist.
 - Export placeholder.
 
 Planned later in v0:
 
 - Teacher output quality hardening after the first one-row real-teacher smoke test.
-- Colab output/logging resilience for long optional cells.
+- Upload-path smoke tests with user-provided `.txt` and `.md` files.
 - Local-run guidance.
 
 Excluded:

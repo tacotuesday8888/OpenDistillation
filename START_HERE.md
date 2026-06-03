@@ -32,7 +32,7 @@ The next useful implementation goal is in:
 docs/next-goal-prompt.md
 ```
 
-It should harden the first public Colab demo for the notes model only, with the deterministic mock teacher kept as the fallback. It should not start coding, writing, work, phone, SaaS, Mac app, or multi-profile features.
+It should rehearse the first public Colab demo with uploaded TXT/MD notes for the notes model only, with the deterministic mock teacher kept as the fallback. It should not start coding, writing, work, phone, SaaS, Mac app, or multi-profile features.
 
 ## What Not To Do Next
 
