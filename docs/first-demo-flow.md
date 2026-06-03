@@ -229,7 +229,7 @@ Included now:
 Planned later in v0:
 
 - Teacher output quality hardening after the first one-row real-teacher smoke test.
-- Upload-path smoke tests with user-provided `.txt` and `.md` files after browser file-upload control is unblocked.
+- Finish the upload-path smoke tests: the uploaded `.txt` path passed once through mock teacher, dataset save, training skipped, and comparison skipped; the uploaded `.md` path is still blocked at file attachment in Colab's native picker/iframe flow.
 - Local-run guidance.
 
 Excluded:

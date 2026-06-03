@@ -8,6 +8,8 @@ Fresh Colab GPU training from a clean GitHub-opened runtime is **verified once**
 
 The optional real-teacher Colab path is **verified once** on 2026-06-03. The verified path used sample TXT/MD notes, `Qwen/Qwen2.5-1.5B-Instruct` as the local real teacher, dataset validation, a 1-step TRL/PEFT LoRA adapter from `Qwen/Qwen2.5-0.5B-Instruct`, and before/after comparison on a Tesla T4 runtime.
 
+The uploaded-notes Colab rehearsal is **partially verified** on 2026-06-03: one uploaded `.txt` file passed the default mock-teacher path end to end with status-log evidence; the uploaded `.md` path is still blocked at file attachment and is not verified.
+
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
 The clean run passed after three fixes were pushed:
@@ -383,9 +385,104 @@ The notebook is expected to:
 
 The actual student-model Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime using mock-teacher rows. The real-teacher path has also passed once on a T4 using one sample-note chunk and a 1-step adapter verification. GGUF export and local runtime instructions remain unverified and deferred.
 
+## Uploaded Notes Rehearsal: TXT Pass, MD Blocked
+
+Date: 2026-06-03
+
+Commit checked before rehearsal:
+
+```text
+HEAD == origin/main == 6f7d9c66cacb07dc82571abb85b3232285f6961c
+git status: clean
+```
+
+Notebook URL:
+
+```text
+https://colab.research.google.com/github/tacotuesday8888/OpenDistillation/blob/main/notebooks/opendistillation_v0_demo.ipynb
+```
+
+Temporary local files prepared outside the repository:
+
+```text
+/private/tmp/opendistillation-upload-rehearsal-notes.txt
+/private/tmp/opendistillation-upload-rehearsal-notes.md
+```
+
+Safe defaults confirmed in the repository notebook before the run:
+
+```text
+INSTALL_TRAINING_DEPS = False
+USE_SAMPLE_NOTES = True
+RUN_REAL_TEACHER = False
+RUN_TRAINING = False
+MockTeacherEngine remains the default teacher path.
+Notebook committed output count: 0
+Generated artifact/model/data scan before run: no repository hits.
+```
+
+Runtime-only Colab note:
+
+```text
+The browser notebook cell was temporarily changed to USE_SAMPLE_NOTES = False
+so Colab would expose google.colab.files.upload(). This change was not saved
+back to GitHub and was not committed.
+```
+
+Uploaded `.txt` result: **passed**
+
+```text
+File: opendistillation-upload-rehearsal-notes.txt
+Extension: .txt
+Characters: 229
+Approx. words: 35
+Warning: Document is short; the demo may generate only a few examples.
+Chunks: 1
+Teacher engine: mock-local-teacher
+Generated examples: 2
+Training: skipped
+Comparison: skipped
+Export placeholder: skipped
+```
+
+The uploaded `.txt` file was attached through the actual Colab `Choose Files` button. Computer Use clicked the visible upload button in the Colab output iframe, and the native macOS Open dialog selected `/private/tmp/opendistillation-upload-rehearsal-notes.txt`.
+
+`OD_STATUS` evidence recovered from the Colab Terminal with `cat /tmp/opendistillation_status.jsonl`:
+
+```text
+{"stage": "setup", "status": "ready", "project_root": "/content/OpenDistillation", "colab": true}
+{"stage": "install", "status": "configured", "install_training_deps": false, "packages": ["transformers<5", "datasets", "trl<1", "peft<0.19", "accelerate"], "command": "python -m pip install -U 'transformers<5' datasets 'trl<1' 'peft<0.19' accelerate"}
+{"stage": "install", "status": "skipped"}
+{"stage": "teacher", "status": "configured", "run_real_teacher": false, "engine": "mock-local-teacher", "chunk_count": 1, "examples_per_chunk": 2}
+{"stage": "teacher", "status": "mock_started", "engine": "mock-local-teacher"}
+{"stage": "teacher", "status": "succeeded", "engine": "mock-local-teacher", "generated_examples": 2, "sends_data_remote": false}
+{"stage": "dataset", "status": "saved", "rows": 2, "output_path": "/tmp/opendistillation_training_data.jsonl"}
+{"stage": "training", "status": "configured", "run_training": false, "output_dir": "/content/OpenDistillation/outputs/notes-lora", "max_steps": 10, "student_model": "Qwen/Qwen2.5-0.5B-Instruct"}
+{"stage": "training", "status": "skipped"}
+{"stage": "comparison", "status": "skipped", "reason": "training_result_is_none"}
+```
+
+Uploaded `.md` result: **not verified**
+
+The `.md` rehearsal reached a fresh setup/install-skipped state and the actual Colab upload widget, but the Markdown file could not be attached. Observed blocker:
+
+```text
+The native Open dialog showed /private/tmp/opendistillation-upload-rehearsal-notes.md,
+but the Markdown row was not exposed as a clickable file element and the Open
+button stayed disabled. Computer Use could click the Colab Choose Files button
+and operate visible dialog controls, but could not complete the .md selection.
+Chrome's file-chooser listener returned no usable chooser object for this Colab
+output iframe, so setFiles() could not be used as a fallback.
+The waiting upload cell was interrupted and ended with KeyboardInterrupt.
+```
+
+No `.md` validation, chunking, teacher, dataset, training-skipped, or comparison-skipped evidence was produced. This is still an upload-control blocker, not evidence that `.md` parsing fails after a Markdown file is loaded.
+
 ## Uploaded Notes Rehearsal Attempt
 
 Date: 2026-06-03
+
+Historical note: this attempt predates the later uploaded `.txt` pass recorded above. It remains here only to explain the earlier automation blocker.
 
 Commit tested:
 
@@ -432,6 +529,8 @@ This is an automation/control blocker, not evidence that the notebook upload pat
 ## Uploaded Notes Rehearsal Retry
 
 Date: 2026-06-03
+
+Historical note: this retry also predates the later uploaded `.txt` pass recorded above. It remains here only to explain the earlier Chrome-control blocker.
 
 Commit checked before retry:
 
