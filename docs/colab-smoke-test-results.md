@@ -14,6 +14,8 @@ The first quality-loop update is **verified locally and twice in Colab T4** on 2
 
 Follow-up local diagnosis on 2026-06-03 found a comparison bug: the PEFT adapter was loaded before base-answer generation, and PEFT documents that the passed base model may be modified in place. That means the first quality smoke may have compared the adapter-enabled model to itself. The local comparison helper now generates base answers inside PEFT's `disable_adapter()` context and chooses questions from distinct source chunks first. The second Colab T4 quality smoke ran after that fix. All three trained-adapter answers changed, so the fixed comparison path can now see adapter-side movement. The answer quality was **not improved / worse overall** because the trained answers were still generic or hallucinated.
 
+The sample-fact learning-signal experiment is **verified locally but not yet verified in Colab** on 2026-06-03. The local path now uses fact-rich sample notes, 24 mock rows, zero dataset-quality issues, four held-out sample-fact questions, and a bounded optional 30-step LoRA plan. A T4 run was attempted after pushing commit `18b6c6c`, but Chrome extension communication timed out before Colab could be operated. No Colab runtime, package versions, training run, adapter path, base/trained answers, overlap deltas, or better/unchanged/worse answer judgment were collected for this new experiment.
+
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
 The clean run passed after three fixes were pushed:
@@ -23,6 +25,80 @@ The clean run passed after three fixes were pushed:
 - Load `examples/sample-notes.md` by default in Colab so the first smoke path does not block on a file picker.
 
 The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
+
+## Colab GPU Quality Smoke: Sample-Fact Experiment Attempt
+
+Date: 2026-06-03
+
+Status: **not run in Colab / answer quality unverified**.
+
+Intended path:
+
+```text
+fact-rich sample-notes.md -> mock-local-teacher rows -> deterministic dataset quality report -> 30-step Qwen2.5-0.5B LoRA adapter -> 4 held-out sample-fact before/after questions
+```
+
+Repo state prepared for Colab:
+
+```text
+Git commit pushed before attempt: 18b6c6c
+Notebook URL intended for run: https://colab.research.google.com/github/tacotuesday8888/OpenDistillation/blob/main/notebooks/opendistillation_v0_demo.ipynb
+Committed safe defaults: INSTALL_TRAINING_DEPS = False, RUN_REAL_TEACHER = False, RUN_TRAINING = False
+Live-only intended settings: INSTALL_TRAINING_DEPS = True, USE_SAMPLE_NOTES = True, RUN_REAL_TEACHER = False, RUN_TRAINING = True
+Notebook sample setting: examples_per_chunk = 6
+Notebook training setting: max_steps = 30
+Notebook comparison setting: max_examples = 4
+```
+
+Local evidence before the Colab attempt:
+
+```text
+Input file: sample-notes.md
+Chunks: 4
+Generated examples: 24
+Rows: 24 total, 24 schema-valid
+Chunk coverage: 4/4
+Duplicate questions: 0
+Near-duplicate questions: 0
+Very short answers: 0
+Very long answers: 0
+Issues: 0
+Held-out sample-fact questions: 4
+```
+
+Held-out questions prepared:
+
+```text
+1. In the demo notes, what phrase is listed as the project codename?
+2. Which checkpoint phrase should verify that the sample notes were remembered?
+3. Which local runner label does the sample say to remember?
+4. What time and color are paired in the review ritual notes?
+```
+
+Why Colab did not run:
+
+```text
+Chrome plugin connection attempt 1: timed out before open-tabs check completed.
+Chrome plugin connection attempt 2: timed out before open-tabs check completed.
+Chrome health checks: Google Chrome running, Chrome installed, Codex Chrome Extension installed/enabled in selected Profile 36, native host manifest present and correct.
+Recovery step: opened a fresh Chrome window for selected Profile 36.
+Chrome plugin retry after recovery: timed out again.
+Computer Use fallback: not sufficient in this session because only click/key actions were exposed, without a usable screen-reading or typing surface for Colab.
+```
+
+Remaining unverified for this experiment:
+
+- Colab T4 package versions.
+- T4 runtime name and CUDA readiness.
+- Optional dependency install in the new notebook state.
+- 30-step training runtime and adapter path.
+- Adapter file list.
+- Four held-out base answers.
+- Four held-out trained-adapter answers.
+- Reference-overlap values and deltas.
+- Honest answer-quality judgment: better, unchanged, or worse.
+
+Generated datasets, adapters, checkpoints, and model files were not created locally and were not committed.
 
 ## Colab GPU Quality Smoke: Adapter-Disabled Comparison Follow-Up
 

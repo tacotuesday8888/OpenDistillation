@@ -1,31 +1,43 @@
 # Recommended Next Goal Prompt
 
-Use this as the next `/goal` after the adapter-disabled Colab GPU quality smoke is implemented and documented:
+Use this as the next `/goal` after the sample-fact learning-signal experiment is committed:
 
 ```text
-/goal Improve OpenDistillation's first notes-model answer quality without broadening v0. Work in /Users/langqi/Developer/Projects/OpenDistillation on latest main. Keep v0 narrow: TXT/MD notes only, one notes/school model only, Colab-first, MockTeacherEngine as the safe default, optional local Qwen real teacher, optional short TRL/PEFT LoRA training, and bounded before/after quality report. Do not build SaaS, Mac app, phone app, accounts, backend, GGUF export, local runtime packaging, multiple profiles, coding model, writing model, work model, phone model, paid APIs, broad benchmark suite, Unsloth migration, bitsandbytes migration, or larger training platform. Starting evidence: the first Tesla T4 Colab quality smoke at commit 276a8d3 produced 16 mock-teacher rows, a clean dataset-quality report, a 3-step Qwen2.5-0.5B LoRA adapter, and unchanged base/trained answers. Follow-up diagnosis fixed the comparison path by generating base answers with the PEFT adapter disabled. The second T4 smoke at commit 6a98c92599d1defa2b4a61510f7372f399f5fd87 used the fixed comparison path, produced 16/16 valid rows with 4/4 chunk coverage, trained another 3-step adapter, and made all three trained answers change; however, the answers were generic or hallucinated, with overlap deltas +0.031, +0.027, and -0.026, so useful note learning is still not proven. Make the smallest notes-only improvement likely to improve the actual answer content: stronger note-grounded mock teacher targets, clearer reference answers, better comparison prompts, a tiny held-out notes question set, slightly more bounded training steps, or a sample-notes tweak that gives the model concrete facts to learn. Keep committed safe defaults unchanged: INSTALL_TRAINING_DEPS = False, RUN_REAL_TEACHER = False, RUN_TRAINING = False. If another Colab smoke is run, keep it bounded for T4 and record package versions, runtime, dataset quality values, training steps, adapter path, comparison answers, overlap signals, and whether answers are better, unchanged, or worse. Keep generated datasets, adapters, model artifacts, checkpoints, secrets, and local config out of git. Update docs, run local verification, review the diff for secrets/artifacts, commit, and push.
+/goal Finish the OpenDistillation sample-fact Colab T4 quality smoke and document the measured answer result. Work in /Users/langqi/Developer/Projects/OpenDistillation on latest origin/main. Keep v0 narrow: TXT/MD notes only, one notes/school model only, Colab-first, MockTeacherEngine as the safe default, optional local Qwen real teacher, optional short TRL/PEFT LoRA training, and bounded before/after quality report. Do not build SaaS, Mac app, phone app, accounts, backend, GGUF export, local runtime packaging, multiple profiles, coding model, writing model, work model, phone model, paid APIs, broad benchmark suite, Unsloth migration, bitsandbytes migration, or larger training platform.
+
+Starting evidence: the first Tesla T4 Colab quality smoke at commit 276a8d3 produced 16 mock-teacher rows, a clean dataset-quality report, a 3-step Qwen2.5-0.5B LoRA adapter, and unchanged base/trained answers. Follow-up diagnosis fixed the comparison path by generating base answers with the PEFT adapter disabled. The second T4 smoke at commit 6a98c92599d1defa2b4a61510f7372f399f5fd87 used the fixed comparison path, produced 16/16 valid rows with 4/4 chunk coverage, trained another 3-step adapter, and made all three trained answers change; however, the answers were generic or hallucinated, with overlap deltas +0.031, +0.027, and -0.026, so useful note learning was still not proven.
+
+Current local experiment: latest main has fact-rich `examples/sample-notes.md`, fact-aware mock rows for simple `Label: value` chunks, `build_sample_fact_comparison_rows(...)`, four held-out sample-fact questions, notebook sample setting `examples_per_chunk = 6`, notebook optional training setting `SFTLoRAConfig(max_steps=30)`, and notebook comparison setting `COMPARISON_MAX_EXAMPLES = 4`. Local verification produced 4 chunks, 24 mock rows, 24 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 very short answers, 0 very long answers, 0 dataset-quality issues, and 4 held-out sample-fact questions. Safe committed defaults are still `INSTALL_TRAINING_DEPS = False`, `RUN_REAL_TEACHER = False`, and `RUN_TRAINING = False`.
+
+The 2026-06-03 Colab attempt did not reach notebook execution. Chrome extension communication timed out twice; Chrome, the Codex Chrome Extension, and the native host manifest passed health checks; a fresh selected-profile Chrome window was opened; the retry still timed out. Computer Use exposed only click/key actions in that session, without a usable screen-reading or typing surface. Do not invent Colab evidence.
+
+Use @Chrome/@Computer efficiently if available. If Colab runs, use a T4 runtime and live-only settings `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, `RUN_REAL_TEACHER = False`, and `RUN_TRAINING = True`. Record package versions, runtime/GPU, dataset quality values, training steps, adapter path, adapter file list, comparison questions, base answers, trained-adapter answers, overlap values/deltas, and honest judgment: better, unchanged, or worse. If the adapter answers are still generic or hallucinated, say that plainly.
+
+If Colab still is not feasible, update docs with the exact blocker and leave answer quality unverified. Keep generated datasets, adapters, model artifacts, checkpoints, secrets, and local config out of git. Run local verification, review the diff for secrets/artifacts, commit, and push.
 ```
 
 ## Why This Goal
 
-The repo now has a first quality loop that runs locally and twice in Colab on a Tesla T4: better mock-teacher row variety, deterministic dataset-quality checks, short LoRA training, and a bounded multi-question comparison helper. The first Colab report proved wiring but had identical answers; the second proved the fixed comparison can see adapter-side movement. Neither proved useful note learning.
+The implementation now has a sharper local learning-signal setup, but the core question is still external:
 
-The next risk is answer content. A beginner needs to see whether the optional adapter can produce more note-grounded answers after a tiny Colab run, or the demo should clearly explain why the current short run is only a wiring check.
+> Does a short T4 LoRA run answer the held-out sample-fact questions better than the base model?
+
+The answer can be better, unchanged, or worse. The project needs measured evidence, not optimism.
 
 ## Done Means
 
-- The sample-notes default remains safe and CPU-runnable.
-- The unchanged first Colab result and changed-but-not-improved second Colab result are used as baselines.
-- Any implementation change stays inside the notes/school model path.
-- Dataset quality remains recorded separately from model quality.
-- The model-quality section still compares up to three generated questions when training creates an adapter.
-- Docs clearly say whether the trained adapter looked better, unchanged, or worse after any new smoke run.
+- Latest main is inspected before changing anything.
+- The safe committed defaults stay off.
+- The Colab run either completes with full measured evidence, or the exact blocker is documented.
+- `docs/colab-smoke-test-results.md`, `docs/current-decisions.md`, README-facing docs, and this file agree on the result.
 - No generated datasets, model artifacts, checkpoints, secrets, or local config are committed.
+- Unit tests, notebook JSON validation, default local notebook smoke path, `git diff --check`, secret scan, artifact scan, and git status are checked.
+- Changes are committed and pushed.
 
 ## Do Not Use This Goal For
 
 - Expanding beyond TXT/MD notes.
 - Adding coding, writing, work, phone, or multi-profile flows.
 - Implementing GGUF export or local runtime.
-- Adding Hugging Face Evaluate, LightEval, Unsloth, or bitsandbytes unless there is a specific measured reason.
+- Adding Hugging Face Evaluate, LightEval, Unsloth, or bitsandbytes.
 - Claiming benchmark results.
