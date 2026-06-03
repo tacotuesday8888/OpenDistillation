@@ -80,17 +80,16 @@ Verified locally in this repository:
 - Recovered Colab T4 run after dependency fixes: model download, 1-step LoRA training, adapter creation, and before/after comparison completed once.
 - Clean GitHub-opened Colab T4 run: bounded optional dependency install succeeded without upgrading `torch`, `USE_SAMPLE_NOTES = True` loaded the sample notes, `RUN_TRAINING = True` created `/content/OpenDistillation/outputs/notes-lora/adapter`, and before/after comparison printed both answers.
 - Real-teacher Colab attempt on 2026-06-03 opened the GitHub notebook from `origin/main` at `740d105`, but Chrome/Colab control timed out before runtime selection, teacher model load, QA generation, dataset validation, training, or comparison evidence could be collected.
+- Real-teacher Colab verification on 2026-06-03 used commit `a04538dfc999047255ddc4747d91d89e9f0ed3f6`, Tesla T4, `Qwen/Qwen2.5-1.5B-Instruct`, one sample-notes chunk, 1 generated QA row, passed dataset validation, confirmed a 1-step LoRA adapter at `/content/OpenDistillation/outputs/notes-lora-real-teacher-smoke/adapter`, and ran before/after comparison.
 
 Still deferred or unverified:
 
-- Clean Colab GPU smoke-test evidence for `RUN_REAL_TEACHER = True`.
-- Whether `Qwen/Qwen2.5-1.5B-Instruct` can load and generate valid v0 rows on a fresh Colab T4 runtime.
-- Whether a real-teacher-generated dataset can continue into the verified LoRA training/comparison path without memory cleanup or other small fixes.
-- Real teacher output quality beyond local fake-dependency tests.
+- Real teacher output quality beyond a tiny 1-row smoke test.
+- Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond a qualitative wiring check.
 - Upload-path smoke tests for user-provided `.txt` and `.md` files.
-- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, and the clean GitHub-opened T4 pass.
+- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, and the real-teacher end-to-end T4 verification.
 
 Why this path:
 

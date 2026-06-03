@@ -221,8 +221,8 @@ Included now:
 
 Planned later in v0:
 
-- Clean Colab GPU smoke test for the optional real teacher path.
-- Teacher output quality hardening after that smoke test.
+- Teacher output quality hardening after the first one-row real-teacher smoke test.
+- Colab output/logging resilience for long optional cells.
 - Local-run guidance.
 
 Excluded:

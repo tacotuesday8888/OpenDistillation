@@ -12,7 +12,7 @@ The current prototype is much narrower:
 
 > One Colab-first notes / school model prototype for `.txt` and `.md` notes.
 
-It has a runnable notebook, helper package, deterministic mock teacher, an opt-in local Qwen real teacher path, a bounded optional TRL/PEFT LoRA training entry point, runtime readiness messages, a clean Colab T4 smoke-test result for optional training/comparison, and optional before/after comparison wiring. It does not yet have a clean Colab smoke-test result for the real teacher path, model export, local runtime instructions, or multiple model profiles.
+It has a runnable notebook, helper package, deterministic mock teacher, an opt-in local Qwen real teacher path, a bounded optional TRL/PEFT LoRA training entry point, runtime readiness messages, a clean Colab T4 smoke-test result for optional training/comparison, a real-teacher end-to-end T4 verification, and optional before/after comparison wiring. It does not yet have model export, local runtime instructions, meaningful adapter-quality evidence, or multiple model profiles.
 
 ## Read These In Order
 
@@ -32,7 +32,7 @@ The next useful implementation goal is in:
 docs/next-goal-prompt.md
 ```
 
-It should smoke-test the opt-in real teacher-generation path for the notes model only, with the deterministic mock teacher kept as the fallback. It should not start coding, writing, work, phone, SaaS, Mac app, or multi-profile features.
+It should harden the first public Colab demo for the notes model only, with the deterministic mock teacher kept as the fallback. It should not start coding, writing, work, phone, SaaS, Mac app, or multi-profile features.
 
 ## What Not To Do Next
 

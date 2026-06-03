@@ -116,7 +116,7 @@ Acceptance criteria:
 - Notebook states whether uploaded notes are sent to a remote endpoint.
 - Fallback behavior is documented for teacher failures.
 
-Status: implemented locally. The default remains `MockTeacherEngine`. The opt-in real teacher is `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`; it downloads model weights from Hugging Face but does not send notes text to a paid or proprietary remote API. Clean Colab GPU smoke-test evidence for `RUN_REAL_TEACHER = True` is still pending.
+Status: implemented and smoke-tested once on Colab T4. The default remains `MockTeacherEngine`. The opt-in real teacher is `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`; it downloads model weights from Hugging Face but does not send notes text to a paid or proprietary remote API.
 
 ### 7. Generate question-answer examples from chunks
 
@@ -131,7 +131,7 @@ Acceptance criteria:
 - Dataset is saved to an ignored generated-data path.
 - Dataset can be downloaded from Colab.
 
-Status: implemented for the default mock teacher path and locally tested for the optional real teacher parser with fake no-download dependencies. The next verification gap is a clean Colab GPU run of `RUN_REAL_TEACHER = True`.
+Status: implemented for the default mock teacher path and smoke-tested once for the optional real teacher path on Colab T4 with one sample-note chunk and one generated row. More output-quality hardening remains.
 
 ### 8. Choose the default notes student model and training backend
 
@@ -161,7 +161,7 @@ Acceptance criteria:
 - Output artifacts stay in ignored runtime paths.
 - Missing GPU and out-of-memory failures are explained plainly.
 
-Status: bounded local engine and notebook entry point exist. A clean GitHub-opened Colab T4 runtime completed the optional training path and created `/content/OpenDistillation/outputs/notes-lora/adapter`. Remaining work is quality hardening after the real teacher path is smoke-tested.
+Status: bounded local engine and notebook entry point exist. A clean GitHub-opened Colab T4 runtime completed the optional training path and created `/content/OpenDistillation/outputs/notes-lora/adapter`. A later real-teacher T4 verification confirmed a 1-step adapter at `/content/OpenDistillation/outputs/notes-lora-real-teacher-smoke/adapter`. Remaining work is quality and demo hardening, not broadening the training system.
 
 ### 10. Add before/after comparison
 
@@ -193,7 +193,7 @@ Acceptance criteria:
 - Before/after comparison either prints base and adapter answers or records the exact failure.
 - Docs are updated to mark the verified and unverified parts honestly.
 
-Status: completed on 2026-06-02 from a clean GitHub-opened Colab T4 runtime. Results are recorded in `docs/colab-smoke-test-results.md`. The optional real teacher path now exists but still needs its own clean Colab GPU smoke test. GGUF export and local runtime instructions remain separate follow-up work.
+Status: completed on 2026-06-02 from a clean GitHub-opened Colab T4 runtime. Results are recorded in `docs/colab-smoke-test-results.md`. The optional real teacher path also passed one T4 end-to-end wiring check on 2026-06-03. GGUF export and local runtime instructions remain separate follow-up work.
 
 ### 12. Verify GGUF or local-run export path
 

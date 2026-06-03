@@ -1,12 +1,14 @@
 # Colab GPU Smoke-Test Results
 
-Date: 2026-06-02
+Last updated: 2026-06-03
 
 ## Result
 
 Fresh Colab GPU training from a clean GitHub-opened runtime is **verified once** on 2026-06-02.
 
-The optional real-teacher Colab path is **not verified**. A 2026-06-03 attempt opened the GitHub notebook from `origin/main` at commit `740d105`, but Chrome control timed out before a fresh runtime could be selected, before a GPU type could be recorded for that attempt, and before the real teacher could be run. No real-teacher QA rows, dataset validation output, LoRA adapter, or before/after comparison output were produced or observed in that attempt.
+The optional real-teacher Colab path is **verified once** on 2026-06-03. The verified path used sample TXT/MD notes, `Qwen/Qwen2.5-1.5B-Instruct` as the local real teacher, dataset validation, a 1-step TRL/PEFT LoRA adapter from `Qwen/Qwen2.5-0.5B-Instruct`, and before/after comparison on a Tesla T4 runtime.
+
+An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
 The clean run passed after three fixes were pushed:
 
@@ -16,7 +18,81 @@ The clean run passed after three fixes were pushed:
 
 The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
 
-## Real Teacher Colab Attempt: Browser-Control Failure
+## Real Teacher End-to-End Success
+
+Date: 2026-06-03
+
+Verified path:
+
+```text
+sample TXT/MD notes -> Qwen/Qwen2.5-1.5B-Instruct real teacher QA generation -> dataset validation -> Qwen/Qwen2.5-0.5B-Instruct LoRA adapter -> before/after comparison
+```
+
+Runtime and repo state:
+
+```text
+Notebook URL: https://colab.research.google.com/github/tacotuesday8888/OpenDistillation/blob/main/notebooks/opendistillation_v0_demo.ipynb
+Git commit used by Colab clone: a04538dfc999047255ddc4747d91d89e9f0ed3f6
+Runtime: T4 (Python 3)
+GPU: Tesla T4
+torch: 2.11.0+cu128
+transformers: 4.57.6
+datasets: 4.8.5
+trl: 0.29.1
+peft: 0.18.1
+accelerate: 1.13.0
+```
+
+Teacher and dataset evidence:
+
+```text
+Input file: sample-notes.md
+Chunks used: ["chunk-0001"]
+Teacher model: Qwen/Qwen2.5-1.5B-Instruct
+QA rows generated: 1
+Dataset validation: passed
+First generated question: What is OpenDistillation?
+First generated response length: 76 characters
+```
+
+Training evidence:
+
+```text
+Adapter path: /content/OpenDistillation/outputs/notes-lora-real-teacher-smoke/adapter
+Adapter exists: true
+Adapter files: README.md, adapter_config.json, adapter_model.safetensors, added_tokens.json, chat_template.jinja, merges.txt, special_tokens_map.json, tokenizer.json, tokenizer_config.json, training_args.bin, vocab.json
+Training global step recorded in trainer_state.json: 1
+Training log history entries: 1
+```
+
+Comparison evidence:
+
+```text
+Comparison ran: true
+Comparison question: What is OpenDistillation?
+Base answer length: 187 characters
+Trained adapter answer length: 174 characters
+Runtime for terminal verification pass: 29.8 seconds
+Result marker: OD_VERIFY_PASSED=True
+```
+
+Comparison previews:
+
+```text
+Base model answer preview:
+OpenDistillation is an open-source project that aims to improve the efficiency and scalability of distillation-based models for deep learning applications. It focuses on several key areas
+
+Trained adapter answer preview:
+OpenDistillation is an open-source software platform for the development of distillation-based AI models. It aims to provide a unified and efficient way to develop and deploy
+```
+
+Notes:
+
+- The tiny 1-row, 1-step run proves wiring, not model quality.
+- The first notebook output pane hit a non-fatal Colab UI error: `Could not load the JavaScript files needed to display output...`. The verification continued through the Colab Terminal in the same T4 runtime and wrote markers to `/content/od_smoke_terminal_result.jsonl`.
+- Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
+
+## Earlier Real Teacher Colab Attempt: Browser-Control Failure
 
 Date: 2026-06-03
 
@@ -71,7 +147,7 @@ Before/after comparison ran: no.
 Exact failure: Chrome/Colab control became unavailable before runtime/output evidence could be collected.
 ```
 
-This is a tooling/control failure, not evidence that `Qwen/Qwen2.5-1.5B-Instruct` is too heavy for a T4. Do not mark the real-teacher path as passed or failed on model grounds until a Colab GPU runtime actually reaches teacher model load/generation.
+This was a tooling/control failure, not evidence that `Qwen/Qwen2.5-1.5B-Instruct` was too heavy for a T4. The later 2026-06-03 run above reached teacher generation and comparison successfully.
 
 ## Clean GitHub Runtime Success
 
@@ -305,4 +381,4 @@ The notebook is expected to:
 - Save any adapter output under `outputs/notes-lora/adapter`.
 - Run before/after comparison only after training creates an adapter.
 
-The actual student-model Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime using mock-teacher rows. The optional real teacher implementation exists locally but still needs a clean Colab GPU smoke test. GGUF export and local runtime instructions remain unverified and deferred.
+The actual student-model Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime using mock-teacher rows. The real-teacher path has also passed once on a T4 using one sample-note chunk and a 1-step adapter verification. GGUF export and local runtime instructions remain unverified and deferred.

@@ -1,26 +1,29 @@
 # Recommended Next Goal Prompt
 
-Use this as the next `/goal` after the optional real teacher implementation is committed:
+Use this as the next `/goal` after the real-teacher Colab smoke result is committed:
 
 ```text
-/goal Smoke-test and harden the optional real teacher path for the OpenDistillation v0 notes model. Work in /Users/langqi/Developer/Projects/OpenDistillation on the current branch. Keep the product scope narrow: TXT/MD notes only, one notes/school model only, Colab-first, deterministic MockTeacherEngine as the safe fallback. Use Chrome as the first Colab control path and Computer as the fallback if Chrome cannot read or operate Colab. Do not ask the user for screenshots when those plugins can inspect the page. Do not build a SaaS, Mac app, phone app, account system, cloud backend, multi-profile system, GGUF export, local runtime, or real large training pipeline. Run `RUN_REAL_TEACHER = True` with the optional Hugging Face dependencies in a clean Colab GPU runtime, record whether `Qwen/Qwen2.5-1.5B-Instruct` loads and produces valid rows, capture exact failure messages if it does not, keep generated datasets/model artifacts/secrets out of git, update README/docs/current-decisions.md/docs/first-demo-flow.md/docs/colab-smoke-test-results.md/docs/github-issue-plan.md with verified versus unverified status, run local verification, review the diff for secrets/artifacts, commit locally, and push.
+/goal Harden the first public OpenDistillation Colab demo without broadening v0. Work in /Users/langqi/Developer/Projects/OpenDistillation on the current branch. Keep scope narrow: TXT/MD notes only, one notes/school model only, Colab-first, deterministic MockTeacherEngine as the safe default, optional local Qwen real teacher, optional short TRL/PEFT LoRA training, and optional before/after comparison. Use Chrome as the first Colab control path and Computer as the fallback if Chrome cannot read or operate Colab. Do not ask the user for screenshots when those plugins can inspect the page. Do not build a SaaS, Mac app, phone app, account system, cloud backend, multi-profile system, GGUF export, local runtime, or real large training pipeline. Improve the first-demo experience around the verified path: clearer Colab run order, stronger log markers for long optional cells, a safer way to capture output if Colab output frames fail, and beginner-readable notes that the tiny smoke test proves wiring not model quality. Keep generated datasets/model artifacts/secrets out of git, update README/docs/current-decisions.md/docs/first-demo-flow.md/docs/colab-smoke-test-results.md/docs/github-issue-plan.md if status changes, run local verification, review the diff for secrets/artifacts, commit locally, and push.
 ```
 
 ## Why This Goal
 
-The first optional local real teacher path now exists behind `TeacherEngine`: `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`. The next useful product risk is proving whether that teacher path actually works in a clean Colab GPU runtime and whether the generated rows are useful enough to train from.
+The first optional real teacher path now has one Colab T4 wiring pass:
 
-The 2026-06-03 attempt opened the GitHub Colab notebook at `origin/main` commit `740d105`, but Chrome/Colab control timed out before runtime selection or model execution. That attempt is documented as a tooling/control failure, not a model failure.
+- `Qwen/Qwen2.5-1.5B-Instruct` loaded and generated one valid QA row from `examples/sample-notes.md`.
+- Dataset validation passed.
+- A 1-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA adapter existed at `/content/OpenDistillation/outputs/notes-lora-real-teacher-smoke/adapter`.
+- Before/after comparison ran.
+
+That proves the path can work. It does not prove the model is useful yet. The next risk is making the first public demo reliable and understandable for a beginner without turning the project into a larger platform.
 
 ## Done Means
 
-- `RUN_REAL_TEACHER = True` is attempted from a clean GitHub-opened Colab GPU runtime.
-- The run records whether the runtime was fresh, the GPU type, the teacher model, model-load status, QA row count, dataset validation result, LoRA adapter path if training runs, comparison status, and exact failure text if any step fails.
-- The docs say plainly whether the real teacher loaded, generated valid rows, failed, or remained unverified.
-- The first generated rows are inspected and recorded without committing generated datasets.
-- `MockTeacherEngine` remains available and safe.
-- No-download tests still cover the teacher path by using fake dependencies.
-- Real training, GGUF export, local runtime, and future model profiles remain deferred.
+- The default notebook path still runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training.
+- Optional real teacher, training, and comparison cells have clear run order and clear skip/run markers.
+- Long optional cells write concise status markers so a Colab output-frame failure does not erase evidence.
+- Docs state that the real-teacher result is a tiny wiring smoke test, not a quality benchmark.
+- `MockTeacherEngine` remains the safe fallback.
 - No generated datasets, model artifacts, checkpoints, secrets, or local config are committed.
 
 ## Do Not Use This Goal For

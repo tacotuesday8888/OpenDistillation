@@ -6,7 +6,7 @@
 
 ## Current State
 
-OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, an opt-in local real teacher path, and bounded optional training and comparison entry points. A clean GitHub-opened Colab T4 runtime completed one optional training/comparison smoke test from the sample notes path. The opt-in real teacher path still needs its own clean Colab GPU smoke test.
+OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, an opt-in local real teacher path, and bounded optional training and comparison entry points. A clean GitHub-opened Colab T4 runtime completed one optional training/comparison smoke test from the sample notes path, and a later T4 verification completed the real-teacher path from sample notes through before/after comparison.
 
 The repo now contains:
 
@@ -21,7 +21,7 @@ The repo now contains:
 - Optional before/after comparison engine for one generated question, skipped by default in the notebook.
 - Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
 - Manual Colab GPU smoke-test checklist.
-- Smoke-test results file recording the first real Colab T4 blockers, the recovered-runtime pass, and one clean GitHub-opened T4 training/comparison pass.
+- Smoke-test results file recording the first real Colab T4 blockers, the recovered-runtime pass, one clean GitHub-opened T4 training/comparison pass, and one real-teacher end-to-end T4 verification.
 - First-demo implementation plan.
 - GitHub issue forms.
 - Starter milestone and issue plan.
@@ -46,7 +46,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task should smoke-test and harden the opt-in real teacher-generation path for the notes model while keeping the deterministic mock teacher as the fallback.
+The next task should harden the first public Colab demo for the notes model while keeping the deterministic mock teacher as the fallback.
 
 ## Important Guardrails
 

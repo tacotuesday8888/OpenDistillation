@@ -67,7 +67,7 @@ Exit criteria:
 - The user can inspect examples before training.
 - The mock teacher remains available as a safe deterministic fallback.
 
-Current status: implemented locally as an opt-in `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`, with `RUN_REAL_TEACHER = False` keeping the default notebook path safe. Local tests cover request construction, JSONL parsing, schema validation, dependency failures, model-load failures, generation/CUDA-memory failures, and invalid-output failures without downloading a model. A clean Colab GPU smoke test for `RUN_REAL_TEACHER = True` is still needed before this phase is called verified.
+Current status: implemented as an opt-in `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`, with `RUN_REAL_TEACHER = False` keeping the default notebook path safe. Local tests cover request construction, JSONL parsing, schema validation, dependency failures, model-load failures, generation/CUDA-memory failures, and invalid-output failures without downloading a model. A Colab T4 smoke test passed once with one sample-note chunk, one valid generated QA row, a 1-step LoRA adapter, and before/after comparison; broader teacher-output quality remains unproven.
 
 ## Phase 3: Short Notes-Model Training Path
 

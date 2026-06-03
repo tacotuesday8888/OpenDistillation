@@ -48,14 +48,13 @@ What exists now:
 - Runtime checks and plain-language setup messages for optional Hugging Face, CUDA, teacher, training, and comparison failures.
 - A first-demo implementation plan.
 - A manual Colab GPU smoke-test checklist.
-- A smoke-test results file that records the first real Colab T4 blockers and a clean GitHub-opened T4 training/comparison pass.
+- A smoke-test results file that records the first real Colab T4 blockers, a clean GitHub-opened T4 training/comparison pass, and one real-teacher end-to-end T4 verification.
 - GitHub issue forms and a starter issue plan.
 - Guardrails to avoid committing generated datasets, checkpoints, model weights, or secrets.
 
 What does not exist yet:
 
-- A clean Colab GPU smoke-test result for `RUN_REAL_TEACHER = True`.
-- End-to-end evidence that the real Qwen teacher can generate valid rows and then continue into LoRA training/comparison in a fresh Colab runtime. A 2026-06-03 attempt opened the GitHub Colab notebook from `origin/main`, but browser control timed out before runtime/output evidence could be collected.
+- Meaningful model-quality evidence beyond tiny smoke tests.
 - Multiple personal model profiles.
 - Coding, writing, work, or phone model flows.
 - A CLI.
@@ -78,7 +77,7 @@ Current prototype constraints:
 - **Teacher:** deterministic local mock teacher by default; optional local `Qwen/Qwen2.5-1.5B-Instruct` teacher after `RUN_REAL_TEACHER = True`.
 - **Dataset:** JSONL rows with `instruction`, `response`, and `source_chunk_id`.
 - **Training:** optional short TRL/PEFT LoRA entry point; skipped by default and verified once in a clean GitHub-opened Colab T4 runtime.
-- **Comparison:** optional base-vs-adapter answer comparison after training; skipped by default and verified once in that clean T4 smoke test.
+- **Comparison:** optional base-vs-adapter answer comparison after training; skipped by default and verified once with mock-teacher rows and once after real-teacher row generation.
 - **Export:** placeholder only; no GGUF or local runtime output yet.
 
 Remaining v0 constraints after the current prototype:
@@ -114,7 +113,7 @@ The planned notes-model notebook flow is specified in [`docs/first-demo-flow.md`
 8. If training runs, compare one base-model answer with one trained-adapter answer.
 9. Show clear placeholders for export and local running.
 
-The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke test for mock-teacher training/comparison is recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md); the real teacher path is implemented locally but still needs its own successful Colab smoke-test result.
+The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke tests for mock-teacher training/comparison and real-teacher end-to-end wiring are recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md).
 
 ## Repository Map
 
@@ -159,7 +158,7 @@ The current prototype covers the safe first slice of the notes / school model:
 7. Prepare a short optional LoRA fine-tuning request from those rows.
 8. Prepare an optional before/after comparison from the first generated question.
 
-The next implementation work is to smoke-test `RUN_REAL_TEACHER = True` in a clean Colab GPU runtime, record whether the teacher loads and produces valid rows, continue into the short LoRA/comparison path if it does, and then harden only that notes-only path. GGUF/local export comes after that.
+The next implementation work is to harden the first public demo experience around the verified notes-only path: clearer Colab run instructions, better output/logging resilience, and honest local-run/export follow-up. GGUF/local export comes after that.
 
 Future personal model types should reuse the same broad workflow, but they should not be implemented until the notes model path works.
 

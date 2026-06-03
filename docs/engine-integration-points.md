@@ -54,9 +54,12 @@ Verified locally:
 - Mock teacher generation.
 - Real teacher request construction, JSONL parsing, schema validation, and failure handling with fake no-download dependencies.
 
+Verified once in Colab T4:
+
+- `RUN_REAL_TEACHER = True` style path with `Qwen/Qwen2.5-1.5B-Instruct`, one sample-note chunk, one generated QA row, dataset validation, adapter verification, and before/after comparison.
+
 Still unverified:
 
-- Clean Colab GPU run with `RUN_REAL_TEACHER = True`.
 - Real teacher output quality on the sample notes file.
 
 ## Dataset Validation
@@ -156,7 +159,7 @@ Verified once in a clean GitHub-opened Colab T4 runtime:
 
 Still unverified:
 
-- Whether the answer changes in a useful way after a real teacher path and more meaningful training data.
+- Whether the answer changes in a useful way after more real-teacher rows and more meaningful training data.
 
 ## Future Export Engines
 

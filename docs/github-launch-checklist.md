@@ -32,7 +32,7 @@ Use this before making the repository public or inviting outside contributors.
 - [x] Document engine integration points.
 - [x] Add deterministic mock teacher path.
 - [x] Choose and prototype the optional local real teacher path.
-- [ ] Smoke-test the optional real teacher path in clean Colab GPU.
+- [x] Smoke-test the optional real teacher path in clean Colab GPU.
 - [x] Choose student model and training backend.
 - [x] Add a bounded optional short training path.
 - [x] Add before/after comparison wiring.

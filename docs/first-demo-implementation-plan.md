@@ -115,7 +115,7 @@ Acceptance criteria:
 - Dataset output is downloadable from Colab.
 - The notebook clearly says if text is sent to a remote teacher endpoint.
 
-Status: implemented for the default path with `MockTeacherEngine` and for the opt-in real path with `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`. Local tests cover real-teacher request construction, JSONL parsing, schema validation, dependency failures, model-load failures, generation/CUDA-memory failures, and invalid output without downloading a model. A clean Colab GPU smoke test for `RUN_REAL_TEACHER = True` is still pending.
+Status: implemented for the default path with `MockTeacherEngine` and for the opt-in real path with `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`. Local tests cover real-teacher request construction, JSONL parsing, schema validation, dependency failures, model-load failures, generation/CUDA-memory failures, and invalid output without downloading a model. A Colab T4 smoke test for the real-teacher path passed once with one sample-note chunk and one generated row.
 
 ## Milestone 4: Short Student Fine-Tuning
 
