@@ -84,6 +84,7 @@ Verified locally in this repository:
 - Real-teacher Colab attempt on 2026-06-03 opened the GitHub notebook from `origin/main` at `740d105`, but Chrome/Colab control timed out before runtime selection, teacher model load, QA generation, dataset validation, training, or comparison evidence could be collected.
 - Real-teacher Colab verification on 2026-06-03 used commit `a04538dfc999047255ddc4747d91d89e9f0ed3f6`, Tesla T4, `Qwen/Qwen2.5-1.5B-Instruct`, one sample-notes chunk, 1 generated QA row, passed dataset validation, confirmed a 1-step LoRA adapter at `/content/OpenDistillation/outputs/notes-lora-real-teacher-smoke/adapter`, and ran before/after comparison.
 - Uploaded-notes Colab rehearsal on 2026-06-03 used commit `7113f87fa915b789cc77bbfb423b405defd9b5ec`. Setup and install-skip status markers printed in Colab, but Chrome file-chooser control timed out on Colab's `files.upload()` iframe before a `.txt` or `.md` file could be attached. Computer Use was installed but no callable Computer control tool was exposed in this thread.
+- Uploaded-notes Colab retry on 2026-06-03 started from clean `origin/main` at `6a74bd88371044d235928301d6f87f4c926c36dc`. Chrome extension health checks passed and a fresh selected-profile window opened, but Chrome browser control still timed out before tab access. Computer Use was installed locally but still did not expose a callable control tool in this thread.
 
 Still deferred or unverified:
 
@@ -91,7 +92,7 @@ Still deferred or unverified:
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond a qualitative wiring check.
-- Upload-path smoke tests for user-provided `.txt` and `.md` files. The latest attempt reached the Colab upload widget but did not attach files, so no upload pass is claimed.
+- Upload-path smoke tests for user-provided `.txt` and `.md` files. Recent attempts were blocked by browser automation before files could be attached, so no upload pass is claimed.
 - `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, and the real-teacher end-to-end T4 verification.
 
 Why this path:

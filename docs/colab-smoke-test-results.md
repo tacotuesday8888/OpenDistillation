@@ -428,3 +428,51 @@ The public GitHub-backed Colab notebook loaded the current hardened notebook, an
 Computer Use was installed after Chrome hit the file-chooser blocker, but tool discovery still did not expose a callable Computer control tool in this thread. No manual user-assisted upload result was used.
 
 This is an automation/control blocker, not evidence that the notebook upload path works or fails for a normal human Colab user. The uploaded-notes path remains unverified until a browser-control path can attach the `.txt` and `.md` files and the notebook reaches teacher, dataset, training-skipped, and comparison-skipped markers.
+
+## Uploaded Notes Rehearsal Retry
+
+Date: 2026-06-03
+
+Commit checked before retry:
+
+```text
+6a74bd88371044d235928301d6f87f4c926c36dc
+```
+
+Repository state before retry:
+
+```text
+HEAD == origin/main == 6a74bd88371044d235928301d6f87f4c926c36dc
+git status: clean
+```
+
+Temporary local files prepared outside the repository:
+
+```text
+/private/tmp/opendistillation-upload-rehearsal-notes.txt
+/private/tmp/opendistillation-upload-rehearsal-notes.md
+```
+
+Chrome plugin health checks:
+
+```text
+Google Chrome running: yes
+Codex Chrome extension selected profile: Profile 36
+Codex Chrome extension installed: true
+Codex Chrome extension enabled: true
+Native host manifest exists: true
+Native host manifest has expected extension origin: true
+Fresh Chrome selected-profile window opened: yes
+```
+
+Result:
+
+- Uploaded `.txt` path: not verified.
+- Uploaded `.md` path: not verified.
+- No Colab notebook cells were run in this retry, so no new `OD_STATUS` markers were produced.
+
+Blocker:
+
+Chrome browser control timed out before a tab could be claimed or navigated. The `setupBrowserRuntime()` / `browser.user.openTabs()` path timed out twice, including after opening a fresh Chrome window for the selected profile. A narrower backend attempt could not be configured because the Node runtime environment object is not extensible. Computer Use files and MCP manifest were installed locally, but tool discovery still did not expose a callable Computer control API in this thread.
+
+This remains an automation/control blocker, not evidence that the notebook upload path works or fails. The uploaded-notes path remains unverified until Chrome can attach a local file to Colab's `files.upload()` widget or an actually callable Computer control tool can operate the native file picker.

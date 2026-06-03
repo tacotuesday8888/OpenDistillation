@@ -10,7 +10,7 @@ Use this as the next `/goal` after the first uploaded-notes rehearsal attempt is
 
 The sample-notes path, optional training path, and one real-teacher T4 wiring path have passed. The hardened notebook also printed setup and install-skip status markers in Colab at commit `7113f87fa915b789cc77bbfb423b405defd9b5ec`.
 
-The remaining public-demo risk is still the uploaded-notes path. The latest attempt reached Colab's upload iframe, but Chrome file-chooser events timed out before the `.txt` file could be attached, and Computer Use did not expose a callable control tool in that thread.
+The remaining public-demo risk is still the uploaded-notes path. One attempt reached Colab's upload iframe, but Chrome file-chooser events timed out before the `.txt` file could be attached. A retry passed Chrome extension/native-host health checks but Chrome browser control timed out before tab access. Computer Use is installed locally but has not exposed a callable control tool in this thread.
 
 ## Done Means
 
