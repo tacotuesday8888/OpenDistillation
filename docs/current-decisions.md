@@ -86,7 +86,8 @@ Verified locally in this repository:
 - Uploaded-notes Colab rehearsal on 2026-06-03 used commit `7113f87fa915b789cc77bbfb423b405defd9b5ec`. Setup and install-skip status markers printed in Colab, but Chrome file-chooser control timed out on Colab's `files.upload()` iframe before a `.txt` or `.md` file could be attached. Computer Use was installed but no callable Computer control tool was exposed in that thread.
 - Uploaded-notes Colab retry on 2026-06-03 started from clean `origin/main` at `6a74bd88371044d235928301d6f87f4c926c36dc`. Chrome extension health checks passed and a fresh selected-profile window opened, but Chrome browser control still timed out before tab access. Computer Use was installed locally but still did not expose a callable control tool in that thread.
 - Uploaded `.txt` Colab rehearsal on 2026-06-03 started from clean `origin/main` at `6f7d9c66cacb07dc82571abb85b3232285f6961c`. Computer Use clicked the actual Colab `Choose Files` button and the native macOS Open dialog selected `/private/tmp/opendistillation-upload-rehearsal-notes.txt`. The run reached validation, 1 chunk, `mock-local-teacher`, 2 QA rows, dataset saved to `/tmp/opendistillation_training_data.jsonl`, training skipped, and comparison skipped. The Colab Terminal status log recorded setup ready, install skipped, teacher succeeded, dataset saved, training skipped, and comparison skipped.
-- Uploaded `.md` Colab rehearsal on 2026-06-03 reached the actual Colab upload widget from the same clean `origin/main` state, but `/private/tmp/opendistillation-upload-rehearsal-notes.md` could not be attached through the native Open dialog or Chrome file-chooser fallback. The waiting upload cell was interrupted with `KeyboardInterrupt`, so no `.md` validation/chunking/teacher/dataset evidence is claimed.
+- Earlier uploaded `.md` Colab rehearsal on 2026-06-03 reached the actual Colab upload widget from clean `origin/main` at `6f7d9c66cacb07dc82571abb85b3232285f6961c`, but `/private/tmp/opendistillation-upload-rehearsal-notes.md` could not be attached through the native Open dialog or Chrome file-chooser fallback. That blocker was later resolved and is kept only as historical context.
+- Uploaded `.md` Colab rehearsal on 2026-06-03 started from clean `origin/main` at `0e53cdd1e860a1c93007cb20e4c143c90f0a7af9`. Chrome edited the runtime-only upload cell to `USE_SAMPLE_NOTES = False`; Computer Use clicked the actual Colab `Choose Files` button; the native macOS Open dialog selected `/private/tmp/opendistillation-upload-rehearsal-notes.md` by path/suggestion; and the run reached validation, 1 chunk, `mock-local-teacher`, 2 QA rows, dataset saved to `/tmp/opendistillation_training_data.jsonl`, training skipped, and comparison skipped. The Colab Terminal status log recorded setup ready, install skipped, teacher succeeded, dataset saved, training skipped, and comparison skipped.
 
 Still deferred or unverified:
 
@@ -94,7 +95,7 @@ Still deferred or unverified:
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond a qualitative wiring check.
-- Upload-path smoke test for a user-provided `.md` file. The uploaded `.txt` path passed once; the uploaded `.md` path remains blocked at file attachment, so a complete TXT+MD upload rehearsal is not yet verified.
+- Larger uploaded notes files and higher row counts beyond the tiny TXT/MD rehearsal files.
 - `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, and the real-teacher end-to-end T4 verification.
 
 Why this path:

@@ -229,7 +229,7 @@ Included now:
 Planned later in v0:
 
 - Teacher output quality hardening after the first one-row real-teacher smoke test.
-- Finish the upload-path smoke tests: the uploaded `.txt` path passed once through mock teacher, dataset save, training skipped, and comparison skipped; the uploaded `.md` path is still blocked at file attachment in Colab's native picker/iframe flow.
+- Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance.
 
 Excluded:

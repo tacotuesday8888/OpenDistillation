@@ -8,7 +8,7 @@ Fresh Colab GPU training from a clean GitHub-opened runtime is **verified once**
 
 The optional real-teacher Colab path is **verified once** on 2026-06-03. The verified path used sample TXT/MD notes, `Qwen/Qwen2.5-1.5B-Instruct` as the local real teacher, dataset validation, a 1-step TRL/PEFT LoRA adapter from `Qwen/Qwen2.5-0.5B-Instruct`, and before/after comparison on a Tesla T4 runtime.
 
-The uploaded-notes Colab rehearsal is **partially verified** on 2026-06-03: one uploaded `.txt` file passed the default mock-teacher path end to end with status-log evidence; the uploaded `.md` path is still blocked at file attachment and is not verified.
+The uploaded-notes Colab rehearsal is **verified once** on 2026-06-03 for both one `.txt` file and one `.md` file. Each ran through validation, chunking, mock-teacher rows, dataset save, training skipped, and comparison skipped with status-log evidence.
 
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
@@ -385,15 +385,15 @@ The notebook is expected to:
 
 The actual student-model Qwen download, TRL/PEFT training run, adapter output, and before/after comparison have passed once in a clean GitHub-opened Colab T4 runtime using mock-teacher rows. The real-teacher path has also passed once on a T4 using one sample-note chunk and a 1-step adapter verification. GGUF export and local runtime instructions remain unverified and deferred.
 
-## Uploaded Notes Rehearsal: TXT Pass, MD Blocked
+## Uploaded Notes Rehearsal: TXT and MD Pass
 
 Date: 2026-06-03
 
-Commit checked before rehearsal:
+Commits checked before rehearsal:
 
 ```text
-HEAD == origin/main == 6f7d9c66cacb07dc82571abb85b3232285f6961c
-git status: clean
+.txt pass: HEAD == origin/main == 6f7d9c66cacb07dc82571abb85b3232285f6961c, git status clean
+.md pass: HEAD == origin/main == 0e53cdd1e860a1c93007cb20e4c143c90f0a7af9, git status clean
 ```
 
 Notebook URL:
@@ -462,27 +462,46 @@ The uploaded `.txt` file was attached through the actual Colab `Choose Files` bu
 {"stage": "comparison", "status": "skipped", "reason": "training_result_is_none"}
 ```
 
-Uploaded `.md` result: **not verified**
-
-The `.md` rehearsal reached a fresh setup/install-skipped state and the actual Colab upload widget, but the Markdown file could not be attached. Observed blocker:
+Uploaded `.md` result: **passed**
 
 ```text
-The native Open dialog showed /private/tmp/opendistillation-upload-rehearsal-notes.md,
-but the Markdown row was not exposed as a clickable file element and the Open
-button stayed disabled. Computer Use could click the Colab Choose Files button
-and operate visible dialog controls, but could not complete the .md selection.
-Chrome's file-chooser listener returned no usable chooser object for this Colab
-output iframe, so setFiles() could not be used as a fallback.
-The waiting upload cell was interrupted and ended with KeyboardInterrupt.
+Saving opendistillation-upload-rehearsal-notes.md to opendistillation-upload-rehearsal-notes.md
+File: opendistillation-upload-rehearsal-notes.md
+Extension: .md
+Characters: 240
+Approx. words: 30
+Warning: Document is short; the demo may generate only a few examples.
+Chunks: 1
+chunk-0001 | chars=240 | words=30
+Teacher engine: mock-local-teacher
+Generated examples: 2
+Dataset rows saved: 2
+Training: skipped
+Comparison: skipped
 ```
 
-No `.md` validation, chunking, teacher, dataset, training-skipped, or comparison-skipped evidence was produced. This is still an upload-control blocker, not evidence that `.md` parsing fails after a Markdown file is loaded.
+The uploaded `.md` file was attached through the actual Colab `Choose Files` button. Chrome focused the fresh GitHub-opened notebook and changed only the runtime copy of the upload cell to `USE_SAMPLE_NOTES = False`; Computer Use opened the native macOS picker; the picker was driven by the full path `/private/tmp/opendistillation-upload-rehearsal-notes.md` and the selected `.md` suggestion; and the enabled Open button attached the Markdown file. The notebook was not saved back to GitHub.
+
+`OD_STATUS` evidence recovered from the Colab Terminal with `cat /tmp/opendistillation_status.jsonl`:
+
+```text
+{"stage": "setup", "status": "ready", "project_root": "/content/OpenDistillation", "colab": true}
+{"stage": "install", "status": "configured", "install_training_deps": false, "packages": ["transformers<5", "datasets", "trl<1", "peft<0.19", "accelerate"], "command": "python -m pip install -U 'transformers<5' datasets 'trl<1' 'peft<0.19' accelerate"}
+{"stage": "install", "status": "skipped"}
+{"stage": "teacher", "status": "configured", "run_real_teacher": false, "engine": "mock-local-teacher", "chunk_count": 1, "examples_per_chunk": 2}
+{"stage": "teacher", "status": "mock_started", "engine": "mock-local-teacher"}
+{"stage": "teacher", "status": "succeeded", "engine": "mock-local-teacher", "generated_examples": 2, "sends_data_remote": false}
+{"stage": "dataset", "status": "saved", "rows": 2, "output_path": "/tmp/opendistillation_training_data.jsonl"}
+{"stage": "training", "status": "configured", "run_training": false, "output_dir": "/content/OpenDistillation/outputs/notes-lora", "max_steps": 10, "student_model": "Qwen/Qwen2.5-0.5B-Instruct"}
+{"stage": "training", "status": "skipped"}
+{"stage": "comparison", "status": "skipped", "reason": "training_result_is_none"}
+```
 
 ## Uploaded Notes Rehearsal Attempt
 
 Date: 2026-06-03
 
-Historical note: this attempt predates the later uploaded `.txt` pass recorded above. It remains here only to explain the earlier automation blocker.
+Historical note: this attempt predates the later uploaded `.txt` and `.md` passes recorded above. It remains here only to explain the earlier automation blocker.
 
 Commit tested:
 
@@ -524,13 +543,13 @@ The public GitHub-backed Colab notebook loaded the current hardened notebook, an
 
 Computer Use was installed after Chrome hit the file-chooser blocker, but tool discovery still did not expose a callable Computer control tool in this thread. No manual user-assisted upload result was used.
 
-This is an automation/control blocker, not evidence that the notebook upload path works or fails for a normal human Colab user. The uploaded-notes path remains unverified until a browser-control path can attach the `.txt` and `.md` files and the notebook reaches teacher, dataset, training-skipped, and comparison-skipped markers.
+This was an automation/control blocker, not evidence that the notebook upload path worked or failed for a normal human Colab user. It was superseded by the later verified `.txt` and `.md` uploaded-notes passes above.
 
 ## Uploaded Notes Rehearsal Retry
 
 Date: 2026-06-03
 
-Historical note: this retry also predates the later uploaded `.txt` pass recorded above. It remains here only to explain the earlier Chrome-control blocker.
+Historical note: this retry also predates the later uploaded `.txt` and `.md` passes recorded above. It remains here only to explain the earlier Chrome-control blocker.
 
 Commit checked before retry:
 
@@ -574,4 +593,4 @@ Blocker:
 
 Chrome browser control timed out before a tab could be claimed or navigated. The `setupBrowserRuntime()` / `browser.user.openTabs()` path timed out twice, including after opening a fresh Chrome window for the selected profile. A narrower backend attempt could not be configured because the Node runtime environment object is not extensible. Computer Use files and MCP manifest were installed locally, but tool discovery still did not expose a callable Computer control API in this thread.
 
-This remains an automation/control blocker, not evidence that the notebook upload path works or fails. The uploaded-notes path remains unverified until Chrome can attach a local file to Colab's `files.upload()` widget or an actually callable Computer control tool can operate the native file picker.
+This was an automation/control blocker, not evidence that the notebook upload path worked or failed. It was superseded by the later verified `.txt` and `.md` uploaded-notes passes above.
