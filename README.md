@@ -50,14 +50,13 @@ What exists now:
 - Notebook `OD_STATUS` markers and a runtime status log so Colab output-frame failures do not erase the state of long optional cells.
 - A first-demo implementation plan.
 - A manual Colab GPU smoke-test checklist.
-- A smoke-test results file that records the first real Colab T4 blockers, a clean GitHub-opened T4 training/comparison pass, one real-teacher end-to-end T4 verification, the uploaded-notes rehearsal status, and two multi-question Colab GPU quality smoke results.
+- A smoke-test results file that records the first real Colab T4 blockers, a clean GitHub-opened T4 training/comparison pass, one real-teacher end-to-end T4 verification, the uploaded-notes rehearsal status, two earlier multi-question Colab GPU quality smoke results, and the 30-step sample-fact CLI T4 smoke.
 - GitHub issue forms and a starter issue plan.
 - Guardrails to avoid committing generated datasets, checkpoints, model weights, or secrets.
 
 What does not exist yet:
 
-- Evidence that the tiny adapter meaningfully improves answers on the new fact-rich sample. The first multi-question Colab quality smoke passed wiring, but trained answers were unchanged from base answers. The second smoke fixed the comparison path and made adapter differences visible, but the answers were still generic or hallucinated.
-- A completed Colab T4 answer-quality run for the new 24-row / 30-step sample-fact smoke. The latest attempt reached T4 selection, but Colab refused GPU connection because of usage limits before notebook execution.
+- Evidence that the tiny adapter meaningfully improves answers on the fact-rich sample. The 30-step sample-fact Colab T4 smoke completed, but the trained adapter still hit 0/4 held-out facts and produced wrong or hallucinated answers.
 - Multiple personal model profiles.
 - Coding, writing, work, or phone model flows.
 - A CLI.
@@ -81,7 +80,7 @@ Current prototype constraints:
 - **Dataset:** JSONL rows with `instruction`, `response`, and `source_chunk_id`.
 - **Training:** optional short TRL/PEFT LoRA entry point; skipped by default and verified once in a clean GitHub-opened Colab T4 runtime.
 - **Quality:** deterministic dataset checks for row count, chunk coverage, duplicate questions, answer length, missing fields, and source chunk IDs.
-- **Comparison:** optional bounded base-vs-adapter quality report after training; skipped by default and verified locally with fake model dependencies. For the committed sample notes, the report uses four held-out questions about concrete facts such as `Glass Harbor`, `copper-lantern-47`, `llama-harbor-alpha`, `4:17 PM`, and `ultramarine`. For uploaded notes, it falls back to generated questions from distinct source chunks first. The report uses PEFT's adapter-disabled inference path for the base answer. The first multi-question Colab report ran before that fix and returned identical answers. The second report ran after the fix; trained answers changed, but the changes were not useful note-grounded improvements.
+- **Comparison:** optional bounded base-vs-adapter quality report after training; skipped by default and verified locally with fake model dependencies. For the committed sample notes, the report uses four held-out questions about concrete facts such as `Glass Harbor`, `copper-lantern-47`, `llama-harbor-alpha`, `4:17 PM`, and `ultramarine`. For uploaded notes, it falls back to generated questions from distinct source chunks first. The report uses PEFT's adapter-disabled inference path for the base answer. The latest 30-step sample-fact Colab T4 smoke changed all four trained-adapter answers, but it still hit 0/4 expected facts and the answers were not useful note-grounded improvements.
 - **Export:** placeholder only; no GGUF or local runtime output yet.
 
 Remaining v0 constraints after the current prototype:
@@ -117,7 +116,7 @@ The planned notes-model notebook flow is specified in [`docs/first-demo-flow.md`
 8. If training runs, compare held-out sample-fact questions for the committed sample notes, or chunk-diverse generated questions for uploaded notes.
 9. Show clear placeholders for export and local running.
 
-The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers and creates `/tmp/opendistillation_status.jsonl` for recoverable status markers. The default sample-notes path now generates 24 fact-aware mock rows from four short chunks and prints four held-out sample-fact comparison questions. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke tests for mock-teacher training/comparison and real-teacher end-to-end wiring are recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md). That file also records the first uploaded-notes rehearsal, where both `.txt` and `.md` upload paths passed through validation, chunking, mock teacher, dataset save, training skipped, and comparison skipped. The latest completed multi-question quality smoke used a temporary live Colab harness against commit `6a98c92599d1defa2b4a61510f7372f399f5fd87`: the adapter changed all three answers after the comparison fix, but the answers were not better. The new 24-row / 30-step sample-fact smoke is prepared locally and pushed. The latest attempt did not run because Colab refused T4 GPU connection due to usage limits before notebook execution.
+The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers and creates `/tmp/opendistillation_status.jsonl` for recoverable status markers. The default sample-notes path now generates 24 fact-aware mock rows from four short chunks and prints four held-out sample-fact comparison questions. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke tests for mock-teacher training/comparison and real-teacher end-to-end wiring are recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md). That file also records the first uploaded-notes rehearsal, where both `.txt` and `.md` upload paths passed through validation, chunking, mock teacher, dataset save, training skipped, and comparison skipped. The latest 24-row / 30-step sample-fact T4 smoke ran through `google-colab-cli`: it created a LoRA adapter and changed all four trained-adapter answers, but it still hit 0/4 expected facts and is judged worse / not useful yet.
 
 ## Repository Map
 
@@ -162,7 +161,7 @@ The current prototype covers the safe first slice of the notes / school model:
 7. Prepare a short optional LoRA fine-tuning request from those rows.
 8. Prepare an optional bounded before/after quality report from held-out sample-fact questions or chunk-diverse generated questions.
 
-The next implementation work is to regain Colab GPU access and run the bounded sample-fact quality smoke honestly: better, unchanged, or worse. Do not broaden beyond the notes model or build export before the demo flow is stable.
+The next implementation work is to improve the notes-learning signal before export: better teacher targets, training settings, or sample evaluation, while staying inside the TXT/MD notes model. Do not broaden beyond the notes model or build export before the demo flow can show useful note-grounded answers.
 
 Future personal model types should reuse the same broad workflow, but they should not be implemented until the notes model path works.
 

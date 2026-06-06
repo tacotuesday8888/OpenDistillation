@@ -1,6 +1,6 @@
 # Colab GPU Smoke-Test Results
 
-Last updated: 2026-06-03
+Last updated: 2026-06-06
 
 ## Result
 
@@ -14,7 +14,7 @@ The first quality-loop update is **verified locally and twice in Colab T4** on 2
 
 Follow-up local diagnosis on 2026-06-03 found a comparison bug: the PEFT adapter was loaded before base-answer generation, and PEFT documents that the passed base model may be modified in place. That means the first quality smoke may have compared the adapter-enabled model to itself. The local comparison helper now generates base answers inside PEFT's `disable_adapter()` context and chooses questions from distinct source chunks first. The second Colab T4 quality smoke ran after that fix. All three trained-adapter answers changed, so the fixed comparison path can now see adapter-side movement. The answer quality was **not improved / worse overall** because the trained answers were still generic or hallucinated.
 
-The sample-fact learning-signal experiment is **verified locally but not yet verified in a Colab T4 training run** on 2026-06-03. The local path now uses fact-rich sample notes, 24 mock rows, zero dataset-quality issues, four held-out sample-fact questions, and a bounded optional 30-step LoRA plan. The latest T4 attempt used `google-colab-cli` first, then the Colab browser UI. The CLI proved it could authenticate, create a CPU Colab VM, execute code, and terminate the session, but GPU assignment failed before notebook execution. The browser fallback selected a T4 runtime in Colab, then Colab showed a GPU quota modal: "Cannot connect to GPU backend" and "You cannot currently connect to a GPU due to usage limits in Colab." No package versions, training run, adapter path, base/trained answers, overlap deltas, or better/unchanged/worse answer judgment were collected for this new experiment.
+The sample-fact learning-signal experiment is **verified in a Colab CLI T4 training run** on 2026-06-06. The run used fact-rich sample notes, 24 mock rows, zero dataset-quality issues, four held-out sample-fact questions, and a bounded 30-step LoRA adapter. The adapter changed all four answers, but it did **not** answer the held-out facts better than the base model. Base fact hits: 0/4. Trained-adapter fact hits: 0/4. Final judgment: **worse / not useful yet** because the trained answers were still wrong or hallucinated and did not contain `Glass Harbor`, `copper-lantern-47`, `llama-harbor-alpha`, or the `4:17 PM` plus `ultramarine` pair.
 
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
@@ -26,7 +26,158 @@ The clean run passed after three fixes were pushed:
 
 The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
 
-## Colab GPU Quality Smoke: Sample-Fact Experiment Attempt
+## Colab GPU Quality Smoke: Sample-Fact 30-Step CLI Run
+
+Date: 2026-06-06
+
+Status: **ran on Colab T4 / answer quality worse overall**.
+
+Verified path:
+
+```text
+fact-rich sample-notes.md -> mock-local-teacher rows -> deterministic dataset quality report -> 30-step Qwen2.5-0.5B LoRA adapter -> 4 held-out sample-fact before/after questions
+```
+
+Repo and runtime state:
+
+```text
+Execution path: google-colab-cli
+Git commit used by Colab clone: 0797ed21682960acc8e462db1d793ba357689258
+Runtime: Colab T4 GPU
+GPU: Tesla T4
+CUDA available: true
+python: 3.12.13
+torch: 2.11.0+cu128
+transformers: 4.57.6
+datasets: 5.0.0
+trl: 0.29.1
+peft: 0.18.1
+accelerate: 1.13.0
+```
+
+The CLI T4 probe passed immediately before the full smoke:
+
+```text
+OD_COLAB_CLI_PROBE {"cuda": true, "gpu": "Tesla T4", "python": "3.12.13", "torch": "2.11.0+cu128", "torch_imported": true}
+```
+
+Live-only settings:
+
+```text
+INSTALL_TRAINING_DEPS = True
+USE_SAMPLE_NOTES = True
+RUN_REAL_TEACHER = False
+RUN_TRAINING = True
+examples_per_chunk = 6
+training max_steps = 30
+comparison max_examples = 4
+```
+
+Dataset quality evidence:
+
+```text
+Input file: sample-notes.md
+Characters: 778
+Approx. words: 118
+Chunks: 4
+Teacher engine: mock-local-teacher
+Generated examples: 24
+Rows: 24 total, 24 schema-valid
+Chunk coverage: 4/4
+Duplicate questions: 0
+Near-duplicate questions: 0
+Very short answers: 0
+Very long answers: 0
+Issues: 0
+Held-out sample-fact questions: 4
+Runtime dataset path: /tmp/opendistillation_sample_fact_training_data.jsonl
+```
+
+Training evidence:
+
+```text
+Training ran: true
+Student model: Qwen/Qwen2.5-0.5B-Instruct
+Training engine: trl-sfttrainer-peft-lora
+Max steps: 30
+Adapter path: /content/opendistillation_sample_fact_outputs/notes-lora-sample-fact/adapter
+Adapter exists: true
+Adapter files: README.md, adapter_config.json, adapter_model.safetensors, added_tokens.json, chat_template.jinja, merges.txt, special_tokens_map.json, tokenizer.json, tokenizer_config.json, training_args.bin, vocab.json
+Training elapsed runtime: 103.9 seconds
+```
+
+Comparison evidence:
+
+```text
+Comparison ran: true
+Comparison engine: transformers-peft-before-after
+Comparison questions: 4
+Changed answers: 4/4
+Base fact hits: 0/4
+Trained-adapter fact hits: 0/4
+Overlap deltas: -0.300, -0.375, +0.000, +0.300
+Automatic signal: changed_without_more_fact_hits
+Comparison elapsed runtime: 15.6 seconds
+Quality judgment: worse / not useful yet. The adapter changed every answer, but none of the trained answers contained the expected held-out facts.
+```
+
+Questions and answers:
+
+```text
+1. In the demo notes, what phrase is listed as the project codename?
+Reference answer:
+The project codename listed in the demo notes is Glass Harbor.
+Base answer:
+The project codename mentioned in the demo notes is "Tianhe-1". This refers to the first Chinese space mission launched by China's Tianhe core module, which was named after the ancient Chinese emperor of the same name. The Tianhe-1 mission marked the beginning of China's space station program and set the stage for future missions to orbit Earth and beyond.
+Trained adapter answer:
+The project codename is Echo.
+Expected term hit: base false, trained false
+Overlap: base 0.700, trained 0.400, delta -0.300
+
+2. Which checkpoint phrase should verify that the sample notes were remembered?
+Reference answer:
+The checkpoint phrase for the sample notes is copper-lantern-47.
+Base answer:
+To ensure that the sample notes were remembered, you can use the following checkpoint phrases:
+1. "The sample notes were reviewed and verified."
+2. "All sample notes have been checked for accuracy and consistency."
+3. "Sample notes have been thoroughly analyzed to ensure they accurately reflect the topic."
+These checkpoints will help confirm that the sample notes have been correctly recorded and verified before being used in your analysis or reporting process.
+Trained adapter answer:
+The verification key is remember_samples_notes.
+Expected term hit: base false, trained false
+Overlap: base 0.625, trained 0.250, delta -0.375
+
+3. Which local runner label does the sample say to remember?
+Reference answer:
+The local runner label to remember is llama-harbor-alpha.
+Base answer:
+I'm sorry, but I don't have access to specific information about any particular sample or its contents. Without knowing which sample you're referring to and what it is about, I can't provide an accurate answer. Could you please clarify your question or provide more details about the sample in question?
+Trained adapter answer:
+The sample says to remember H2O.
+Expected term hit: base false, trained false
+Overlap: base 0.375, trained 0.375, delta +0.000
+
+4. What time and color are paired in the review ritual notes?
+Reference answer:
+The review ritual pairs 4:17 PM with the color ultramarine.
+Base answer:
+I'm sorry, but I cannot provide answers on political matters. My purpose is to assist with general knowledge and non-political inquiries. If you have any other questions, please feel free to ask.
+Trained adapter answer:
+The review ritual notes pair emerald green for time and violet for color.
+Expected term hit: base false, trained false
+Overlap: base 0.100, trained 0.400, delta +0.300
+```
+
+Run caveat:
+
+```text
+The remote script printed OD_SAMPLE_FACT_SMOKE {"stage": "done", "status": "succeeded"} and the CLI stopped the session. After that, google-colab-cli exited non-zero with TimeoutError: Timeout waiting for reply while waiting for the final kernel reply. Treat the smoke execution itself as complete because the structured done marker, comparison output, and session termination were all printed before the wrapper timeout.
+```
+
+Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
+
+## Colab GPU Quality Smoke: Previous Sample-Fact Blocked Attempt
 
 Date: 2026-06-03
 

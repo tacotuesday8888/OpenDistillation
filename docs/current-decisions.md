@@ -82,6 +82,7 @@ Verified locally in this repository:
 - Notebook default CPU path with dataset quality report: sample notes produced 4 chunks, 16 mock-teacher rows, 16 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, training skipped, comparison skipped, and export skipped.
 - Current notebook default CPU path with the fact-rich sample notes: sample notes produced 4 chunks, 24 mock-teacher rows, 24 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, 0 long answers, 4 held-out sample-fact comparison rows, training skipped, and comparison skipped.
 - Sample-fact Colab attempt on 2026-06-03 used pushed commit `bef902cd0cd4005ec5931e6190e1247e98fa936b` as the intended GitHub source. The official Colab CLI authenticated and successfully ran a CPU VM probe, then failed to assign a GPU runtime before code execution. Chrome control then operated the Colab UI, selected T4, and clicked Connect, but Colab showed "Cannot connect to GPU backend" and "You cannot currently connect to a GPU due to usage limits in Colab." No new T4 training or answer-quality evidence was collected for the sample-fact experiment.
+- Sample-fact Colab CLI T4 smoke on 2026-06-06 used commit `0797ed21682960acc8e462db1d793ba357689258`, Tesla T4, `mock-local-teacher`, 24 generated rows, dataset quality reporting with 24/24 schema-valid rows, 4/4 chunk coverage, zero duplicate/near-duplicate questions, zero answer-length warnings, a 30-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA adapter, and a 4-question held-out before/after report. The adapter changed all four answers, but base and trained answers both hit 0/4 expected facts. The trained answers were wrong or hallucinated, so the quality judgment is worse / not useful yet.
 - Notebook default install path where `INSTALL_TRAINING_DEPS = False`.
 - Notebook setup structure for the fresh Colab clone fallback.
 - Notebook status markers for setup, optional install, teacher generation, dataset save, optional training, and optional comparison.
@@ -102,12 +103,12 @@ Still deferred or unverified:
 
 - Real teacher output quality beyond a tiny 1-row smoke test.
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
-- Whether a tiny Colab adapter run can produce visibly more note-grounded answers after the adapter-disabled comparison fix. The second smoke produced visible answer movement, but not useful note grounding.
-- Whether the new 24-row / 30-step sample-fact Colab smoke produces better, unchanged, or worse note-grounded answers. The 2026-06-03 attempt did not reach notebook execution because Colab refused T4 GPU connection due to usage limits.
+- Whether a tiny Colab adapter run can produce useful note-grounded answers after the adapter-disabled comparison fix. The second smoke and the later 30-step sample-fact smoke both produced visible answer movement, but not useful note grounding.
+- How to improve the notes-learning signal after the 24-row / 30-step sample-fact Colab smoke changed answers but still hit 0/4 held-out facts.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond deterministic local quality helpers and the two three-question Colab quality smokes.
 - Larger uploaded notes files and higher row counts beyond the tiny TXT/MD rehearsal files.
-- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, the real-teacher end-to-end T4 verification, the uploaded-notes rehearsals, the first unchanged multi-question Colab quality smoke, the second adapter-disabled quality smoke with changed but not improved answers, and the sample-fact smoke attempt that was blocked by Colab GPU usage limits before notebook execution.
+- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, the real-teacher end-to-end T4 verification, the uploaded-notes rehearsals, the first unchanged multi-question Colab quality smoke, the second adapter-disabled quality smoke with changed but not improved answers, the sample-fact smoke attempt that was blocked by Colab GPU usage limits before notebook execution, and the 30-step sample-fact CLI T4 run that changed answers but still hit 0/4 expected facts.
 
 Why this path:
 
