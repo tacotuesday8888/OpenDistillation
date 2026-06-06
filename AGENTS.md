@@ -2,29 +2,25 @@
 
 ## Project Mission
 
-OpenDistillation is an open-source, productized workflow for building small personal models for the AI PC and AI phone era.
+OpenDistillation is an open-source personal model factory.
 
-The long-term direction is a personal model factory:
+The product direction is:
 
-- Notes / school models.
-- Coding models.
-- Writing models.
-- Work models.
-- Phone-local models.
+> user TXT/MD material -> high-quality teacher-generated train/eval data -> smaller personal model -> honest quality report.
 
-The first product path is much narrower:
+The long-term vision can include coding, writing, work, and phone-local models, but v0 stays narrow:
 
-> Build a tiny local notes model from TXT/MD notes.
+> one notes / school model from TXT/MD notes.
 
-Do not turn this into a broad research framework or multi-profile platform before the first notes-model demo works.
+Model quality comes before GitHub polish, product packaging, or broad platform features.
 
 ## Current Stage
 
-The project has a Colab-first prototype skeleton.
+The repo has a Colab-first prototype. The wiring works: notes loading, chunking, dataset validation, mock teacher rows, optional Hugging Face teacher path, optional TRL/PEFT LoRA training, and before/after comparison have all been exercised.
 
-It can load and chunk TXT/MD notes, validate a JSONL dataset schema, generate deterministic mock QA examples, prepare an optional short TRL/PEFT LoRA training run, and prepare an optional before/after comparison. It does not have real teacher-model calls, a verified Colab GPU training/comparison run, export, or multiple model profiles yet.
+The latest meaningful quality result is not good enough: a bounded Colab T4 sample-fact run trained an adapter, but both base and trained answers hit `0/4` held-out facts. That means the next work should improve the learning/data/evaluation loop, not randomly tune training knobs.
 
-The next major milestones are one real teacher-generation path for the notes model and a Colab GPU smoke test for the optional training/comparison cells, not a Mac app, SaaS, phone app, or full training platform.
+The current product-core design lives under `docs/superpowers/specs/`.
 
 ## Product Defaults
 
@@ -32,53 +28,118 @@ Use these defaults unless the user explicitly changes direction:
 
 - Public positioning: personal model factory for the AI PC and AI phone era.
 - First model type: notes / school model.
-- Future model types: coding, writing, work, and phone models, only after the notes model works.
-- Main first-run experience: Colab notebook.
-- Secondary interface: thin local CLI.
-- Initial input: `.txt` and `.md` notes only.
-- Initial teacher path: deterministic mock teacher, then one real open-source teacher path.
-- Initial student target: around 0.5B-1.5B parameters.
-- Initial training method: response distillation / SFT.
-- Advanced training method: experimental logits distillation only where technically feasible.
-- Initial export target: GGUF or a clear documented path toward GGUF.
-- Local running target: llama.cpp and/or Ollama-style local runtime.
+- First-run experience: Colab notebook.
+- Input: `.txt` and `.md` notes only.
+- Default teacher: deterministic `MockTeacherEngine`.
+- Optional private/cheap teacher: small local Hugging Face Qwen model.
+- First stronger teacher target: Qwen 7B/8B-class instruct model where feasible.
+- Future teacher/critic candidates: larger Qwen or DeepSeek-style open-weight models, depending on cost, privacy, and hardware.
+- Student target: small open-source instruct model, currently Qwen2.5-0.5B-class for Colab smoke tests.
+- Training stack: PyTorch, Hugging Face Transformers, TRL `SFTTrainer`, PEFT LoRA.
+- Acceleration path: Unsloth only after the standard TRL/PEFT path proves quality or hits memory/speed limits.
+- Colab automation: prefer `google-colab-cli`; use Chrome or Computer Use only when the CLI cannot do the job.
 
-## What To Avoid
+## Scope Boundaries
 
-- Do not start with a closed SaaS.
-- Do not start with a Mac app.
-- Do not start with a phone app.
-- Do not build a giant research framework first.
-- Do not build coding, writing, work, phone, or multi-profile flows in v0.
-- Do not claim novel algorithms unless the code actually implements them.
-- Do not overbuild PDF parsing, arbitrary document ingestion, dashboards, accounts, billing, or cloud training in v0.
-- Do not commit generated models, datasets, checkpoints, API keys, `.env` files, or local machine config.
+Do not broaden v0 into:
+
+- SaaS.
+- Mac app.
+- Phone app.
+- Account system.
+- Backend.
+- GGUF export.
+- Local runtime packaging.
+- Multi-profile system.
+- Broad benchmark suite.
+- Coding, writing, work, or phone model flows.
+- Arbitrary PDF/document ingestion.
+- Dashboards, billing, or cloud training platform.
+
+Those can be future product directions only after the notes-model quality loop works.
+
+## Technical Direction
+
+Prefer proven open-source ML tools over custom algorithms.
+
+- Use PyTorch and Hugging Face libraries for model loading, generation, tokenization, training, adapters, and datasets.
+- Use TRL/PEFT for SFT and LoRA instead of writing training loops by hand.
+- Use current official docs before changing version-sensitive ML packages or model APIs.
+- Treat Unsloth as a speed/memory optimization layer, not the core quality solution.
+- Do not claim novel ML algorithms unless the repo actually implements and verifies them.
+
+## RAG Role
+
+RAG means searching the user's notes at answer time and giving the model relevant passages.
+
+Use RAG as:
+
+- exact memory for facts;
+- citation/source support;
+- a baseline for what can be answered without training;
+- a helper for teacher data generation and evaluation.
+
+Do not treat RAG as proof that the small model learned. Evaluate retrieval-assisted answers separately from adapter-only answers.
+
+## Quality Rules
+
+Do not claim model quality without held-out evidence.
+
+The near-term quality loop should prioritize:
+
+1. stable note chunks;
+2. a fact ledger of facts the model should learn;
+3. teacher-generated training rows;
+4. separate held-out eval rows;
+5. leakage checks so eval questions are not copied from training;
+6. exact fact-hit scoring before subjective answer quality;
+7. honest reporting of better, unchanged, or worse.
+
+If a trained model changes its answers but still misses the facts, call that a failure.
+
+## Privacy Rules
+
+Real personal data is sensitive.
+
+- Hosted teacher models are acceptable for synthetic/demo data.
+- For real user data, require a local/private path or explicit opt-in before sending data to any hosted service.
+- Never commit or print API keys, tokens, `.env` files, private data, local config, generated datasets, adapters, checkpoints, or model files.
 
 ## Communication Style
 
-The user is exploring and is not deeply technical.
+The user is still learning the ML details.
 
 - Explain choices in plain language.
-- Be honest when an idea is mostly product packaging versus real technical novelty.
+- Translate terms like LoRA, RAG, GGUF, teacher model, and eval into product meaning.
+- Recommend the safest default when asking a question.
+- Be direct when a path is too broad or weak.
 - Prefer concrete next steps over abstract strategy.
-- Do not flatter weak ideas; improve them.
-- When something is risky or too broad, say so clearly and offer a narrower path.
+- Do not keep goal prompts running if the project needs vision realignment first.
 
 ## Development Workflow
 
 - Inspect the current repo before making changes.
-- Keep changes small and intentional.
+- Plan before large changes; implement directly for small obvious fixes.
+- Keep changes small, intentional, and aligned with the existing project.
 - Before committing, run `git status`, inspect the diff, and check for secrets.
 - Commit only intended files.
-- Prefer documentation and prototype clarity before deep infrastructure.
-- If using version-sensitive packages, check current official docs before locking choices.
+- Push verified work.
+- If using plugins/tools for ML planning, prefer `@superpowers` for planning/debugging/quality work and `@Hugging Face` plus official docs for model/package choices.
+
+## Verification
+
+Before saying work is done, run the best relevant checks:
+
+- unit tests when code changes;
+- notebook JSON validation when notebooks change;
+- default local notebook smoke when notebook flow changes;
+- `git diff --check`;
+- secret scan;
+- generated artifact/model/data scan;
+- final `git status`.
+
+If verification cannot run, state exactly what was not verified and why.
 
 ## Near-Term Priority
 
-The next useful work is:
-
-1. Keep the personal model factory positioning clear.
-2. Keep v0 scoped to the notes / school model.
-3. Choose one real teacher-generation path for TXT/MD notes.
-4. Keep the deterministic mock teacher as a safe fallback.
-5. Smoke-test the existing Qwen2.5-0.5B TRL/PEFT training and comparison path in Colab before adding new model profiles.
+The next implementation work should build the fact-ledger train/eval data builder and contamination-safe quality gate before changing training knobs, adding export, or building product surfaces.
