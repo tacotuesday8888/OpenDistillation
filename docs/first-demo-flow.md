@@ -122,7 +122,32 @@ Expected output:
 - A plain-language reminder that dataset quality is not the same as model quality.
 - Four held-out sample-fact comparison questions when the committed sample notes are loaded. These questions use different wording from the mock-teacher training rows.
 
-### Step 7: Optional Training Entry Point
+### Step 7: Review Fact-Ledger Quality Gate
+
+The notebook builds a deterministic fact ledger from explicit `Label: value` notes before any optional model training starts.
+
+Default behavior:
+
+- Extract stable fact cards from the current chunks when simple explicit facts are present.
+- Build separate train rows and held-out eval rows from those facts.
+- Keep the public rows in the same `instruction`, `response`, and `source_chunk_id` schema.
+- Keep row metadata in an internal sidecar manifest for quality checks.
+- Check exact and near-duplicate leakage between train questions and held-out eval questions.
+- Check that each fact response contains the expected term it is supposed to teach or test.
+- Do not load a model, use a GPU, or claim model quality.
+
+Expected output:
+
+- Number of extracted facts.
+- Number of fact-ledger train rows.
+- Number of held-out eval rows.
+- Train and eval fact coverage.
+- Exact and near-duplicate train/eval leakage counts.
+- Expected-term check count.
+- First few fact cards, including fact ID, source chunk, label, and value.
+- A reminder that this gate proves data separation, not that the small model has learned.
+
+### Step 8: Optional Training Entry Point
 
 The notebook shows a bounded real student fine-tuning path, but keeps it skipped by default.
 
@@ -146,7 +171,7 @@ Expected output:
 - `OD_STATUS` markers for training configuration, runtime check, start, success, failure, blocked, or skipped states.
 - A reminder that short adapter runs prove wiring and artifact creation, not model quality.
 
-### Step 8: Before/After Model Quality Report
+### Step 9: Before/After Model Quality Report
 
 The notebook compares held-out sample-fact questions against the base model and the trained LoRA adapter after optional training. For uploaded notes, it falls back to generated questions and prefers distinct source chunks before reusing a chunk.
 
@@ -186,7 +211,7 @@ The checklist records:
 - Confirmation that generated artifacts stay out of git.
 - Status log markers from `/tmp/opendistillation_status.jsonl` if the Colab output frame fails.
 
-### Step 9: Export Placeholder
+### Step 10: Export Placeholder
 
 The notebook shows where GGUF/local-runtime export will plug in later.
 
@@ -230,6 +255,7 @@ Included now:
 - Simple chunking.
 - JSONL dataset schema helpers.
 - Deterministic dataset quality report.
+- Deterministic fact-ledger extraction, train/eval split, leakage checks, expected-term checks, and exact fact-hit scoring helpers.
 - Local deterministic mock teacher, enabled by default.
 - Optional local Qwen real teacher, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL/PEFT LoRA training entry point, skipped by default.
@@ -240,7 +266,7 @@ Included now:
 
 Planned later in v0:
 
-- Final evidence from the 24-row / 30-step sample-fact Colab quality smoke.
+- Connect the fact-ledger train/eval split to the next bounded sample-fact Colab quality smoke.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance.
 

@@ -46,6 +46,7 @@ What exists now:
 - A bounded optional training engine using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA.
 - A before/after comparison helper that can compare held-out sample-fact questions or chunk-diverse generated questions with trained-adapter answers after opt-in training.
 - A fact-rich sample-notes experiment with 24 mock rows and four held-out sample-fact questions for checking note-grounded answer movement.
+- A deterministic fact-ledger builder that extracts simple `Label: value` facts, creates separate train/eval rows, checks train/eval leakage, and scores exact expected-term hits.
 - Runtime checks and plain-language setup messages for optional Hugging Face, CUDA, teacher, training, and comparison failures.
 - Notebook `OD_STATUS` markers and a runtime status log so Colab output-frame failures do not erase the state of long optional cells.
 - A first-demo implementation plan.
@@ -79,7 +80,7 @@ Current prototype constraints:
 - **Teacher:** deterministic local mock teacher by default; optional local `Qwen/Qwen2.5-1.5B-Instruct` teacher after `RUN_REAL_TEACHER = True`.
 - **Dataset:** JSONL rows with `instruction`, `response`, and `source_chunk_id`.
 - **Training:** optional short TRL/PEFT LoRA entry point; skipped by default and verified once in a clean GitHub-opened Colab T4 runtime.
-- **Quality:** deterministic dataset checks for row count, chunk coverage, duplicate questions, answer length, missing fields, and source chunk IDs.
+- **Quality:** deterministic dataset checks for row count, chunk coverage, duplicate questions, answer length, missing fields, and source chunk IDs, plus a fact-ledger quality gate for train/eval leakage and exact expected-term coverage.
 - **Comparison:** optional bounded base-vs-adapter quality report after training; skipped by default and verified locally with fake model dependencies. For the committed sample notes, the report uses four held-out questions about concrete facts such as `Glass Harbor`, `copper-lantern-47`, `llama-harbor-alpha`, `4:17 PM`, and `ultramarine`. For uploaded notes, it falls back to generated questions from distinct source chunks first. The report uses PEFT's adapter-disabled inference path for the base answer. The latest 30-step sample-fact Colab T4 smoke changed all four trained-adapter answers, but it still hit 0/4 expected facts and the answers were not useful note-grounded improvements.
 - **Export:** placeholder only; no GGUF or local runtime output yet.
 
@@ -112,11 +113,12 @@ The planned notes-model notebook flow is specified in [`docs/first-demo-flow.md`
 4. Split it into short chunks.
 5. Generate question-answer examples with the mock teacher, or opt into the local Qwen teacher.
 6. Preview, quality-check, and save the JSONL dataset in the notebook runtime.
-7. Show an optional short training plan that stays skipped by default.
-8. If training runs, compare held-out sample-fact questions for the committed sample notes, or chunk-diverse generated questions for uploaded notes.
-9. Show clear placeholders for export and local running.
+7. Build a fact ledger, train rows, held-out eval questions, and a leakage report.
+8. Show an optional short training plan that stays skipped by default.
+9. If training runs, compare held-out sample-fact questions for the committed sample notes, or chunk-diverse generated questions for uploaded notes.
+10. Show clear placeholders for export and local running.
 
-The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers and creates `/tmp/opendistillation_status.jsonl` for recoverable status markers. The default sample-notes path now generates 24 fact-aware mock rows from four short chunks and prints four held-out sample-fact comparison questions. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke tests for mock-teacher training/comparison and real-teacher end-to-end wiring are recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md). That file also records the first uploaded-notes rehearsal, where both `.txt` and `.md` upload paths passed through validation, chunking, mock teacher, dataset save, training skipped, and comparison skipped. The latest 24-row / 30-step sample-fact T4 smoke ran through `google-colab-cli`: it created a LoRA adapter and changed all four trained-adapter answers, but it still hit 0/4 expected facts and is judged worse / not useful yet.
+The current notebook is [`notebooks/opendistillation_v0_demo.ipynb`](notebooks/opendistillation_v0_demo.ipynb). Its default path runs without GPU, package installs, model downloads, paid APIs, remote APIs, or training. When opened from GitHub in Colab, the setup cell clones this repository before importing local helpers and creates `/tmp/opendistillation_status.jsonl` for recoverable status markers. The default sample-notes path now generates 24 fact-aware mock rows from four short chunks, prints four held-out sample-fact comparison questions, and shows a fact-ledger quality gate with train/eval leakage checks. The optional real teacher and optional training cells require a Colab GPU runtime and the Hugging Face packages installed by the notebook. The clean GitHub-opened T4 smoke tests for mock-teacher training/comparison and real-teacher end-to-end wiring are recorded in [`docs/colab-smoke-test-results.md`](docs/colab-smoke-test-results.md). That file also records the first uploaded-notes rehearsal, where both `.txt` and `.md` upload paths passed through validation, chunking, mock teacher, dataset save, training skipped, and comparison skipped. The latest 24-row / 30-step sample-fact T4 smoke ran through `google-colab-cli`: it created a LoRA adapter and changed all four trained-adapter answers, but it still hit 0/4 expected facts and is judged worse / not useful yet.
 
 ## Repository Map
 
@@ -158,10 +160,11 @@ The current prototype covers the safe first slice of the notes / school model:
 4. Generate QA examples with the deterministic mock teacher by default.
 5. Validate and serialize the JSONL dataset.
 6. Optionally generate real QA rows with the local Qwen teacher.
-7. Prepare a short optional LoRA fine-tuning request from those rows.
-8. Prepare an optional bounded before/after quality report from held-out sample-fact questions or chunk-diverse generated questions.
+7. Extract a fact ledger and create separate train/eval rows with leakage checks.
+8. Prepare a short optional LoRA fine-tuning request from the validated dataset rows.
+9. Prepare an optional bounded before/after quality report from held-out sample-fact questions or chunk-diverse generated questions.
 
-The next implementation work is to improve the notes-learning signal before export: better teacher targets, training settings, or sample evaluation, while staying inside the TXT/MD notes model. Do not broaden beyond the notes model or build export before the demo flow can show useful note-grounded answers.
+The next implementation work is to connect the fact-ledger train/eval split to the next bounded Colab quality smoke, then measure exact fact hits before changing training knobs or export. Do not broaden beyond the notes model or build export before the demo flow can show useful note-grounded answers.
 
 Future personal model types should reuse the same broad workflow, but they should not be implemented until the notes model path works.
 

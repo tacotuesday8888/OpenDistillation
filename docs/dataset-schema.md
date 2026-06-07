@@ -16,6 +16,21 @@ Each line is one JSON object:
 
 The helper code validates that all three fields exist and are non-empty strings. Extra fields are not kept in the public v0 schema.
 
+## Fact-Ledger Sidecar
+
+The public training JSONL stays deliberately small. The fact-ledger path keeps richer quality metadata in an internal sidecar so beginners can still inspect the dataset without learning a larger schema.
+
+For explicit notes like `Label: value`, the fact ledger stores one structured fact card with:
+
+- `fact_id` - stable ID such as `fact-0001`.
+- `source_chunk_id` - the chunk that contained the fact.
+- `label` and `value` - the extracted fact.
+- `expected_terms` - exact terms that a correct answer must include.
+- `fact_kind` - currently `label_value`.
+- `source_hash` - short hash of the source chunk text for traceability.
+
+The train rows and held-out eval rows still use the same public `instruction`, `response`, and `source_chunk_id` shape. The sidecar manifest links each row back to `row_id`, `fact_id`, `split`, `source_hash`, `fact_kind`, `label`, and `expected_terms`. This lets the quality gate check whether training and eval are separated without committing generated datasets or model artifacts.
+
 ## Dataset Quality Checks
 
 Schema validation only proves that rows have the right shape. The notebook now also runs deterministic quality checks that do not download models or call any API:
@@ -28,6 +43,9 @@ Schema validation only proves that rows have the right shape. The notebook now a
 - Near-duplicate questions within the same source chunk.
 - Very short or very long answers.
 - Missing required fields.
+- Fact coverage for train and held-out eval rows.
+- Exact and near-duplicate leakage between train questions and eval questions.
+- Expected-term coverage, so each train/eval response contains the fact it is supposed to teach or test.
 
 These checks are dataset-quality signals, not model-quality signals. They help a beginner decide whether the generated rows are worth training on before spending GPU time.
 
@@ -52,5 +70,7 @@ The notebook also includes an opt-in real teacher path:
 Both generators must return validated rows with `instruction`, `response`, and `source_chunk_id`. The current prompt/templates ask for varied study rows and avoid duplicate or near-duplicate questions in the committed sample-notes path. The real teacher parser rejects invalid JSONL, missing fields, empty fields, and rows with the wrong `source_chunk_id`.
 
 The committed `examples/sample-notes.md` file also has four fixed held-out comparison rows. They use the same schema but different question wording from the mock-teacher training rows. These rows are used only when the committed sample facts are present; uploaded notes fall back to generated comparison questions.
+
+The current notebook also builds a deterministic fact-ledger report from the committed sample notes. The safe default path shows the number of extracted facts, generated fact train rows, held-out eval rows, train/eval leakage count, expected-term checks, and the first few fact cards before any optional training starts.
 
 Any future remote teacher path must clearly say when uploaded notes leave the notebook runtime.

@@ -36,10 +36,13 @@ This file records decisions that should not be reopened without a concrete reaso
 - The manual Colab GPU smoke test should use `docs/colab-smoke-test-checklist.md` before the optional training/comparison path is called verified.
 - `RUN_REAL_TEACHER = False` is the notebook default. Real teacher generation starts only after the user opts in and installs the optional Hugging Face packages.
 - The notebook writes concise `OD_STATUS` markers and `/tmp/opendistillation_status.jsonl` in Colab so the run state can be recovered if Colab's output frame fails.
+- The fact-ledger quality gate is deterministic and local. It starts with simple explicit `Label: value` facts, creates separate train/eval rows, checks train/eval leakage, and scores exact expected-term hits.
+- The public v0 training JSONL remains `instruction`, `response`, and `source_chunk_id`. Fact metadata stays in an internal sidecar manifest unless a later goal proves a reason to expand the public schema.
+- Changed adapter answers are not evidence of useful note learning unless held-out fact-hit scores improve over the base model.
 
 ## Not Decided Yet
 
-- Exact dataset schema fields beyond the required v0 `instruction`, `response`, and `source_chunk_id`.
+- Which sidecar metadata fields, if any, should graduate into a future public dataset schema.
 - Whether a hosted teacher path is ever needed after the local Qwen teacher is smoke-tested.
 - Whether GGUF export is implemented in v0 or documented as the immediate next command.
 - Which future model profile comes after the notes / school model.
@@ -53,15 +56,17 @@ Use this notes-model v0 flow as the default implementation plan:
 2. User uses the sample notes file or uploads one `.txt` or `.md` notes file.
 3. The notebook validates and previews the text.
 4. OpenDistillation chunks the notes.
-5. The mock teacher generates question-answer pairs by default.
-6. The user can opt into `HuggingFaceLocalTeacherEngine` for local Qwen-generated rows with the same schema.
-7. The dataset is previewed, quality-checked, saved, and downloadable.
-8. Optional training prepares `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
-9. A short supervised fine-tuning run starts only when the user sets `RUN_TRAINING = True` in a Colab GPU runtime.
-10. The notebook compares base-model answers and trained-adapter answers using held-out sample-fact questions for the committed sample notes, or chunk-diverse generated questions for uploaded notes.
-11. The notebook saves the output.
-12. The notebook exports to GGUF or shows the exact export command and limitation.
-13. The user gets local run instructions.
+5. OpenDistillation extracts a fact ledger from simple explicit note facts when present.
+6. The mock teacher generates question-answer pairs by default.
+7. The user can opt into `HuggingFaceLocalTeacherEngine` for local Qwen-generated rows with the same schema.
+8. The dataset is previewed, quality-checked, saved, and downloadable.
+9. The fact-ledger train/eval split reports fact coverage, exact or near-duplicate train/eval leakage, and expected-term coverage.
+10. Optional training prepares `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
+11. A short supervised fine-tuning run starts only when the user sets `RUN_TRAINING = True` in a Colab GPU runtime.
+12. The notebook compares base-model answers and trained-adapter answers using held-out sample-fact questions for the committed sample notes, or chunk-diverse generated questions for uploaded notes.
+13. The notebook saves the output.
+14. The notebook exports to GGUF or shows the exact export command and limitation.
+15. The user gets local run instructions.
 
 Do not build coding, writing, work, or phone model flows until the notes model path works end to end.
 
@@ -81,6 +86,7 @@ Verified locally in this repository:
 - Notebook JSON parsing and the default CPU path where training remains skipped.
 - Notebook default CPU path with dataset quality report: sample notes produced 4 chunks, 16 mock-teacher rows, 16 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, training skipped, comparison skipped, and export skipped.
 - Current notebook default CPU path with the fact-rich sample notes: sample notes produced 4 chunks, 24 mock-teacher rows, 24 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, 0 long answers, 4 held-out sample-fact comparison rows, training skipped, and comparison skipped.
+- Fact-ledger extraction, train/eval row building, train/eval leakage checks, expected-term checks, and exact fact-hit scoring are covered by local tests. The committed sample notes currently produce 8 fact cards, 24 fact-ledger train rows, 8 held-out eval rows, 8/8 train coverage, 8/8 eval coverage, zero exact train/eval leaks, zero near-duplicate leaks, and zero missing expected terms in the safe notebook path.
 - Sample-fact Colab attempt on 2026-06-03 used pushed commit `bef902cd0cd4005ec5931e6190e1247e98fa936b` as the intended GitHub source. The official Colab CLI authenticated and successfully ran a CPU VM probe, then failed to assign a GPU runtime before code execution. Chrome control then operated the Colab UI, selected T4, and clicked Connect, but Colab showed "Cannot connect to GPU backend" and "You cannot currently connect to a GPU due to usage limits in Colab." No new T4 training or answer-quality evidence was collected for the sample-fact experiment.
 - Sample-fact Colab CLI T4 smoke on 2026-06-06 used commit `0797ed21682960acc8e462db1d793ba357689258`, Tesla T4, `mock-local-teacher`, 24 generated rows, dataset quality reporting with 24/24 schema-valid rows, 4/4 chunk coverage, zero duplicate/near-duplicate questions, zero answer-length warnings, a 30-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA adapter, and a 4-question held-out before/after report. The adapter changed all four answers, but base and trained answers both hit 0/4 expected facts. The trained answers were wrong or hallucinated, so the quality judgment is worse / not useful yet.
 - Notebook default install path where `INSTALL_TRAINING_DEPS = False`.
@@ -104,7 +110,7 @@ Still deferred or unverified:
 - Real teacher output quality beyond a tiny 1-row smoke test.
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
 - Whether a tiny Colab adapter run can produce useful note-grounded answers after the adapter-disabled comparison fix. The second smoke and the later 30-step sample-fact smoke both produced visible answer movement, but not useful note grounding.
-- How to improve the notes-learning signal after the 24-row / 30-step sample-fact Colab smoke changed answers but still hit 0/4 held-out facts.
+- Whether training from the fact-ledger train/eval split improves exact held-out fact hits after the 24-row / 30-step sample-fact Colab smoke changed answers but still hit 0/4 held-out facts.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond deterministic local quality helpers and the two three-question Colab quality smokes.
 - Larger uploaded notes files and higher row counts beyond the tiny TXT/MD rehearsal files.
