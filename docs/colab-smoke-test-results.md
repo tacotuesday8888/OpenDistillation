@@ -232,7 +232,7 @@ Near-duplicate/token-overlap train/eval leaks: 0
 Missing expected terms: 0
 ```
 
-No GPU rerun is recorded in this section. The next useful GPU evidence is one bounded T4 smoke of the revised value-first fact-ledger rows.
+No GPU rerun is recorded in this section. In the overnight/no-permission local pass, even a harmless `colab status --help` probe failed before runtime access because the CLI tried to write `/Users/langqi/.config/colab-cli/colab.log`, which this sandbox cannot modify. Because the run instructions forbid approval prompts, manual auth, or interactive runtime control, no new GPU job was started here. The next useful GPU evidence is one bounded T4 smoke of the revised value-first fact-ledger rows when non-interactive Colab CLI access is available.
 
 ## Colab GPU Quality Smoke: Sample-Fact 30-Step CLI Run
 
