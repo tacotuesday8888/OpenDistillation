@@ -18,7 +18,7 @@ Model quality comes before GitHub polish, product packaging, or broad platform f
 
 The repo has a Colab-first prototype. The wiring works: notes loading, chunking, dataset validation, mock teacher rows, optional Hugging Face teacher path, optional TRL/PEFT LoRA training, and before/after comparison have all been exercised.
 
-The latest meaningful quality result is not good enough: a bounded Colab T4 fact-ledger run trained an adapter on 24 fact-ledger rows, but both base and trained answers hit `0/8` held-out facts. The adapter changed every answer without learning the checked facts. That means the next work should improve the learning/data/evaluation loop, not randomly tune training knobs.
+The latest meaningful GPU quality result is not good enough: a bounded Colab T4 fact-ledger run trained an adapter on 24 fact-ledger rows, but both base and trained answers hit `0/8` held-out facts. The adapter changed every answer without learning the checked facts. Follow-up local diagnosis found the SFT format follows TRL's supported prompt/completion path, but the product-layer rows made exact values less salient than they should be for a tiny adapter and the held-out wording invited generic "note field" answers. The current local direction is value-first fact-ledger train rows plus direct exact-recall eval wording before another bounded GPU smoke.
 
 The current product-core design lives under `docs/superpowers/specs/`.
 
@@ -142,4 +142,4 @@ If verification cannot run, state exactly what was not verified and why.
 
 ## Near-Term Priority
 
-The next implementation work should diagnose why the fact-ledger T4 smoke still hit `0/8` exact facts before changing training knobs, adding export, or building product surfaces. Start locally with the fact-ledger train rows, held-out eval rows, prompts, labels, scoring, and training request formatting before spending more GPU.
+The next implementation work should run or document one bounded value-first fact-ledger GPU smoke only after local checks pass and non-interactive Colab access is available. Do not change training knobs, add export, or build product surfaces before the notes-model quality loop shows exact held-out fact improvement.

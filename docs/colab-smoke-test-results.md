@@ -192,9 +192,47 @@ Interpretation:
 
 - The hardened local data/eval gate did its job: it produced separated train and eval rows with zero required leakage or expected-term issues.
 - The GPU run did not prove useful learning. The adapter changed every answer but still missed every exact expected term.
-- The next step should be local diagnosis of the learning signal: inspect the fact-ledger train rows, answer format, prompts, labels, SFT text formatting, and scoring before spending more GPU.
+- The required local diagnosis is recorded below. The next useful GPU evidence is one bounded T4 smoke of the revised value-first fact-ledger rows.
 
 Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
+
+## Local Diagnosis After The 0/8 Fact-Ledger Run
+
+Date: 2026-06-08
+
+Status: **local product-layer fix prepared / no new GPU quality claim yet**.
+
+Diagnosis:
+
+- Current TRL SFT docs support the prompt/completion dataset shape OpenDistillation uses, including conversational prompt/completion rows and completion-only loss.
+- Current PEFT docs confirm that `PeftModel.from_pretrained()` may modify the passed base model in place and that `disable_adapter()` is the supported base-inference path. The comparison helper already uses that path.
+- The likely local failure was weak learning signal rather than a known TRL/PEFT formatting bug: each fact value appeared only a few times, exact values were sometimes buried after longer phrasing, and the held-out eval wording asked "which answer belongs with the note field", which encouraged generic field explanations.
+
+Local changes prepared after the failed run:
+
+```text
+Fact-ledger train row 1 per fact: answer-only exact value
+Fact-ledger train rows 2-3 per fact: response starts with "Exact answer: <value>"
+Held-out eval row per fact: direct closed-book exact-recall question
+Sidecar metadata: row_style and value fields added for diagnosis
+Notebook optional training source: fact-ledger train rows when the gate passes
+Notebook optional comparison source: held-out fact-ledger eval questions when the gate passes
+```
+
+Local gate after the fix still reports:
+
+```text
+Facts: 8
+Fact-ledger train rows: 24
+Held-out eval rows: 8
+Train fact coverage: 8/8
+Eval fact coverage: 8/8
+Exact train/eval leaks: 0
+Near-duplicate/token-overlap train/eval leaks: 0
+Missing expected terms: 0
+```
+
+No GPU rerun is recorded in this section. The next useful GPU evidence is one bounded T4 smoke of the revised value-first fact-ledger rows.
 
 ## Colab GPU Quality Smoke: Sample-Fact 30-Step CLI Run
 

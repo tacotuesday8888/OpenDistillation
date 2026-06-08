@@ -41,6 +41,8 @@ This file records decisions that should not be reopened without a concrete reaso
 - The local quality engine stays standard-library-only for now. Optional ML paths can use Hugging Face Datasets, Transformers, TRL, and PEFT after opt-in, but extra retrieval/fuzzy-matching/vector-store dependencies wait until they clearly improve the notes-model quality loop.
 - Changed adapter answers are not evidence of useful note learning unless held-out fact-hit scores improve over the base model.
 - The 2026-06-08 fact-ledger Colab T4 smoke is a failed learning result, not a pass: it trained on 24 fact-ledger rows and changed all 8 held-out answers, but base and trained answers both hit 0/8 exact expected facts.
+- The follow-up local diagnosis keeps TRL/PEFT as the training stack. TRL's current SFT docs support conversational prompt/completion rows with completion-only loss, and PEFT's current docs confirm `disable_adapter()` is the right base-vs-adapter comparison path. The likely local failure was weak product-layer learning signal: exact values were not consistently the first/simple target, and the held-out wording invited generic "note field" answers.
+- Fact-ledger train rows now put exact values first, held-out eval rows use direct exact-recall wording, and the internal sidecar records `row_style` and `value` for diagnosis. The public JSONL schema is unchanged.
 
 ## Not Decided Yet
 
@@ -65,7 +67,7 @@ Use this notes-model v0 flow as the default implementation plan:
 9. The fact-ledger train/eval split reports fact coverage, exact or near-duplicate train/eval leakage, and expected-term coverage.
 10. Optional training prepares `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
 11. A short supervised fine-tuning run starts only when the user sets `RUN_TRAINING = True` in a Colab GPU runtime.
-12. The notebook compares base-model answers and trained-adapter answers using held-out sample-fact questions for the committed sample notes, or chunk-diverse generated questions for uploaded notes.
+12. When the fact-ledger gate passes, the notebook trains on fact-ledger train rows and compares base-model answers against trained-adapter answers using held-out fact-ledger eval questions. Otherwise it falls back to held-out sample-fact questions for the committed sample notes, or chunk-diverse generated questions for uploaded notes.
 13. The notebook saves the output.
 14. The notebook exports to GGUF or shows the exact export command and limitation.
 15. The user gets local run instructions.
@@ -89,6 +91,7 @@ Verified locally in this repository:
 - Notebook default CPU path with dataset quality report: sample notes produced 4 chunks, 16 mock-teacher rows, 16 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, training skipped, comparison skipped, and export skipped.
 - Current notebook default CPU path with the fact-rich sample notes: sample notes produced 4 chunks, 24 mock-teacher rows, 24 schema-valid rows, 4/4 chunk coverage, 0 duplicate questions, 0 near-duplicate questions, 0 short answers, 0 long answers, 4 held-out sample-fact comparison rows, training skipped, and comparison skipped.
 - Fact-ledger extraction, safe bullet/list fact extraction, train/eval row building, train/eval leakage checks, expected-term checks, and exact fact-hit scoring are covered by local tests. The committed sample notes currently produce 8 fact cards, 24 fact-ledger train rows, 8 held-out eval rows, 8/8 train coverage, 8/8 eval coverage, zero exact train/eval leaks, zero near-duplicate leaks, and zero missing expected terms in the safe notebook path.
+- Value-first fact-ledger row wording, direct held-out eval wording, sidecar `row_style`/`value` metadata, and less overconfident fact-ledger report language are covered by local tests. The notebook skeleton test also verifies that a passing fact-ledger gate supplies the optional training rows and held-out comparison rows.
 - Sample-fact Colab attempt on 2026-06-03 used pushed commit `bef902cd0cd4005ec5931e6190e1247e98fa936b` as the intended GitHub source. The official Colab CLI authenticated and successfully ran a CPU VM probe, then failed to assign a GPU runtime before code execution. Chrome control then operated the Colab UI, selected T4, and clicked Connect, but Colab showed "Cannot connect to GPU backend" and "You cannot currently connect to a GPU due to usage limits in Colab." No new T4 training or answer-quality evidence was collected for the sample-fact experiment.
 - Sample-fact Colab CLI T4 smoke on 2026-06-06 used commit `0797ed21682960acc8e462db1d793ba357689258`, Tesla T4, `mock-local-teacher`, 24 generated rows, dataset quality reporting with 24/24 schema-valid rows, 4/4 chunk coverage, zero duplicate/near-duplicate questions, zero answer-length warnings, a 30-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA adapter, and a 4-question held-out before/after report. The adapter changed all four answers, but base and trained answers both hit 0/4 expected facts. The trained answers were wrong or hallucinated, so the quality judgment is worse / not useful yet.
 - Fact-ledger Colab CLI T4 smoke on 2026-06-08 used commit `479b110773ad9d3382523a4d98c5cca1645e0cdd`, Tesla T4, 8 extracted facts, 24 fact-ledger train rows, 8 held-out eval rows, 8/8 train coverage, 8/8 eval coverage, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a 30-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA adapter. The adapter changed all 8 answers, but base and trained answers both hit 0/8 exact expected facts. The judgment is unchanged by exact fact-hit count and not useful as learned note memory.
@@ -113,7 +116,8 @@ Still deferred or unverified:
 - Real teacher output quality beyond a tiny 1-row smoke test.
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
 - Whether a tiny Colab adapter run can produce useful note-grounded answers after the adapter-disabled comparison fix. The second smoke and the later 30-step sample-fact smoke both produced visible answer movement, but not useful note grounding.
-- Why the 24-row / 30-step fact-ledger Colab T4 run changed all 8 answers but still hit 0/8 exact held-out facts.
+- Whether the local learning-signal diagnosis fully explains why the 24-row / 30-step fact-ledger Colab T4 run changed all 8 answers but still hit 0/8 exact held-out facts.
+- Whether the revised value-first fact-ledger train rows improve exact held-out fact hits in a bounded T4 smoke.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond deterministic local quality helpers and the two three-question Colab quality smokes.
 - Larger uploaded notes files and higher row counts beyond the tiny TXT/MD rehearsal files.
@@ -138,6 +142,12 @@ Sources checked on 2026-06-03:
 - [PEFT task types](https://huggingface.co/docs/peft/main/package_reference/peft_types)
 - [Hugging Face Evaluate overview](https://huggingface.co/docs/evaluate/index)
 - [TRL Unsloth integration](https://huggingface.co/docs/trl/en/unsloth_integration)
+
+Sources checked on 2026-06-08:
+
+- [TRL SFTTrainer docs](https://huggingface.co/docs/trl/sft_trainer)
+- [PEFT PeftModel docs](https://huggingface.co/docs/peft/package_reference/peft_model)
+- [PEFT LoRA guide](https://huggingface.co/docs/peft/developer_guides/lora)
 
 Sources checked on 2026-06-02:
 

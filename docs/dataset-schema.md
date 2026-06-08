@@ -31,6 +31,8 @@ For explicit notes like `Label: value` or safe list items like `- Label - value`
 
 The train rows and held-out eval rows still use the same public `instruction`, `response`, and `source_chunk_id` shape. The sidecar manifest links each row back to `row_id`, `fact_id`, `split`, `source_hash`, `fact_kind`, `label`, and `expected_terms`. This lets the quality gate check whether training and eval are separated without committing generated datasets or model artifacts.
 
+After the 2026-06-08 0/8 fact-ledger GPU result, the sidecar also records `value` and `row_style`. These are internal diagnostics only. They let OpenDistillation explain whether a row is an exact-value answer-only target, a label/value recall target, or a held-out direct-recall eval row, while the public JSONL schema stays unchanged.
+
 ## Dataset Quality Checks
 
 Schema validation only proves that rows have the right shape. The notebook now also runs deterministic quality checks that do not download models or call any API:
@@ -73,6 +75,6 @@ The committed `examples/sample-notes.md` file also has four fixed held-out compa
 
 The current notebook also builds a deterministic fact-ledger report from the committed sample notes. The safe default path shows the number of extracted facts, generated fact train rows, held-out eval rows, train/eval leakage count, expected-term checks, and the first few fact cards before any optional training starts. A passing report means the local data/eval split is safer to test; it does not mean the small model has learned the facts.
 
-The 2026-06-08 Colab T4 fact-ledger smoke used this same public schema for 24 fact-ledger train rows and 8 held-out eval rows. The schema and leakage checks passed, but the trained adapter still scored 0/8 exact expected-term hits, the same as the base model. That is why the next work should improve the learning signal rather than expand the JSONL schema.
+The 2026-06-08 Colab T4 fact-ledger smoke used this same public schema for 24 fact-ledger train rows and 8 held-out eval rows. The schema and leakage checks passed, but the trained adapter still scored 0/8 exact expected-term hits, the same as the base model. The local follow-up keeps the schema stable and changes the product-layer wording instead: train targets now put the exact value first, and held-out eval asks direct exact recall instead of a generic "which answer belongs with this note field" question.
 
 Any future remote teacher path must clearly say when uploaded notes leave the notebook runtime.

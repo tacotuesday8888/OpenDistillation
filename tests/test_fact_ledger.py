@@ -98,6 +98,9 @@ class FactLedgerTests(unittest.TestCase):
         self.assertTrue(train_questions.isdisjoint(eval_questions))
         self.assertTrue(all(row["split"] in {"train", "eval"} for row in split.manifest_rows))
         self.assertTrue(all(row["expected_terms"] for row in split.manifest_rows))
+        self.assertEqual(split.manifest_rows[0]["row_style"], "exact_value_answer_only")
+        self.assertEqual(split.manifest_rows[-1]["row_style"], "held_out_direct_recall")
+        self.assertEqual(split.manifest_rows[0]["value"], "Glass Harbor")
 
     def test_build_fact_train_eval_split_keeps_question_wording_diverse(self):
         chunks = [
@@ -115,8 +118,50 @@ class FactLedgerTests(unittest.TestCase):
 
         self.assertEqual(len(train_questions), 6)
         self.assertEqual(len(set(train_questions)), 6)
-        self.assertIn("closed-book check", split.eval_rows[0]["instruction"])
+        self.assertIn("closed-book check", split.eval_rows[0]["instruction"].lower())
         self.assertTrue(set(train_questions).isdisjoint({split.eval_rows[0]["instruction"]}))
+
+    def test_fact_train_rows_frontload_exact_values_for_tiny_sft(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks), train_examples_per_fact=3)
+        responses = [row["response"] for row in split.train_rows]
+
+        self.assertEqual(responses[0], "Glass Harbor")
+        self.assertTrue(all("Glass Harbor" in response for response in responses))
+        self.assertTrue(
+            all(
+                response.startswith("Glass Harbor") or response.startswith("Exact answer: Glass Harbor")
+                for response in responses
+            )
+        )
+
+    def test_eval_rows_use_direct_recall_instead_of_note_field_matching_wording(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks), train_examples_per_fact=3)
+
+        eval_question = split.eval_rows[0]["instruction"].lower()
+
+        self.assertIn("closed-book", eval_question)
+        self.assertIn("exact", eval_question)
+        self.assertIn("project codename", eval_question)
+        self.assertNotIn("which answer belongs", eval_question)
+        self.assertNotIn("note field", eval_question)
 
     def test_fact_quality_gate_passes_clean_split_and_formats_plain_language_report(self):
         sample_path = Path(__file__).resolve().parents[1] / "examples" / "sample-notes.md"
@@ -139,7 +184,8 @@ class FactLedgerTests(unittest.TestCase):
         self.assertTrue(any("Train/eval leakage: 0 exact, 0 near-duplicate" in line for line in lines))
         self.assertTrue(any("A leakage failure means" in line for line in lines))
         self.assertTrue(any("Expected terms are the exact note details" in line for line in lines))
-        self.assertTrue(any("ready for a bounded training smoke" in line for line in lines))
+        self.assertTrue(any("safe enough for a bounded training smoke" in line for line in lines))
+        self.assertTrue(any("does not prove the model will learn" in line for line in lines))
 
     def test_fact_quality_gate_flags_exact_and_near_duplicate_eval_leakage(self):
         chunks = [
@@ -159,7 +205,7 @@ class FactLedgerTests(unittest.TestCase):
             },
             {
                 **split.eval_rows[0],
-                "instruction": split.train_rows[0]["instruction"].replace("note", "notes"),
+                "instruction": split.train_rows[0]["instruction"].replace("exact", "precise"),
             },
         ]
         leaked_split = split.replace(eval_rows=leaked_eval_rows)
@@ -188,7 +234,7 @@ class FactLedgerTests(unittest.TestCase):
             eval_rows=[
                 {
                     **split.eval_rows[0],
-                    "instruction": "project codename exact value note give what",
+                    "instruction": "project codename exact saved value answer only",
                 }
             ]
         )

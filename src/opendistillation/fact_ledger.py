@@ -161,7 +161,7 @@ def build_fact_train_eval_split(
     for fact in fact_tuple:
         train_templates = _train_templates(fact)
         for index in range(train_examples_per_fact):
-            instruction, response = train_templates[index % len(train_templates)]
+            row_style, instruction, response = train_templates[index % len(train_templates)]
             row = {
                 "instruction": instruction,
                 "response": response,
@@ -174,15 +174,16 @@ def build_fact_train_eval_split(
                     split="train",
                     fact=fact,
                     row=row,
+                    row_style=row_style,
                 )
             )
 
         eval_row = {
             "instruction": (
-                "During a closed-book check, which answer belongs with the "
-                f'note field "{fact.label.lower()}"?'
+                "Closed-book check: what exact notes value should be recalled "
+                f'for "{fact.label.lower()}"?'
             ),
-            "response": f"The held-out answer for {fact.label.lower()} is {fact.value}.",
+            "response": f"Exact answer: {fact.value}.",
             "source_chunk_id": fact.source_chunk_id,
         }
         eval_rows.append(eval_row)
@@ -192,6 +193,7 @@ def build_fact_train_eval_split(
                 split="eval",
                 fact=fact,
                 row=eval_row,
+                row_style="held_out_direct_recall",
             )
         )
 
@@ -357,7 +359,8 @@ def format_fact_quality_report(report: FactQualityGateReport) -> list[str]:
         "Expected terms are the exact note details that a correct answer must contain.",
     ]
     if report.passes_required_checks:
-        lines.append("Fact-ledger checks passed; this split is ready for a bounded training smoke.")
+        lines.append("Fact-ledger checks passed; this split is safe enough for a bounded training smoke.")
+        lines.append("This does not prove the model will learn; it only proves the local train/eval split is separated and checkable.")
         return lines
 
     lines.append("Fact-ledger checks failed:")
@@ -403,6 +406,7 @@ def _manifest_row(
     split: str,
     fact: FactCard,
     row: Mapping[str, str],
+    row_style: str,
 ) -> dict[str, object]:
     return {
         "row_id": row_id,
@@ -411,47 +415,57 @@ def _manifest_row(
         "source_chunk_id": fact.source_chunk_id,
         "source_hash": fact.source_hash,
         "fact_kind": fact.fact_kind,
+        "row_style": row_style,
         "label": fact.label,
+        "value": fact.value,
         "expected_terms": list(fact.expected_terms),
         "instruction": row["instruction"],
         "response": row["response"],
     }
 
 
-def _train_templates(fact: FactCard) -> tuple[tuple[str, str], ...]:
+def _train_templates(fact: FactCard) -> tuple[tuple[str, str, str], ...]:
     label = fact.label.lower()
     return (
         (
-            f"What exact value does the note give for {label}?",
-            f"The notes state that {label} is {fact.value}.",
+            "exact_value_answer_only",
+            f"Answer only with the exact saved value for {label}.",
+            fact.value,
         ),
         (
-            f"Answer from the notes: identify {label}.",
-            f"From the notes, {label} is {fact.value}.",
+            "exact_value_with_label",
+            f"What should the notes model reply for {label}?",
+            f"Exact answer: {fact.value}.",
         ),
         (
-            f"Create a study flashcard for {label}.",
-            f"Front: What is {label}? Back: {fact.value}.",
+            "closed_book_direct_recall",
+            f"Closed-book practice for {label}: give the recorded value.",
+            f"Exact answer: {fact.value}. {fact.label}: {fact.value}.",
         ),
         (
+            "label_value_mapping",
             f"Which value should be remembered for {label}?",
-            f"Remember that {label} is {fact.value}.",
+            f"Exact answer: {fact.value}. Remember that {label} is {fact.value}.",
         ),
         (
+            "source_note_direct_answer",
             f"Use the source note to name {label}.",
-            f"The source note names {label} as {fact.value}.",
+            f"Exact answer: {fact.value}. The source note names {label} as {fact.value}.",
         ),
         (
+            "review_quiz_direct_answer",
             f"For a review quiz, give the recorded answer for {label}.",
-            f"The recorded answer for {label} is {fact.value}.",
+            f"Exact answer: {fact.value}.",
         ),
         (
+            "notes_only_direct_answer",
             f"State the notes-only answer linked to {label}.",
-            f"The notes-only answer linked to {label} is {fact.value}.",
+            f"Exact answer: {fact.value}.",
         ),
         (
+            "short_recall_answer",
             f"Turn {label} into a short recall answer.",
-            f"Recall answer: {fact.value}.",
+            f"Exact answer: {fact.value}.",
         ),
     )
 

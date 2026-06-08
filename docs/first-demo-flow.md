@@ -130,6 +130,8 @@ Default behavior:
 
 - Extract stable fact cards from the current chunks when simple explicit facts or safe bullet/list facts are present.
 - Build separate train rows and held-out eval rows from those facts.
+- Put exact fact values first in fact-ledger train responses, including one answer-only target per fact.
+- Use direct exact-recall wording for held-out eval rows.
 - Keep the public rows in the same `instruction`, `response`, and `source_chunk_id` schema.
 - Keep row metadata in an internal sidecar manifest for quality checks.
 - Check exact and near-duplicate leakage between train questions and held-out eval questions, including rearranged token-overlap leaks.
@@ -145,7 +147,7 @@ Expected output:
 - Exact and near-duplicate train/eval leakage counts.
 - Expected-term check count.
 - First few fact cards, including fact ID, source chunk, label, and value.
-- A reminder that this gate proves data separation, not that the small model has learned.
+- A reminder that this gate proves data separation and local checkability, not that the small model has learned.
 
 ### Step 8: Optional Training Entry Point
 
@@ -156,7 +158,7 @@ Default behavior:
 - Do not load a model.
 - Do not use GPU.
 - Do not fine-tune.
-- Build a training request from the validated dataset rows.
+- Build a training request from the fact-ledger train rows when the fact-ledger gate passes; otherwise use the validated generated dataset rows.
 - Show a plan for `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
 - Require `RUN_TRAINING = True` before model download or adapter training begins.
 - Run a readiness check before training that reports missing optional packages and whether a CUDA GPU is available.
@@ -173,13 +175,13 @@ Expected output:
 
 ### Step 9: Before/After Model Quality Report
 
-The notebook compares held-out sample-fact questions against the base model and the trained LoRA adapter after optional training. For uploaded notes, it falls back to generated questions and prefers distinct source chunks before reusing a chunk.
+The notebook compares held-out fact-ledger eval questions against the base model and the trained LoRA adapter after optional training when the fact-ledger gate passes. If no passing fact ledger exists, it falls back to held-out sample-fact questions or generated questions and prefers distinct source chunks before reusing a chunk.
 
 Default behavior:
 
 - Do not load a model while `RUN_TRAINING = False`.
 - Skip comparison when no adapter exists.
-- Use four held-out questions for `examples/sample-notes.md`, or up to four generated dataset questions for uploaded notes.
+- Use held-out fact-ledger eval questions when the fact-ledger gate passes. Otherwise use four held-out questions for `examples/sample-notes.md`, or up to four generated dataset questions for uploaded notes.
 - Generate the base-model answer with the LoRA adapter disabled, then generate the trained-adapter answer with the adapter enabled.
 - Show the generated reference answer, base-model answer, and trained-adapter answer when training has run.
 - Print a crude reference-overlap signal for each answer pair.
@@ -200,7 +202,7 @@ The optional training and comparison wiring is verified with two multi-question 
 
 The next bounded quality smoke used the fact-rich sample notes, 24 mock rows, the four held-out sample-fact questions, and a 30-step optional LoRA run through `google-colab-cli` on 2026-06-06. It changed all four trained-adapter answers, but the trained answers still hit 0/4 expected facts and were wrong or hallucinated.
 
-The latest bounded quality smoke used the hardened fact-ledger split through `google-colab-cli` on 2026-06-08. It printed a passing local data gate first: 8 facts, 24 fact-ledger train rows, 8 held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, and zero missing expected terms. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers, but base and trained answers both hit 0/8 exact expected facts. The demo should not claim useful note learning yet; the next work should improve the local learning signal while staying inside the notes-only flow.
+The latest bounded quality smoke used the hardened fact-ledger split through `google-colab-cli` on 2026-06-08. It printed a passing local data gate first: 8 facts, 24 fact-ledger train rows, 8 held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, and zero missing expected terms. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers, but base and trained answers both hit 0/8 exact expected facts. Follow-up local diagnosis found no obvious TRL/PEFT formatting bug; the SFT prompt/completion shape matches current TRL docs. The product-layer fix makes fact values more prominent in train responses, changes eval wording to direct exact recall, records row styles in the sidecar, and makes the notebook use fact-ledger train/eval rows after a passing gate. The demo should not claim useful note learning yet; the next evidence should be a bounded GPU smoke of the revised value-first fact-ledger rows.
 
 The checklist records:
 
@@ -268,7 +270,7 @@ Included now:
 
 Planned later in v0:
 
-- Diagnose why the fact-ledger split still produced 0/8 exact fact hits after a bounded T4 training run.
+- Run one bounded GPU smoke of the revised value-first fact-ledger rows when non-interactive Colab access is available.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance, after the notes-model quality loop shows useful note-grounded answers.
 

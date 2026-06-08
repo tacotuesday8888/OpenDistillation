@@ -11,6 +11,8 @@ Checked on 2026-06-08. The rule for v0 is simple: use proven open-source ML tool
 
 The 2026-06-08 bounded Colab T4 fact-ledger smoke used the standard open-source stack already chosen for v0: Colab's GPU `torch`, Transformers `4.57.6`, Datasets `5.0.0`, TRL `0.29.1`, PEFT `0.18.1`, and Accelerate `1.13.0`. That run completed a 30-step LoRA adapter but still scored 0/8 exact held-out fact hits before and after training. The result points to a learning-signal problem, not a need for custom GPU code.
 
+Follow-up doc checks on 2026-06-08 found no reason to replace the training stack. Current TRL docs support conversational prompt/completion datasets and completion-only loss for prompt/completion SFT. Current PEFT docs confirm that `PeftModel.from_pretrained()` may modify the passed base model in place and that `disable_adapter()` is the supported way to run base-model inference. OpenDistillation's local fix therefore stays in the product layer: clearer fact rows, clearer eval wording, and better reporting.
+
 ## Later
 
 - RapidFuzz: likely first add if local near-duplicate checks need stronger fuzzy matching at larger row counts. Not needed now because the standard-library gate catches exact, sequence-similar, and token-overlap leaks covered by tests.
@@ -32,6 +34,8 @@ The 2026-06-08 bounded Colab T4 fact-ledger smoke used the standard open-source 
 - Hugging Face Datasets loading and in-memory data: https://huggingface.co/docs/datasets/loading
 - Hugging Face Evaluate metric selection: https://huggingface.co/docs/evaluate/choosing_a_metric
 - Hugging Face TRL PEFT and Unsloth integration docs: https://huggingface.co/docs/trl/peft_integration and https://huggingface.co/docs/trl/unsloth_integration
+- Hugging Face TRL SFTTrainer docs: https://huggingface.co/docs/trl/sft_trainer
+- Hugging Face PEFT PeftModel docs and LoRA guide: https://huggingface.co/docs/peft/package_reference/peft_model and https://huggingface.co/docs/peft/developer_guides/lora
 - RapidFuzz string matching docs: https://rapidfuzz.github.io/RapidFuzz/
 - scikit-learn text feature extraction docs: https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction
 - FAISS docs: https://faiss.ai/
