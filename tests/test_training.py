@@ -16,7 +16,9 @@ from opendistillation.training import (
     TrainingDependencyError,
     build_lora_config_kwargs,
     build_sft_config_kwargs,
+    build_sft_preview_rows,
     build_training_request,
+    format_sft_preview_report,
     format_sft_rows,
 )
 
@@ -91,6 +93,41 @@ class TrainingPathTests(unittest.TestCase):
                 }
             ],
         )
+
+    def test_sft_preview_rows_show_exact_prompt_completion_and_fact_metadata(self):
+        rows = [
+            {
+                "instruction": "Answer only with the exact saved value for project codename.",
+                "response": "Glass Harbor",
+                "source_chunk_id": "chunk-0001",
+            }
+        ]
+        manifest_rows = [
+            {
+                "instruction": "Answer only with the exact saved value for project codename.",
+                "response": "Glass Harbor",
+                "source_chunk_id": "chunk-0001",
+                "row_id": "train-000001",
+                "fact_id": "fact-0001",
+                "label": "Project codename",
+                "row_style": "exact_value_answer_only",
+                "expected_terms": ["Glass Harbor"],
+            }
+        ]
+
+        preview = build_sft_preview_rows(rows, manifest_rows=manifest_rows)
+        lines = format_sft_preview_report(preview)
+
+        self.assertEqual(len(preview), 1)
+        self.assertEqual(preview[0].prompt, "Answer only with the exact saved value for project codename.")
+        self.assertEqual(preview[0].completion, "Glass Harbor")
+        self.assertEqual(preview[0].fact_id, "fact-0001")
+        self.assertEqual(preview[0].label, "Project codename")
+        self.assertEqual(preview[0].row_style, "exact_value_answer_only")
+        self.assertEqual(preview[0].expected_terms, ("Glass Harbor",))
+        self.assertIn("Exact SFT preview", lines[0])
+        self.assertTrue(any("Prompt: Answer only with the exact saved value" in line for line in lines))
+        self.assertTrue(any("Completion: Glass Harbor" in line for line in lines))
 
     def test_engine_plan_describes_colab_gpu_training_without_running_it(self):
         rows = [

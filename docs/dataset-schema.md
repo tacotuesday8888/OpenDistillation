@@ -33,6 +33,8 @@ The train rows and held-out eval rows still use the same public `instruction`, `
 
 After the 2026-06-08 0/8 fact-ledger GPU result, the sidecar also records `value` and `row_style`. These are internal diagnostics only. They let OpenDistillation explain whether a row is an exact-value answer-only target, a label/value recall target, or a held-out direct-recall eval row, while the public JSONL schema stays unchanged.
 
+Held-out comparison can also use in-memory rows enriched from this sidecar with `row_id`, `fact_id`, `label`, `value`, `row_style`, and `expected_terms`. Those fields are not written to the public JSONL. They keep exact fact-hit scoring attached to the selected fact even when comparison questions are reordered to cover distinct source chunks first.
+
 ## Dataset Quality Checks
 
 Schema validation only proves that rows have the right shape. The notebook now also runs deterministic quality checks that do not download models or call any API:

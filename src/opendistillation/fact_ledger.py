@@ -205,6 +205,35 @@ def build_fact_train_eval_split(
     )
 
 
+def build_fact_comparison_rows(split: FactTrainEvalSplit) -> tuple[dict[str, object], ...]:
+    """Return held-out eval rows with internal fact metadata attached.
+
+    The public JSONL schema remains ``instruction``, ``response``, and
+    ``source_chunk_id``. These enriched rows are for in-memory comparison and
+    scoring only, so expected terms follow the selected question even if the
+    comparison helper reorders rows for source-chunk diversity.
+    """
+
+    manifest_by_public_row = {
+        _public_row_key(row): row
+        for row in split.manifest_rows
+        if row.get("split") == "eval"
+    }
+    enriched_rows: list[dict[str, object]] = []
+    for row in validate_dataset(split.eval_rows):
+        enriched: dict[str, object] = dict(row)
+        manifest_row = manifest_by_public_row.get(_public_row_key(row), {})
+        for field in ("row_id", "fact_id", "label", "value", "row_style"):
+            value = manifest_row.get(field)
+            if isinstance(value, str) and value:
+                enriched[field] = value
+        expected_terms = tuple(str(term).strip() for term in manifest_row.get("expected_terms", ()) if str(term).strip())
+        if expected_terms:
+            enriched["expected_terms"] = list(expected_terms)
+        enriched_rows.append(enriched)
+    return tuple(enriched_rows)
+
+
 def analyze_fact_quality_gate(
     split: FactTrainEvalSplit,
     *,
@@ -400,6 +429,41 @@ def score_fact_outputs(outputs: Iterable[Mapping[str, object]]) -> FactOutputSco
     return FactOutputScore(items=tuple(items))
 
 
+def format_fact_score_report(
+    base_score: FactOutputScore,
+    trained_score: FactOutputScore,
+    *,
+    changed_answer_count: int | None = None,
+) -> list[str]:
+    """Format exact fact-hit scores for beginner-readable model reporting."""
+
+    if base_score.answer_count != trained_score.answer_count:
+        raise ValueError("base and trained scores must cover the same number of answers")
+
+    total = trained_score.answer_count
+    if trained_score.hit_count > base_score.hit_count:
+        judgment = "better"
+    elif trained_score.hit_count < base_score.hit_count:
+        judgment = "worse"
+    else:
+        judgment = "unchanged"
+
+    lines = [
+        "Exact fact-hit quality report",
+        f"Base exact fact hits: {base_score.hit_count}/{total}",
+        f"Trained exact fact hits: {trained_score.hit_count}/{total}",
+    ]
+    if changed_answer_count is not None:
+        lines.append(f"Changed answers: {changed_answer_count}/{total}")
+    lines.append(f"Judgment: {judgment}")
+    lines.append("Exact fact hits require the expected note value to appear in the answer.")
+    if changed_answer_count and trained_score.hit_count <= base_score.hit_count:
+        lines.append("Changed answers with wrong facts are still a failure, not learned note memory.")
+    if trained_score.hit_count == 0:
+        lines.append("The trained adapter did not hit any checked facts.")
+    return lines
+
+
 def _manifest_row(
     *,
     row_id: str,
@@ -422,6 +486,14 @@ def _manifest_row(
         "instruction": row["instruction"],
         "response": row["response"],
     }
+
+
+def _public_row_key(row: Mapping[str, object]) -> tuple[str, str, str]:
+    return (
+        str(row.get("instruction", "")).strip(),
+        str(row.get("response", "")).strip(),
+        str(row.get("source_chunk_id", "")).strip(),
+    )
 
 
 def _train_templates(fact: FactCard) -> tuple[tuple[str, str, str], ...]:

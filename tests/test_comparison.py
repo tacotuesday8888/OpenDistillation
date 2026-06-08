@@ -15,6 +15,7 @@ from opendistillation.comparison import (
 )
 from opendistillation.dataset import DatasetValidationError
 from opendistillation.engines import TrainingResult
+from opendistillation.fact_ledger import score_fact_outputs
 from opendistillation.training import DEFAULT_STUDENT_MODEL, SFTLoRAConfig
 
 
@@ -230,6 +231,75 @@ class ComparisonPathTests(unittest.TestCase):
             [example.source_chunk_id for example in request.examples],
             ["chunk-0001", "chunk-0002", "chunk-0003"],
         )
+
+    def test_build_comparison_request_preserves_fact_metadata_after_reordering(self):
+        rows = [
+            {
+                "instruction": "Question 1 from chunk one",
+                "response": "Reference answer 1 from the notes.",
+                "source_chunk_id": "chunk-0001",
+                "row_id": "eval-000001",
+                "fact_id": "fact-0001",
+                "label": "Project codename",
+                "row_style": "held_out_direct_recall",
+                "expected_terms": ["Glass Harbor"],
+            },
+            {
+                "instruction": "Question 2 from chunk one",
+                "response": "Reference answer 2 from the notes.",
+                "source_chunk_id": "chunk-0001",
+                "row_id": "eval-000002",
+                "fact_id": "fact-0002",
+                "label": "Demo owner alias",
+                "row_style": "held_out_direct_recall",
+                "expected_terms": ["Mira Vale"],
+            },
+            {
+                "instruction": "Question 3 from chunk two",
+                "response": "Reference answer 3 from the notes.",
+                "source_chunk_id": "chunk-0002",
+                "row_id": "eval-000003",
+                "fact_id": "fact-0003",
+                "label": "Notebook signal phrase",
+                "row_style": "held_out_direct_recall",
+                "expected_terms": ["copper-lantern-47"],
+            },
+            {
+                "instruction": "Question 4 from chunk three",
+                "response": "Reference answer 4 from the notes.",
+                "source_chunk_id": "chunk-0003",
+                "row_id": "eval-000004",
+                "fact_id": "fact-0004",
+                "label": "Review ritual color",
+                "row_style": "held_out_direct_recall",
+                "expected_terms": ["ultramarine"],
+            },
+        ]
+        training_result = TrainingResult(
+            engine_name="trl-sfttrainer-peft-lora",
+            output_path=Path("outputs/notes-lora/adapter"),
+            created_model_artifact=True,
+        )
+
+        request = build_comparison_request(rows, training_result, max_examples=3)
+
+        self.assertEqual([example.question for example in request.examples], [
+            "Question 1 from chunk one",
+            "Question 3 from chunk two",
+            "Question 4 from chunk three",
+        ])
+        self.assertEqual([example.fact_id for example in request.examples], ["fact-0001", "fact-0003", "fact-0004"])
+        self.assertEqual([example.label for example in request.examples], [
+            "Project codename",
+            "Notebook signal phrase",
+            "Review ritual color",
+        ])
+        self.assertEqual([example.expected_terms for example in request.examples], [
+            ("Glass Harbor",),
+            ("copper-lantern-47",),
+            ("ultramarine",),
+        ])
+        self.assertTrue(all(example.row_style == "held_out_direct_recall" for example in request.examples))
 
     def test_build_comparison_request_rejects_non_positive_example_limit(self):
         training_result = TrainingResult(
@@ -529,6 +599,75 @@ class ComparisonPathTests(unittest.TestCase):
         self.assertGreaterEqual(result.items[0].base_reference_overlap, 0.0)
         self.assertLessEqual(result.items[0].base_reference_overlap, 1.0)
         self.assertEqual(result.question, "Question one")
+
+    def test_compare_result_fact_outputs_keep_expected_terms_with_reordered_items(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            adapter_path = Path(tmpdir) / "adapter"
+            adapter_path.mkdir()
+            request = build_comparison_request(
+                [
+                    {
+                        "instruction": "Question 1 from chunk one",
+                        "response": "Reference answer 1 from the notes.",
+                        "source_chunk_id": "chunk-0001",
+                        "fact_id": "fact-0001",
+                        "label": "Project codename",
+                        "expected_terms": ["base answer"],
+                        "row_style": "held_out_direct_recall",
+                    },
+                    {
+                        "instruction": "Question 2 from chunk one",
+                        "response": "Reference answer 2 from the notes.",
+                        "source_chunk_id": "chunk-0001",
+                        "fact_id": "fact-0002",
+                        "label": "Demo owner alias",
+                        "expected_terms": ["Mira Vale"],
+                        "row_style": "held_out_direct_recall",
+                    },
+                    {
+                        "instruction": "Question 3 from chunk two",
+                        "response": "Reference answer 3 from the notes.",
+                        "source_chunk_id": "chunk-0002",
+                        "fact_id": "fact-0003",
+                        "label": "Notebook signal phrase",
+                        "expected_terms": ["trained answer"],
+                        "row_style": "held_out_direct_recall",
+                    },
+                ],
+                TrainingResult(
+                    engine_name="trl-sfttrainer-peft-lora",
+                    output_path=adapter_path,
+                    created_model_artifact=True,
+                ),
+                max_examples=2,
+            )
+
+            def fake_import(module_name):
+                if module_name == "torch":
+                    return FakeTorch
+                if module_name == "transformers":
+                    return FakeModule(
+                        AutoModelForCausalLM=FakeAutoModelFactory,
+                        AutoTokenizer=FakeTokenizerFactory,
+                    )
+                if module_name == "peft":
+                    return FakeModule(PeftModel=FakePeftModelFactory)
+                if module_name == "accelerate":
+                    return FakeModule()
+                raise ModuleNotFoundError(name=module_name)
+
+            with patch("opendistillation.comparison.import_module", side_effect=fake_import):
+                result = BeforeAfterComparisonEngine().compare(request)
+
+        self.assertEqual([item.fact_id for item in result.items], ["fact-0001", "fact-0003"])
+        self.assertEqual([item.expected_terms for item in result.items], [("base answer",), ("trained answer",)])
+
+        trained_score = score_fact_outputs(result.fact_outputs("trained"))
+
+        self.assertEqual(trained_score.answer_count, 2)
+        self.assertEqual(trained_score.hit_count, 1)
+        self.assertFalse(trained_score.items[0].hit)
+        self.assertTrue(trained_score.items[1].hit)
 
 
 if __name__ == "__main__":

@@ -37,6 +37,12 @@ class ComparisonExample:
     question: str
     reference_response: str
     source_chunk_id: str
+    row_id: str = ""
+    fact_id: str = ""
+    label: str = ""
+    value: str = ""
+    expected_terms: tuple[str, ...] = ()
+    row_style: str = ""
 
 
 @dataclass(frozen=True)
@@ -72,6 +78,12 @@ class BeforeAfterComparisonItem:
     source_chunk_id: str
     base_reference_overlap: float
     trained_reference_overlap: float
+    row_id: str = ""
+    fact_id: str = ""
+    label: str = ""
+    value: str = ""
+    expected_terms: tuple[str, ...] = ()
+    row_style: str = ""
 
     @property
     def overlap_delta(self) -> float:
@@ -106,6 +118,25 @@ class BeforeAfterComparisonResult:
     def source_chunk_id(self) -> str:
         return self.items[0].source_chunk_id
 
+    def fact_outputs(self, answer_kind: str) -> tuple[dict[str, object], ...]:
+        """Return score-ready outputs using each item's own fact metadata."""
+
+        if answer_kind not in {"base", "trained"}:
+            raise ComparisonConfigurationError("answer_kind must be 'base' or 'trained'")
+        answer_field = "base_answer" if answer_kind == "base" else "trained_answer"
+        return tuple(
+            {
+                "question": item.question,
+                "answer": getattr(item, answer_field),
+                "expected_terms": item.expected_terms,
+                "fact_id": item.fact_id,
+                "label": item.label,
+                "row_style": item.row_style,
+                "source_chunk_id": item.source_chunk_id,
+            }
+            for item in self.items
+        )
+
 
 def build_comparison_request(
     rows: Iterable[Mapping[str, object]],
@@ -125,13 +156,24 @@ def build_comparison_request(
         raise ComparisonConfigurationError("comparison requires a training result with a model artifact")
 
     selected_config = config or SFTLoRAConfig()
-    validated_rows = validate_dataset(rows)
-    selected_rows = _select_comparison_rows(validated_rows, max_examples=max_examples)
+    input_rows = tuple(rows)
+    validated_rows = validate_dataset(input_rows)
+    comparison_rows = [
+        _comparison_row_with_metadata(original, validated)
+        for original, validated in zip(input_rows, validated_rows)
+    ]
+    selected_rows = _select_comparison_rows(comparison_rows, max_examples=max_examples)
     examples = tuple(
         ComparisonExample(
-            question=row["instruction"],
-            reference_response=row["response"],
-            source_chunk_id=row["source_chunk_id"],
+            question=str(row["instruction"]),
+            reference_response=str(row["response"]),
+            source_chunk_id=str(row["source_chunk_id"]),
+            row_id=str(row.get("row_id", "")),
+            fact_id=str(row.get("fact_id", "")),
+            label=str(row.get("label", "")),
+            value=str(row.get("value", "")),
+            expected_terms=_expected_terms(row.get("expected_terms", ())),
+            row_style=str(row.get("row_style", "")),
         )
         for row in selected_rows
     )
@@ -144,16 +186,16 @@ def build_comparison_request(
 
 
 def _select_comparison_rows(
-    validated_rows: list[dict[str, str]],
+    validated_rows: list[dict[str, object]],
     *,
     max_examples: int,
-) -> list[dict[str, str]]:
-    selected_rows: list[dict[str, str]] = []
+) -> list[dict[str, object]]:
+    selected_rows: list[dict[str, object]] = []
     selected_indexes: set[int] = set()
     seen_source_chunks: set[str] = set()
 
     for index, row in enumerate(validated_rows):
-        source_chunk_id = row["source_chunk_id"]
+        source_chunk_id = str(row["source_chunk_id"])
         if source_chunk_id in seen_source_chunks:
             continue
         selected_rows.append(row)
@@ -242,6 +284,12 @@ class BeforeAfterComparisonEngine:
                     source_chunk_id=example.source_chunk_id,
                     base_reference_overlap=_reference_overlap(example.reference_response, base_answer),
                     trained_reference_overlap=_reference_overlap(example.reference_response, trained_answer),
+                    row_id=example.row_id,
+                    fact_id=example.fact_id,
+                    label=example.label,
+                    value=example.value,
+                    expected_terms=example.expected_terms,
+                    row_style=example.row_style,
                 )
             )
 
@@ -317,6 +365,30 @@ def _format_dependency_error(kind: str, missing: list[str], import_errors: dict[
         + " without upgrading Colab's preinstalled torch."
     )
     return " ".join(parts)
+
+
+def _comparison_row_with_metadata(
+    original: Mapping[str, object],
+    validated: Mapping[str, str],
+) -> dict[str, object]:
+    row: dict[str, object] = dict(validated)
+    for field in ("row_id", "fact_id", "label", "value", "row_style"):
+        value = original.get(field)
+        if isinstance(value, str) and value.strip():
+            row[field] = value.strip()
+    expected_terms = _expected_terms(original.get("expected_terms", ()))
+    if expected_terms:
+        row["expected_terms"] = expected_terms
+    return row
+
+
+def _expected_terms(value: object) -> tuple[str, ...]:
+    if isinstance(value, str):
+        stripped = value.strip()
+        return (stripped,) if stripped else ()
+    if isinstance(value, Iterable):
+        return tuple(str(term).strip() for term in value if str(term).strip())
+    return ()
 
 
 def _generate_chat_answer(

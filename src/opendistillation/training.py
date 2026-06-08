@@ -61,6 +61,21 @@ class SFTLoRAConfig:
     use_unsloth: bool = False
 
 
+@dataclass(frozen=True)
+class SFTPreviewRow:
+    """One local preview row showing the exact SFT prompt/completion text."""
+
+    row_index: int
+    source_chunk_id: str
+    prompt: str
+    completion: str
+    row_id: str = ""
+    fact_id: str = ""
+    label: str = ""
+    row_style: str = ""
+    expected_terms: tuple[str, ...] = ()
+
+
 def build_training_request(
     rows: Iterable[Mapping[str, object]],
     output_dir: str | Path,
@@ -93,6 +108,72 @@ def format_sft_rows(rows: Iterable[Mapping[str, object]]) -> list[dict[str, list
         }
         for row in validate_dataset(rows)
     ]
+
+
+def build_sft_preview_rows(
+    rows: Iterable[Mapping[str, object]],
+    *,
+    manifest_rows: Iterable[Mapping[str, object]] = (),
+    max_rows: int | None = None,
+) -> tuple[SFTPreviewRow, ...]:
+    """Build a local preview of the exact prompt/completion pairs used for SFT."""
+
+    if max_rows is not None and max_rows < 1:
+        raise TrainingConfigurationError("max_rows must be at least 1")
+
+    validated_rows = validate_dataset(rows)
+    if max_rows is not None:
+        validated_rows = validated_rows[:max_rows]
+    manifest_by_key = {
+        _manifest_key(row): row
+        for row in manifest_rows
+        if isinstance(row.get("instruction"), str)
+    }
+    formatted_rows = format_sft_rows(validated_rows)
+
+    preview_rows: list[SFTPreviewRow] = []
+    for index, (dataset_row, sft_row) in enumerate(zip(validated_rows, formatted_rows), start=1):
+        manifest_row = manifest_by_key.get(_manifest_key(dataset_row), {})
+        preview_rows.append(
+            SFTPreviewRow(
+                row_index=index,
+                source_chunk_id=dataset_row["source_chunk_id"],
+                prompt=sft_row["prompt"][0]["content"],
+                completion=sft_row["completion"][0]["content"],
+                row_id=_optional_manifest_string(manifest_row, "row_id"),
+                fact_id=_optional_manifest_string(manifest_row, "fact_id"),
+                label=_optional_manifest_string(manifest_row, "label"),
+                row_style=_optional_manifest_string(manifest_row, "row_style"),
+                expected_terms=_manifest_expected_terms(manifest_row),
+            )
+        )
+    return tuple(preview_rows)
+
+
+def format_sft_preview_report(preview_rows: Iterable[SFTPreviewRow]) -> list[str]:
+    """Format SFT preview rows for the notebook and local diagnostics."""
+
+    rows = tuple(preview_rows)
+    lines = [
+        "Exact SFT preview",
+        "These are the exact user prompts and assistant completions sent to TRL before chat templating/tokenization.",
+    ]
+    for row in rows:
+        heading_parts = [f"Row {row.row_index}", row.source_chunk_id]
+        if row.row_id:
+            heading_parts.append(row.row_id)
+        if row.fact_id:
+            heading_parts.append(row.fact_id)
+        if row.row_style:
+            heading_parts.append(row.row_style)
+        lines.append(" | ".join(heading_parts))
+        if row.label:
+            lines.append(f"Label: {row.label}")
+        if row.expected_terms:
+            lines.append("Expected term(s): " + ", ".join(row.expected_terms))
+        lines.append(f"Prompt: {row.prompt}")
+        lines.append(f"Completion: {row.completion}")
+    return lines
 
 
 def build_sft_config_kwargs(
@@ -261,17 +342,43 @@ def _format_dependency_error(kind: str, missing: list[str], import_errors: dict[
     return " ".join(parts)
 
 
+def _manifest_key(row: Mapping[str, object]) -> tuple[str, str, str]:
+    return (
+        str(row.get("instruction", "")).strip(),
+        str(row.get("response", "")).strip(),
+        str(row.get("source_chunk_id", "")).strip(),
+    )
+
+
+def _optional_manifest_string(row: Mapping[str, object], field: str) -> str:
+    value = row.get(field)
+    return value.strip() if isinstance(value, str) else ""
+
+
+def _manifest_expected_terms(row: Mapping[str, object]) -> tuple[str, ...]:
+    value = row.get("expected_terms", ())
+    if isinstance(value, str):
+        stripped = value.strip()
+        return (stripped,) if stripped else ()
+    if isinstance(value, Iterable):
+        return tuple(str(term).strip() for term in value if str(term).strip())
+    return ()
+
+
 __all__ = [
     "DEFAULT_STUDENT_MODEL",
     "QWEN_LORA_TARGET_MODULES",
     "SFTLoRAConfig",
     "SFTLoRATrainingEngine",
+    "SFTPreviewRow",
     "TRAINING_DEPENDENCIES",
     "TRAINING_ENGINE_NAME",
     "TrainingConfigurationError",
     "TrainingDependencyError",
     "build_lora_config_kwargs",
     "build_sft_config_kwargs",
+    "build_sft_preview_rows",
     "build_training_request",
+    "format_sft_preview_report",
     "format_sft_rows",
 ]

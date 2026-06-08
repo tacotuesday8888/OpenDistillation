@@ -18,7 +18,7 @@ Model quality comes before GitHub polish, product packaging, or broad platform f
 
 The repo has a Colab-first prototype. The wiring works: notes loading, chunking, dataset validation, mock teacher rows, optional Hugging Face teacher path, optional TRL/PEFT LoRA training, and before/after comparison have all been exercised.
 
-The latest meaningful GPU quality result is still not good enough: a bounded Colab T4 smoke on the revised value-first fact-ledger rows trained a 30-step adapter on 24 fact-ledger rows, but both base and trained answers hit `0/8` held-out facts. The adapter changed every answer without learning the checked facts. The previous local diagnosis ruled out an obvious TRL/PEFT format bug and improved the row wording, but that was not enough. The current local direction is to diagnose the remaining learning signal and evaluation/reporting path before spending more GPU.
+The latest meaningful GPU quality result is still not good enough: a bounded Colab T4 smoke on the revised value-first fact-ledger rows trained a 30-step adapter on 24 fact-ledger rows, but both base and trained answers hit `0/8` held-out facts. The adapter changed every answer without learning the checked facts. The previous local diagnosis ruled out an obvious TRL/PEFT format bug and improved the row wording, but that was not enough. Follow-up local work fixed expected-term scoring through comparison row reordering and added an SFT prompt/completion preview. The current local direction is to strengthen explicit label/value training signal before spending more GPU.
 
 The current product-core design lives under `docs/superpowers/specs/`.
 
@@ -142,4 +142,4 @@ If verification cannot run, state exactly what was not verified and why.
 
 ## Near-Term Priority
 
-The next implementation work should diagnose why the revised value-first fact-ledger T4 smoke still hit `0/8` exact facts before running another GPU job. Do not change training knobs, add export, or build product surfaces before the notes-model quality loop shows exact held-out fact improvement.
+The next implementation work should strengthen fact-ledger label/value train rows locally before running another GPU job. Do not change training knobs, add export, or build product surfaces before the notes-model quality loop shows exact held-out fact improvement.

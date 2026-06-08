@@ -12,7 +12,7 @@ The important product promise is not "we ran training." The promise is:
 
 > Your notes became controlled training data, the model was tested on questions it did not see during training, and the quality report shows what improved, what failed, and what is still unsafe to claim.
 
-The latest Colab T4 result proved that the pipeline can run, but it did not prove learning quality. The 2026-06-08 revised value-first fact-ledger smoke trained on 24 fact-ledger rows and scored 8 held-out eval questions. The adapter changed all 8 answers, but base and trained answers both hit 0/8 exact expected facts. Follow-up local diagnosis had already ruled out an obvious TRL/PEFT formatting bug and improved the row wording, so the current product-layer path is deeper local diagnosis of the learning signal and exact fact-hit reporting before another GPU run.
+The latest Colab T4 result proved that the pipeline can run, but it did not prove learning quality. The 2026-06-08 revised value-first fact-ledger smoke trained on 24 fact-ledger rows and scored 8 held-out eval questions. The adapter changed all 8 answers, but base and trained answers both hit 0/8 exact expected facts. Follow-up local diagnosis had already ruled out an obvious TRL/PEFT formatting bug and improved the row wording. The later local audit fixed exact expected-term scoring through comparison row reordering and added an SFT prompt/completion preview. The current product-layer path is stronger label/value training signal before another GPU run.
 
 ## Scope
 
@@ -243,7 +243,7 @@ Pass condition:
 
 This is not a benchmark claim. It is the first credible product smoke that says the small model can learn a controlled set of personal note facts from generated training data.
 
-Update on 2026-06-08: this gate shape has now been exercised twice with 8 facts, 24 train rows, 8 held-out eval rows, zero leakage, and 30-step Colab T4 LoRA runs. The first run used earlier fact-ledger wording and scored 0/8 exact held-out fact hits, the same as the base model. Follow-up local diagnosis found the SFT prompt/completion format matches current TRL docs and the adapter-disabled comparison path matches current PEFT docs, so the rows were changed to put exact values first, use direct exact-recall eval questions, and record row styles in the sidecar. The revised value-first run also scored base 0/8 and trained 0/8. The pass condition above remains the bar, but the next work should be local diagnosis and reporting/scoring hardening before spending more GPU.
+Update on 2026-06-08: this gate shape has now been exercised twice with 8 facts, 24 train rows, 8 held-out eval rows, zero leakage, and 30-step Colab T4 LoRA runs. The first run used earlier fact-ledger wording and scored 0/8 exact held-out fact hits, the same as the base model. Follow-up local diagnosis found the SFT prompt/completion format matches current TRL docs and the adapter-disabled comparison path matches current PEFT docs, so the rows were changed to put exact values first, use direct exact-recall eval questions, and record row styles in the sidecar. The revised value-first run also scored base 0/8 and trained 0/8. A later local audit fixed expected-term scoring through comparison row reordering and added an SFT preview; the preview shows only three train rows per fact. The pass condition above remains the bar, but the next work should strengthen label/value training rows before spending more GPU.
 
 ## Library Choices
 

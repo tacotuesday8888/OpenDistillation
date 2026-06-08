@@ -172,7 +172,8 @@ Interpretation:
 - The Colab CLI blocker was resolved by running outside the previous restricted sandbox; no Chrome, Computer Use, manual auth, or screenshots were needed.
 - The revised value-first data/eval gate still did its local job: separated train/eval rows, full fact coverage, and zero leakage.
 - The GPU result is still a failed learning result. The adapter changed every answer but missed every exact expected term.
-- Do not run another GPU smoke by changing random training knobs. The next work should be local diagnosis of why the tiny adapter is not binding labels to values, plus a fix to make exact fact-hit scoring attach expected terms by question/fact identity instead of row position.
+- A later local audit fixed the reporting risk noted above: exact expected terms now travel with comparison examples by fact/question identity instead of by row position.
+- Do not run another GPU smoke by changing random training knobs. The next work should strengthen the local label-value training signal, likely by increasing per-fact examples and making every train response include an explicit canonical `Label: value` binding before one bounded rerun.
 
 Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
@@ -380,7 +381,7 @@ Near-duplicate/token-overlap train/eval leaks: 0
 Missing expected terms: 0
 ```
 
-A GPU rerun of the revised value-first rows is recorded above. It completed on Tesla T4 after running outside the previous restricted sandbox, but the trained adapter still scored 0/8 exact fact hits.
+A GPU rerun of the revised value-first rows is recorded above. It completed on Tesla T4 after running outside the previous restricted sandbox, but the trained adapter still scored 0/8 exact fact hits. A follow-up local audit added metadata-safe scoring through comparison row reordering and an SFT preview; no additional GPU run was started for that audit.
 
 ## Colab GPU Quality Smoke: Sample-Fact 30-Step CLI Run
 

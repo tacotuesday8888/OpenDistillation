@@ -8,8 +8,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from opendistillation.dataset import validate_dataset
 from opendistillation.fact_ledger import (
     analyze_fact_quality_gate,
+    build_fact_comparison_rows,
     build_fact_train_eval_split,
     extract_fact_ledger,
+    FactTrainEvalSplit,
+    format_fact_score_report,
     format_fact_quality_report,
     score_fact_answer,
     score_fact_outputs,
@@ -101,6 +104,80 @@ class FactLedgerTests(unittest.TestCase):
         self.assertEqual(split.manifest_rows[0]["row_style"], "exact_value_answer_only")
         self.assertEqual(split.manifest_rows[-1]["row_style"], "held_out_direct_recall")
         self.assertEqual(split.manifest_rows[0]["value"], "Glass Harbor")
+
+    def test_build_fact_comparison_rows_adds_sidecar_metadata_without_changing_public_eval_rows(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor. Review ritual color: ultramarine.",
+                char_count=68,
+                word_count=8,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks), train_examples_per_fact=3)
+
+        comparison_rows = build_fact_comparison_rows(split)
+
+        self.assertEqual(
+            set(split.eval_rows[0]),
+            {"instruction", "response", "source_chunk_id"},
+        )
+        self.assertEqual(comparison_rows[0]["instruction"], split.eval_rows[0]["instruction"])
+        self.assertEqual(comparison_rows[0]["response"], split.eval_rows[0]["response"])
+        self.assertEqual(comparison_rows[0]["source_chunk_id"], "chunk-0001")
+        self.assertEqual(comparison_rows[0]["row_id"], "eval-000001")
+        self.assertEqual(comparison_rows[0]["fact_id"], "fact-0001")
+        self.assertEqual(comparison_rows[0]["label"], "Project codename")
+        self.assertEqual(comparison_rows[0]["value"], "Glass Harbor")
+        self.assertEqual(comparison_rows[0]["row_style"], "held_out_direct_recall")
+        self.assertEqual(comparison_rows[0]["expected_terms"], ["Glass Harbor"])
+
+    def test_build_fact_comparison_rows_matches_sidecar_by_full_public_row(self):
+        eval_rows = (
+            {
+                "instruction": "What exact value should be recalled?",
+                "response": "Exact answer: Glass Harbor.",
+                "source_chunk_id": "chunk-0001",
+            },
+            {
+                "instruction": "What exact value should be recalled?",
+                "response": "Exact answer: Mira Vale.",
+                "source_chunk_id": "chunk-0002",
+            },
+        )
+        split = FactTrainEvalSplit(
+            facts=(),
+            train_rows=(),
+            eval_rows=eval_rows,
+            manifest_rows=(
+                {
+                    **eval_rows[1],
+                    "split": "eval",
+                    "row_id": "eval-000002",
+                    "fact_id": "fact-0002",
+                    "label": "Demo owner alias",
+                    "value": "Mira Vale",
+                    "row_style": "held_out_direct_recall",
+                    "expected_terms": ["Mira Vale"],
+                },
+                {
+                    **eval_rows[0],
+                    "split": "eval",
+                    "row_id": "eval-000001",
+                    "fact_id": "fact-0001",
+                    "label": "Project codename",
+                    "value": "Glass Harbor",
+                    "row_style": "held_out_direct_recall",
+                    "expected_terms": ["Glass Harbor"],
+                },
+            ),
+        )
+
+        comparison_rows = build_fact_comparison_rows(split)
+
+        self.assertEqual([row["fact_id"] for row in comparison_rows], ["fact-0001", "fact-0002"])
+        self.assertEqual([row["expected_terms"] for row in comparison_rows], [["Glass Harbor"], ["Mira Vale"]])
 
     def test_build_fact_train_eval_split_keeps_question_wording_diverse(self):
         chunks = [
@@ -284,6 +361,45 @@ class FactLedgerTests(unittest.TestCase):
         self.assertEqual(summary.miss_count, 1)
         self.assertEqual(summary.items[0].question, "What is the project codename?")
         self.assertEqual(summary.items[1].missing_terms, ("4:17", "ultramarine"))
+
+    def test_format_fact_score_report_calls_changed_wrong_answers_a_failure(self):
+        base_score = score_fact_outputs(
+            [
+                {
+                    "question": "What is the project codename?",
+                    "answer": "Generic project guidance.",
+                    "expected_terms": ["Glass Harbor"],
+                },
+                {
+                    "question": "What is the review ritual color?",
+                    "answer": "A generic color.",
+                    "expected_terms": ["ultramarine"],
+                },
+            ]
+        )
+        trained_score = score_fact_outputs(
+            [
+                {
+                    "question": "What is the project codename?",
+                    "answer": "Exact answer: Mira Vale.",
+                    "expected_terms": ["Glass Harbor"],
+                },
+                {
+                    "question": "What is the review ritual color?",
+                    "answer": "Exact answer: magenta.",
+                    "expected_terms": ["ultramarine"],
+                },
+            ]
+        )
+
+        lines = format_fact_score_report(base_score, trained_score, changed_answer_count=2)
+
+        self.assertIn("Exact fact-hit quality report", lines[0])
+        self.assertTrue(any("Base exact fact hits: 0/2" in line for line in lines))
+        self.assertTrue(any("Trained exact fact hits: 0/2" in line for line in lines))
+        self.assertTrue(any("Changed answers: 2/2" in line for line in lines))
+        self.assertTrue(any("Judgment: unchanged" in line for line in lines))
+        self.assertTrue(any("Changed answers with wrong facts are still a failure" in line for line in lines))
 
 
 if __name__ == "__main__":
