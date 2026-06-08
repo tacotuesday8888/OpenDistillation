@@ -112,14 +112,21 @@ class FactOutputScore:
 def extract_fact_ledger(chunks: Iterable[TextChunk]) -> list[FactCard]:
     """Extract simple stable facts from note chunks.
 
-    V0 intentionally starts with explicit ``Label: value`` facts. That covers
-    the sample notes and many beginner study notes without model calls.
+    V0 intentionally accepts only explicit note facts. ``Label: value`` covers
+    the sample notes and many beginner study notes. Safe bullet/list pairs such
+    as ``- Label - value`` or ``1. Label = value`` are also accepted when the
+    label is short enough to avoid turning ordinary prose into fake facts.
     """
 
     facts: list[FactCard] = []
+    seen: set[tuple[str, str, str]] = set()
     for chunk in chunks:
         source_hash = _source_hash(chunk.text)
-        for label, value in _extract_label_value_pairs(chunk.text):
+        for label, value, fact_kind in _extract_note_facts(chunk.text):
+            fingerprint = (chunk.id, _normalize_fact_text(label), _normalize_fact_text(value))
+            if fingerprint in seen:
+                continue
+            seen.add(fingerprint)
             fact_id = f"fact-{len(facts) + 1:04d}"
             facts.append(
                 FactCard(
@@ -128,7 +135,7 @@ def extract_fact_ledger(chunks: Iterable[TextChunk]) -> list[FactCard]:
                     label=label,
                     value=value,
                     expected_terms=(value,),
-                    fact_kind="label_value",
+                    fact_kind=fact_kind,
                     source_text=chunk.text,
                     source_hash=source_hash,
                 )
@@ -171,8 +178,11 @@ def build_fact_train_eval_split(
             )
 
         eval_row = {
-            "instruction": f"In your own words, what should the notes say for {fact.label.lower()}?",
-            "response": f"The notes say that {fact.label.lower()} is {fact.value}.",
+            "instruction": (
+                "During a closed-book check, which answer belongs with the "
+                f'note field "{fact.label.lower()}"?'
+            ),
+            "response": f"The held-out answer for {fact.label.lower()} is {fact.value}.",
             "source_chunk_id": fact.source_chunk_id,
         }
         eval_rows.append(eval_row)
@@ -197,6 +207,7 @@ def analyze_fact_quality_gate(
     split: FactTrainEvalSplit,
     *,
     near_duplicate_threshold: float = 0.86,
+    token_overlap_threshold: float = 0.68,
 ) -> FactQualityGateReport:
     """Check the fact-ledger train/eval split for leakage and coverage."""
 
@@ -230,12 +241,16 @@ def analyze_fact_quality_gate(
             continue
 
         for train_row in train_rows:
-            ratio = SequenceMatcher(
+            sequence_ratio = SequenceMatcher(
                 None,
                 normalized_eval,
                 _normalize_question(train_row["instruction"]),
             ).ratio()
-            if ratio >= near_duplicate_threshold:
+            token_overlap = _token_jaccard(
+                _question_tokens(eval_row["instruction"]),
+                _question_tokens(train_row["instruction"]),
+            )
+            if sequence_ratio >= near_duplicate_threshold or token_overlap >= token_overlap_threshold:
                 near_leak_count += 1
                 issues.append(
                     FactQualityIssue(
@@ -243,7 +258,8 @@ def analyze_fact_quality_gate(
                         severity="error",
                         message=(
                             "An eval question is too similar to a training question "
-                            f"({ratio:.2f} similarity)."
+                            f"({sequence_ratio:.2f} sequence similarity, "
+                            f"{token_overlap:.2f} token overlap)."
                         ),
                         row_ids=(
                             *_row_ids_for_instruction(manifest_by_instruction, train_row["instruction"]),
@@ -291,6 +307,26 @@ def analyze_fact_quality_gate(
         for row in split.manifest_rows
         if row.get("split") == "eval" and str(row.get("fact_id")) in known_fact_ids
     }
+    if len(train_fact_ids) < len(known_fact_ids):
+        missing = tuple(sorted(known_fact_ids - train_fact_ids))
+        issues.append(
+            FactQualityIssue(
+                code="missing_train_fact_coverage",
+                severity="error",
+                message="Training rows do not cover fact(s): " + ", ".join(missing) + ".",
+                row_ids=missing,
+            )
+        )
+    if len(eval_fact_ids) < len(known_fact_ids):
+        missing = tuple(sorted(known_fact_ids - eval_fact_ids))
+        issues.append(
+            FactQualityIssue(
+                code="missing_eval_fact_coverage",
+                severity="error",
+                message="Held-out eval rows do not cover fact(s): " + ", ".join(missing) + ".",
+                row_ids=missing,
+            )
+        )
 
     return FactQualityGateReport(
         fact_count=len(split.facts),
@@ -317,6 +353,8 @@ def format_fact_quality_report(report: FactQualityGateReport) -> list[str]:
         f"Fact coverage: train {report.train_fact_coverage}/{report.fact_count}, eval {report.eval_fact_coverage}/{report.fact_count}",
         f"Train/eval leakage: {report.exact_leak_count} exact, {report.near_leak_count} near-duplicate",
         f"Expected-term checks: {report.missing_expected_term_count} missing expected term(s)",
+        "A leakage failure means the model could pass by memorizing a copied question instead of learning the note fact.",
+        "Expected terms are the exact note details that a correct answer must contain.",
     ]
     if report.passes_required_checks:
         lines.append("Fact-ledger checks passed; this split is ready for a bounded training smoke.")
@@ -335,7 +373,7 @@ def score_fact_answer(
 ) -> FactAnswerScore:
     """Score one answer by requiring every expected term to appear."""
 
-    terms = tuple(term for term in expected_terms if str(term).strip())
+    terms = tuple(str(term).strip() for term in expected_terms if str(term).strip())
     return FactAnswerScore(
         question=question,
         answer=answer,
@@ -399,35 +437,112 @@ def _train_templates(fact: FactCard) -> tuple[tuple[str, str], ...]:
             f"Which value should be remembered for {label}?",
             f"Remember that {label} is {fact.value}.",
         ),
+        (
+            f"Use the source note to name {label}.",
+            f"The source note names {label} as {fact.value}.",
+        ),
+        (
+            f"For a review quiz, give the recorded answer for {label}.",
+            f"The recorded answer for {label} is {fact.value}.",
+        ),
+        (
+            f"State the notes-only answer linked to {label}.",
+            f"The notes-only answer linked to {label} is {fact.value}.",
+        ),
+        (
+            f"Turn {label} into a short recall answer.",
+            f"Recall answer: {fact.value}.",
+        ),
     )
 
 
-def _extract_label_value_pairs(text: str) -> list[tuple[str, str]]:
-    facts: list[tuple[str, str]] = []
+def _extract_note_facts(text: str) -> list[tuple[str, str, str]]:
+    facts: list[tuple[str, str, str]] = []
     for raw_line in text.splitlines():
-        cleaned_line = raw_line.strip().lstrip("-*").strip()
+        if _is_markdown_heading(raw_line):
+            continue
+        list_body = _list_item_body(raw_line)
+        if list_body:
+            parsed_list_pair = _parse_list_pair(list_body)
+            if parsed_list_pair:
+                label, value = parsed_list_pair
+                facts.append((label, value, "list_pair"))
+                continue
+        cleaned_line = (list_body or raw_line).strip().lstrip("-*").strip()
         for sentence in re.split(r"(?<=\.)\s+", cleaned_line):
             candidate = sentence.strip()
             if ":" not in candidate or candidate.startswith("#"):
                 continue
             label, value = candidate.split(":", 1)
+            if _has_list_separator(label):
+                continue
             label = _clean_label(label)
             value = value.strip().rstrip(".")
-            if not label or not value:
+            if not _safe_fact_label(label) or not _safe_fact_value(value):
                 continue
-            if len(label.split()) > 6:
-                continue
-            facts.append((label, value))
+            facts.append((label, value, "label_value"))
     return facts
 
 
 def _clean_label(label: str) -> str:
-    cleaned = re.sub(r"^\d+[.)]\s*", "", label.strip())
+    cleaned = re.sub(r"^\d+[.)]\s*", "", label.strip().strip("*_`"))
     return cleaned[:1].upper() + cleaned[1:] if cleaned else cleaned
+
+
+def _clean_value(value: str) -> str:
+    return value.strip().strip("*_`").rstrip(".")
+
+
+def _is_markdown_heading(line: str) -> bool:
+    return bool(re.match(r"^\s{0,3}#{1,6}\s+", line))
+
+
+def _list_item_body(line: str) -> str:
+    match = re.match(r"^\s*(?:[-*+]\s+|\d+[.)]\s+)(.+?)\s*$", line)
+    return match.group(1).strip() if match else ""
+
+
+def _parse_list_pair(body: str) -> tuple[str, str] | None:
+    match = re.match("(.+?)\\s+(?:--?|=|[\u2013\u2014])\\s+(.+)", body)
+    if not match:
+        return None
+    label = _clean_label(match.group(1))
+    value = _clean_value(match.group(2))
+    if not _safe_fact_label(label) or not _safe_fact_value(value):
+        return None
+    return label, value
+
+
+def _has_list_separator(text: str) -> bool:
+    return bool(re.search("\\s(?:--?|=|[\u2013\u2014])\\s", text))
+
+
+def _safe_fact_label(label: str) -> bool:
+    if not label:
+        return False
+    if len(label.split()) > 6:
+        return False
+    if not re.search(r"[A-Za-z]", label):
+        return False
+    if re.search(r"[.!?]", label):
+        return False
+    return True
+
+
+def _safe_fact_value(value: str) -> bool:
+    if not value:
+        return False
+    if len(value.split()) > 30:
+        return False
+    return bool(re.search(r"[A-Za-z0-9]", value))
 
 
 def _source_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
+
+
+def _normalize_fact_text(text: str) -> str:
+    return " ".join(_text_tokens(text))
 
 
 def _normalize_question(question: str) -> str:
@@ -437,8 +552,48 @@ def _normalize_question(question: str) -> str:
 
 
 def _missing_terms(answer: str, expected_terms: Sequence[str]) -> tuple[str, ...]:
-    normalized_answer = answer.lower()
-    return tuple(term for term in expected_terms if term.lower() not in normalized_answer)
+    answer_tokens = _text_tokens(answer)
+    return tuple(term for term in expected_terms if not _answer_contains_expected_term(answer, answer_tokens, term))
+
+
+def _answer_contains_expected_term(answer: str, answer_tokens: Sequence[str], expected_term: str) -> bool:
+    term = expected_term.strip()
+    if not term:
+        return False
+    if _requires_surface_match(term):
+        return bool(_surface_term_pattern(term).search(answer))
+    return _contains_token_phrase(answer_tokens, _text_tokens(term))
+
+
+def _requires_surface_match(term: str) -> bool:
+    return bool(re.search(r"[^\w\s]", term))
+
+
+def _surface_term_pattern(term: str) -> re.Pattern[str]:
+    escaped = re.escape(term.strip())
+    escaped = re.sub(r"(?:\\\s)+", r"\\s+", escaped)
+    return re.compile(rf"(?<![A-Za-z0-9]){escaped}(?![A-Za-z0-9])", flags=re.IGNORECASE)
+
+
+def _text_tokens(text: str) -> tuple[str, ...]:
+    return tuple(re.findall(r"[a-z0-9]+", text.lower()))
+
+
+def _contains_token_phrase(tokens: Sequence[str], phrase_tokens: Sequence[str]) -> bool:
+    if not phrase_tokens:
+        return False
+    phrase_length = len(phrase_tokens)
+    return any(tuple(tokens[index : index + phrase_length]) == tuple(phrase_tokens) for index in range(len(tokens)))
+
+
+def _question_tokens(question: str) -> set[str]:
+    return set(_text_tokens(question))
+
+
+def _token_jaccard(left_tokens: set[str], right_tokens: set[str]) -> float:
+    if not left_tokens or not right_tokens:
+        return 0.0
+    return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
 
 
 def _row_ids_for_instruction(

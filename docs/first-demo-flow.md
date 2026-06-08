@@ -124,16 +124,16 @@ Expected output:
 
 ### Step 7: Review Fact-Ledger Quality Gate
 
-The notebook builds a deterministic fact ledger from explicit `Label: value` notes before any optional model training starts.
+The notebook builds a deterministic fact ledger from explicit `Label: value` notes and safe bullet/list facts before any optional model training starts.
 
 Default behavior:
 
-- Extract stable fact cards from the current chunks when simple explicit facts are present.
+- Extract stable fact cards from the current chunks when simple explicit facts or safe bullet/list facts are present.
 - Build separate train rows and held-out eval rows from those facts.
 - Keep the public rows in the same `instruction`, `response`, and `source_chunk_id` schema.
 - Keep row metadata in an internal sidecar manifest for quality checks.
-- Check exact and near-duplicate leakage between train questions and held-out eval questions.
-- Check that each fact response contains the expected term it is supposed to teach or test.
+- Check exact and near-duplicate leakage between train questions and held-out eval questions, including rearranged token-overlap leaks.
+- Check that each fact response contains the expected term it is supposed to teach or test, without accepting partial-word matches.
 - Do not load a model, use a GPU, or claim model quality.
 
 Expected output:

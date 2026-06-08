@@ -40,6 +40,39 @@ class FactLedgerTests(unittest.TestCase):
         self.assertIn("Review ritual time", labels)
         self.assertIn("Review ritual color", labels)
 
+    def test_extract_fact_ledger_captures_safe_bullet_list_facts(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text=(
+                    "Project codename: Glass Harbor\n"
+                    "- Safety phrase - stay local first\n"
+                    "* Review ritual = 4:17 PM\n"
+                    "1. Accent color - ultramarine\n"
+                    "- This bullet is just prose and should stay out\n"
+                    "- This label has far too many words for a safe fact - skipped\n"
+                    "## Heading - Not a fact\n"
+                    "- Project codename: Glass Harbor\n"
+                ),
+                char_count=250,
+                word_count=45,
+            )
+        ]
+
+        facts = extract_fact_ledger(chunks)
+
+        self.assertEqual(
+            [(fact.label, fact.value, fact.fact_kind) for fact in facts],
+            [
+                ("Project codename", "Glass Harbor", "label_value"),
+                ("Safety phrase", "stay local first", "list_pair"),
+                ("Review ritual", "4:17 PM", "list_pair"),
+                ("Accent color", "ultramarine", "list_pair"),
+            ],
+        )
+        self.assertEqual([fact.fact_id for fact in facts], ["fact-0001", "fact-0002", "fact-0003", "fact-0004"])
+
     def test_build_fact_train_eval_split_creates_separate_rows_and_manifest(self):
         chunks = [
             TextChunk(
@@ -66,6 +99,25 @@ class FactLedgerTests(unittest.TestCase):
         self.assertTrue(all(row["split"] in {"train", "eval"} for row in split.manifest_rows))
         self.assertTrue(all(row["expected_terms"] for row in split.manifest_rows))
 
+    def test_build_fact_train_eval_split_keeps_question_wording_diverse(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks), train_examples_per_fact=6)
+
+        train_questions = [row["instruction"] for row in split.train_rows]
+
+        self.assertEqual(len(train_questions), 6)
+        self.assertEqual(len(set(train_questions)), 6)
+        self.assertIn("closed-book check", split.eval_rows[0]["instruction"])
+        self.assertTrue(set(train_questions).isdisjoint({split.eval_rows[0]["instruction"]}))
+
     def test_fact_quality_gate_passes_clean_split_and_formats_plain_language_report(self):
         sample_path = Path(__file__).resolve().parents[1] / "examples" / "sample-notes.md"
         document = load_text_document(sample_path.name, sample_path.read_text(encoding="utf-8"))
@@ -85,6 +137,8 @@ class FactLedgerTests(unittest.TestCase):
         self.assertIn("Fact-ledger quality gate", lines[0])
         self.assertTrue(any("Facts: 8" in line for line in lines))
         self.assertTrue(any("Train/eval leakage: 0 exact, 0 near-duplicate" in line for line in lines))
+        self.assertTrue(any("A leakage failure means" in line for line in lines))
+        self.assertTrue(any("Expected terms are the exact note details" in line for line in lines))
         self.assertTrue(any("ready for a bounded training smoke" in line for line in lines))
 
     def test_fact_quality_gate_flags_exact_and_near_duplicate_eval_leakage(self):
@@ -119,14 +173,48 @@ class FactLedgerTests(unittest.TestCase):
         self.assertIn("train_eval_exact_leak", issue_codes)
         self.assertIn("train_eval_near_leak", issue_codes)
 
+    def test_fact_quality_gate_flags_token_overlap_leakage(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks), train_examples_per_fact=1)
+        overlapped_split = split.replace(
+            eval_rows=[
+                {
+                    **split.eval_rows[0],
+                    "instruction": "project codename exact value note give what",
+                }
+            ]
+        )
+
+        report = analyze_fact_quality_gate(overlapped_split, near_duplicate_threshold=0.99)
+
+        self.assertFalse(report.passes_required_checks)
+        self.assertEqual(report.near_leak_count, 1)
+        self.assertIn("train_eval_near_leak", {issue.code for issue in report.issues})
+
     def test_fact_hit_scoring_requires_all_expected_terms(self):
         single = score_fact_answer("The project codename is Glass Harbor.", ["Glass Harbor"])
         partial = score_fact_answer("The ritual uses ultramarine.", ["4:17", "ultramarine"])
         paired = score_fact_answer("The ritual pairs 4:17 PM with ultramarine.", ["4:17", "ultramarine"])
+        punctuation_case = score_fact_answer("The codename is glass harbor!", ["Glass Harbor"])
+        partial_word = score_fact_answer("The codename is glass harboring.", ["Glass Harbor"])
+        exact_identifier = score_fact_answer("The token is copper-lantern-47.", ["copper-lantern-47"])
+        changed_identifier = score_fact_answer("The token is copper lantern 47.", ["copper-lantern-47"])
 
         self.assertTrue(single.hit)
         self.assertFalse(partial.hit)
         self.assertTrue(paired.hit)
+        self.assertTrue(punctuation_case.hit)
+        self.assertFalse(partial_word.hit)
+        self.assertTrue(exact_identifier.hit)
+        self.assertFalse(changed_identifier.hit)
         self.assertEqual(partial.missing_terms, ("4:17",))
 
     def test_score_fact_outputs_counts_hits_and_preserves_raw_answers(self):

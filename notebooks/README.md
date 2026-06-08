@@ -12,7 +12,7 @@ The current notebook proves the first safe part of the notes / school model flow
 
 > Load a `.txt` or `.md` notes file, preview and chunk it, generate deterministic mock training examples, show a dataset quality report, prepare an optional short TRL/PEFT LoRA training run, and prepare a bounded before/after quality report that stays skipped by default.
 
-It also now shows a deterministic fact-ledger quality gate before training. That gate extracts simple `Label: value` facts, builds separate train/eval rows, checks train/eval leakage, and reports exact expected-term coverage without loading a model.
+It also now shows a deterministic fact-ledger quality gate before training. That gate extracts explicit `Label: value` facts and safe bullet/list facts, builds separate train/eval rows, checks train/eval leakage, and reports exact expected-term coverage without loading a model.
 
 It also includes an opt-in local real teacher path with `Qwen/Qwen2.5-1.5B-Instruct`. Keep `RUN_REAL_TEACHER = False` unless running a Colab GPU smoke test with the optional Hugging Face packages installed.
 
@@ -34,7 +34,7 @@ With training skipped by default, the notebook should run top to bottom on CPU a
 - Chunk preview.
 - Mock teacher generation by default with fact-aware study rows for simple `Label: value` notes and the generic excerpt fallback for normal uploaded notes.
 - Deterministic dataset quality report for row count, chunk coverage, duplicate or near-duplicate questions, answer length, missing fields, and source chunk IDs.
-- Deterministic fact-ledger quality report for extracted facts, train/eval row counts, fact coverage, train/eval leakage, and expected-term checks.
+- Deterministic fact-ledger quality report for extracted facts, train/eval row counts, fact coverage, train/eval leakage, and strict expected-term checks.
 - Four held-out sample-fact comparison questions when the committed `examples/sample-notes.md` file is loaded.
 - Optional real teacher generation with `RUN_REAL_TEACHER = False` by default.
 - Optional dependency install section with `INSTALL_TRAINING_DEPS = False` by default.

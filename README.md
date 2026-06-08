@@ -46,7 +46,7 @@ What exists now:
 - A bounded optional training engine using `Qwen/Qwen2.5-0.5B-Instruct`, TRL `SFTTrainer`, and PEFT LoRA.
 - A before/after comparison helper that can compare held-out sample-fact questions or chunk-diverse generated questions with trained-adapter answers after opt-in training.
 - A fact-rich sample-notes experiment with 24 mock rows and four held-out sample-fact questions for checking note-grounded answer movement.
-- A deterministic fact-ledger builder that extracts simple `Label: value` facts, creates separate train/eval rows, checks train/eval leakage, and scores exact expected-term hits.
+- A deterministic fact-ledger builder that extracts explicit `Label: value` facts plus safe bullet/list facts, creates separate train/eval rows, checks exact and near-duplicate train/eval leakage, and scores exact expected-term hits.
 - Runtime checks and plain-language setup messages for optional Hugging Face, CUDA, teacher, training, and comparison failures.
 - Notebook `OD_STATUS` markers and a runtime status log so Colab output-frame failures do not erase the state of long optional cells.
 - A first-demo implementation plan.
@@ -80,7 +80,7 @@ Current prototype constraints:
 - **Teacher:** deterministic local mock teacher by default; optional local `Qwen/Qwen2.5-1.5B-Instruct` teacher after `RUN_REAL_TEACHER = True`.
 - **Dataset:** JSONL rows with `instruction`, `response`, and `source_chunk_id`.
 - **Training:** optional short TRL/PEFT LoRA entry point; skipped by default and verified once in a clean GitHub-opened Colab T4 runtime.
-- **Quality:** deterministic dataset checks for row count, chunk coverage, duplicate questions, answer length, missing fields, and source chunk IDs, plus a fact-ledger quality gate for train/eval leakage and exact expected-term coverage.
+- **Quality:** deterministic dataset checks for row count, chunk coverage, duplicate questions, answer length, missing fields, and source chunk IDs, plus a fact-ledger quality gate for safe fact extraction, train/eval leakage, and exact expected-term coverage.
 - **Comparison:** optional bounded base-vs-adapter quality report after training; skipped by default and verified locally with fake model dependencies. For the committed sample notes, the report uses four held-out questions about concrete facts such as `Glass Harbor`, `copper-lantern-47`, `llama-harbor-alpha`, `4:17 PM`, and `ultramarine`. For uploaded notes, it falls back to generated questions from distinct source chunks first. The report uses PEFT's adapter-disabled inference path for the base answer. The latest 30-step sample-fact Colab T4 smoke changed all four trained-adapter answers, but it still hit 0/4 expected facts and the answers were not useful note-grounded improvements.
 - **Export:** placeholder only; no GGUF or local runtime output yet.
 

@@ -11,6 +11,7 @@ TXT/MD notes file
   -> TeacherEngine.generate()
   -> validate_dataset() / rows_to_jsonl()
   -> analyze_dataset_quality()
+  -> extract_fact_ledger() / analyze_fact_quality_gate()
   -> optional SFTLoRATrainingEngine
   -> optional BeforeAfterComparisonEngine
   -> future export engine
@@ -79,6 +80,8 @@ Current helpers:
 Training engines should consume the validated schema from `docs/dataset-schema.md`. If a later backend needs a different internal format, convert from this schema at the boundary instead of changing the notebook flow.
 
 The quality helper is deterministic and local. It checks row count, valid row count, chunk coverage, missing fields, unexpected source chunk IDs, duplicate questions, near-duplicate questions within the same source chunk, and answer length sanity. It is intentionally not a model benchmark.
+
+The fact-ledger helper is also deterministic and local. It extracts explicit `Label: value` facts and safe bullet/list facts, builds train rows and held-out eval rows with the same public JSONL schema, checks exact and near-duplicate train/eval leakage, and scores exact expected-term hits. It is still a data/eval readiness gate, not proof that a trained model improved.
 
 Hugging Face Evaluate and LightEval were considered for this goal, but not added. They are useful open-source evaluation tools, but this project does not yet have a stable held-out notes benchmark; adding another dependency before that would make the Colab path more fragile without proving more.
 
