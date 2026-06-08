@@ -202,7 +202,7 @@ The optional training and comparison wiring is verified with two multi-question 
 
 The next bounded quality smoke used the fact-rich sample notes, 24 mock rows, the four held-out sample-fact questions, and a 30-step optional LoRA run through `google-colab-cli` on 2026-06-06. It changed all four trained-adapter answers, but the trained answers still hit 0/4 expected facts and were wrong or hallucinated.
 
-The latest bounded quality smoke used the hardened fact-ledger split through `google-colab-cli` on 2026-06-08. It printed a passing local data gate first: 8 facts, 24 fact-ledger train rows, 8 held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, and zero missing expected terms. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers, but base and trained answers both hit 0/8 exact expected facts. Follow-up local diagnosis found no obvious TRL/PEFT formatting bug; the SFT prompt/completion shape matches current TRL docs. The product-layer fix makes fact values more prominent in train responses, changes eval wording to direct exact recall, records row styles in the sidecar, and makes the notebook use fact-ledger train/eval rows after a passing gate. The demo should not claim useful note learning yet; the next evidence should be a bounded GPU smoke of the revised value-first fact-ledger rows.
+The latest bounded quality smoke used the revised value-first fact-ledger split through `google-colab-cli` on 2026-06-08. It printed a passing local data gate first: 8 facts, 24 value-first fact-ledger train rows, 8 direct held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, and zero missing expected terms. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers, but base and trained answers both hit 0/8 exact expected facts. The demo should not claim useful note learning yet; the next work should diagnose the remaining learning signal locally and fix exact fact-hit scoring/reporting identity before spending more GPU.
 
 The checklist records:
 
@@ -270,7 +270,7 @@ Included now:
 
 Planned later in v0:
 
-- Run one bounded GPU smoke of the revised value-first fact-ledger rows when non-interactive Colab access is available.
+- Diagnose why the revised value-first fact-ledger T4 smoke still hit 0/8 exact facts before running another GPU smoke.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance, after the notes-model quality loop shows useful note-grounded answers.
 

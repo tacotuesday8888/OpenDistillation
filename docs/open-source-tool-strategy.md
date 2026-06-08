@@ -9,9 +9,9 @@ Checked on 2026-06-08. The rule for v0 is simple: use proven open-source ML tool
 - Hugging Face Datasets inside the optional training engine, where rows become a trainer-ready in-memory dataset.
 - TRL `SFTTrainer` and PEFT LoRA for opt-in supervised fine-tuning. This keeps training on a proven path instead of custom GPU/trainer code.
 
-The 2026-06-08 bounded Colab T4 fact-ledger smoke used the standard open-source stack already chosen for v0: Colab's GPU `torch`, Transformers `4.57.6`, Datasets `5.0.0`, TRL `0.29.1`, PEFT `0.18.1`, and Accelerate `1.13.0`. That run completed a 30-step LoRA adapter but still scored 0/8 exact held-out fact hits before and after training. The result points to a learning-signal problem, not a need for custom GPU code.
+The 2026-06-08 bounded Colab T4 fact-ledger smokes used the standard open-source stack already chosen for v0: Colab's GPU `torch`, Transformers `4.57.6`, Datasets `5.0.0`, TRL `0.29.1`, PEFT `0.18.1`, and Accelerate `1.13.0`. Both the first fact-ledger run and the revised value-first run completed 30-step LoRA adapters but still scored base 0/8 and trained 0/8 exact held-out fact hits. The result points to a learning-signal and reporting problem, not a need for custom GPU code.
 
-Follow-up doc checks on 2026-06-08 found no reason to replace the training stack. Current TRL docs support conversational prompt/completion datasets and completion-only loss for prompt/completion SFT. Current PEFT docs confirm that `PeftModel.from_pretrained()` may modify the passed base model in place and that `disable_adapter()` is the supported way to run base-model inference. OpenDistillation's local fix therefore stays in the product layer: clearer fact rows, clearer eval wording, and better reporting.
+Follow-up doc checks on 2026-06-08 found no reason to replace the training stack. Current TRL docs support conversational prompt/completion datasets and completion-only loss for prompt/completion SFT. Current PEFT docs confirm that `PeftModel.from_pretrained()` may modify the passed base model in place and that `disable_adapter()` is the supported way to run base-model inference. OpenDistillation's next fix should therefore stay in the product layer: better learning-signal diagnosis, fact identity carried through evaluation, and clearer reporting.
 
 ## Later
 
