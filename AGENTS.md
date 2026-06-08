@@ -18,7 +18,7 @@ Model quality comes before GitHub polish, product packaging, or broad platform f
 
 The repo has a Colab-first prototype. The wiring works: notes loading, chunking, dataset validation, mock teacher rows, optional Hugging Face teacher path, optional TRL/PEFT LoRA training, and before/after comparison have all been exercised.
 
-The latest meaningful quality result is not good enough: a bounded Colab T4 sample-fact run trained an adapter, but both base and trained answers hit `0/4` held-out facts. That means the next work should improve the learning/data/evaluation loop, not randomly tune training knobs.
+The latest meaningful quality result is not good enough: a bounded Colab T4 fact-ledger run trained an adapter on 24 fact-ledger rows, but both base and trained answers hit `0/8` held-out facts. The adapter changed every answer without learning the checked facts. That means the next work should improve the learning/data/evaluation loop, not randomly tune training knobs.
 
 The current product-core design lives under `docs/superpowers/specs/`.
 
@@ -142,4 +142,4 @@ If verification cannot run, state exactly what was not verified and why.
 
 ## Near-Term Priority
 
-The next implementation work should build the fact-ledger train/eval data builder and contamination-safe quality gate before changing training knobs, adding export, or building product surfaces.
+The next implementation work should diagnose why the fact-ledger T4 smoke still hit `0/8` exact facts before changing training knobs, adding export, or building product surfaces. Start locally with the fact-ledger train rows, held-out eval rows, prompts, labels, scoring, and training request formatting before spending more GPU.

@@ -198,7 +198,9 @@ Expected output:
 
 The optional training and comparison wiring is verified with two multi-question Colab reports after `docs/colab-smoke-test-checklist.md` evidence was collected. The first quality result was unchanged: all three trained-adapter answers matched the base-model answers. Follow-up local diagnosis found the comparison path could accidentally compare the adapter-enabled model to itself; the comparison helper now disables the adapter for the base answer and spreads questions across chunks. The second Colab quality smoke used that fixed comparison path. All three trained-adapter answers changed, but they were still generic or hallucinated instead of useful note-grounded answers. The demo should not claim useful note learning yet.
 
-The next bounded quality smoke used the fact-rich sample notes, 24 mock rows, the four held-out sample-fact questions, and a 30-step optional LoRA run through `google-colab-cli` on 2026-06-06. It changed all four trained-adapter answers, but the trained answers still hit 0/4 expected facts and were wrong or hallucinated. The demo should not claim useful note learning yet; the next work should improve the learning signal while staying inside the notes-only flow.
+The next bounded quality smoke used the fact-rich sample notes, 24 mock rows, the four held-out sample-fact questions, and a 30-step optional LoRA run through `google-colab-cli` on 2026-06-06. It changed all four trained-adapter answers, but the trained answers still hit 0/4 expected facts and were wrong or hallucinated.
+
+The latest bounded quality smoke used the hardened fact-ledger split through `google-colab-cli` on 2026-06-08. It printed a passing local data gate first: 8 facts, 24 fact-ledger train rows, 8 held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, and zero missing expected terms. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers, but base and trained answers both hit 0/8 exact expected facts. The demo should not claim useful note learning yet; the next work should improve the local learning signal while staying inside the notes-only flow.
 
 The checklist records:
 
@@ -266,9 +268,9 @@ Included now:
 
 Planned later in v0:
 
-- Connect the fact-ledger train/eval split to the next bounded sample-fact Colab quality smoke.
+- Diagnose why the fact-ledger split still produced 0/8 exact fact hits after a bounded T4 training run.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
-- Local-run guidance.
+- Local-run guidance, after the notes-model quality loop shows useful note-grounded answers.
 
 Excluded:
 

@@ -40,6 +40,7 @@ This file records decisions that should not be reopened without a concrete reaso
 - The public v0 training JSONL remains `instruction`, `response`, and `source_chunk_id`. Fact metadata stays in an internal sidecar manifest unless a later goal proves a reason to expand the public schema.
 - The local quality engine stays standard-library-only for now. Optional ML paths can use Hugging Face Datasets, Transformers, TRL, and PEFT after opt-in, but extra retrieval/fuzzy-matching/vector-store dependencies wait until they clearly improve the notes-model quality loop.
 - Changed adapter answers are not evidence of useful note learning unless held-out fact-hit scores improve over the base model.
+- The 2026-06-08 fact-ledger Colab T4 smoke is a failed learning result, not a pass: it trained on 24 fact-ledger rows and changed all 8 held-out answers, but base and trained answers both hit 0/8 exact expected facts.
 
 ## Not Decided Yet
 
@@ -90,6 +91,7 @@ Verified locally in this repository:
 - Fact-ledger extraction, safe bullet/list fact extraction, train/eval row building, train/eval leakage checks, expected-term checks, and exact fact-hit scoring are covered by local tests. The committed sample notes currently produce 8 fact cards, 24 fact-ledger train rows, 8 held-out eval rows, 8/8 train coverage, 8/8 eval coverage, zero exact train/eval leaks, zero near-duplicate leaks, and zero missing expected terms in the safe notebook path.
 - Sample-fact Colab attempt on 2026-06-03 used pushed commit `bef902cd0cd4005ec5931e6190e1247e98fa936b` as the intended GitHub source. The official Colab CLI authenticated and successfully ran a CPU VM probe, then failed to assign a GPU runtime before code execution. Chrome control then operated the Colab UI, selected T4, and clicked Connect, but Colab showed "Cannot connect to GPU backend" and "You cannot currently connect to a GPU due to usage limits in Colab." No new T4 training or answer-quality evidence was collected for the sample-fact experiment.
 - Sample-fact Colab CLI T4 smoke on 2026-06-06 used commit `0797ed21682960acc8e462db1d793ba357689258`, Tesla T4, `mock-local-teacher`, 24 generated rows, dataset quality reporting with 24/24 schema-valid rows, 4/4 chunk coverage, zero duplicate/near-duplicate questions, zero answer-length warnings, a 30-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA adapter, and a 4-question held-out before/after report. The adapter changed all four answers, but base and trained answers both hit 0/4 expected facts. The trained answers were wrong or hallucinated, so the quality judgment is worse / not useful yet.
+- Fact-ledger Colab CLI T4 smoke on 2026-06-08 used commit `479b110773ad9d3382523a4d98c5cca1645e0cdd`, Tesla T4, 8 extracted facts, 24 fact-ledger train rows, 8 held-out eval rows, 8/8 train coverage, 8/8 eval coverage, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a 30-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA adapter. The adapter changed all 8 answers, but base and trained answers both hit 0/8 exact expected facts. The judgment is unchanged by exact fact-hit count and not useful as learned note memory.
 - Notebook default install path where `INSTALL_TRAINING_DEPS = False`.
 - Notebook setup structure for the fresh Colab clone fallback.
 - Notebook status markers for setup, optional install, teacher generation, dataset save, optional training, and optional comparison.
@@ -111,11 +113,11 @@ Still deferred or unverified:
 - Real teacher output quality beyond a tiny 1-row smoke test.
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
 - Whether a tiny Colab adapter run can produce useful note-grounded answers after the adapter-disabled comparison fix. The second smoke and the later 30-step sample-fact smoke both produced visible answer movement, but not useful note grounding.
-- Whether training from the fact-ledger train/eval split improves exact held-out fact hits after the 24-row / 30-step sample-fact Colab smoke changed answers but still hit 0/4 held-out facts.
+- Why the 24-row / 30-step fact-ledger Colab T4 run changed all 8 answers but still hit 0/8 exact held-out facts.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond deterministic local quality helpers and the two three-question Colab quality smokes.
 - Larger uploaded notes files and higher row counts beyond the tiny TXT/MD rehearsal files.
-- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, the real-teacher end-to-end T4 verification, the uploaded-notes rehearsals, the first unchanged multi-question Colab quality smoke, the second adapter-disabled quality smoke with changed but not improved answers, the sample-fact smoke attempt that was blocked by Colab GPU usage limits before notebook execution, and the 30-step sample-fact CLI T4 run that changed answers but still hit 0/4 expected facts.
+- `docs/colab-smoke-test-results.md` records the first failed Colab T4 attempt, the recovered-runtime pass, the clean GitHub-opened T4 pass, the real-teacher end-to-end T4 verification, the uploaded-notes rehearsals, the first unchanged multi-question Colab quality smoke, the second adapter-disabled quality smoke with changed but not improved answers, the sample-fact smoke attempt that was blocked by Colab GPU usage limits before notebook execution, the 30-step sample-fact CLI T4 run that changed answers but still hit 0/4 expected facts, and the 2026-06-08 fact-ledger CLI T4 run that changed answers but still hit 0/8 exact expected facts.
 
 Why this path:
 

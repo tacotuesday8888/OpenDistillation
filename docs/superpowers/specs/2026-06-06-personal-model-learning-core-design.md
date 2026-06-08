@@ -12,7 +12,7 @@ The important product promise is not "we ran training." The promise is:
 
 > Your notes became controlled training data, the model was tested on questions it did not see during training, and the quality report shows what improved, what failed, and what is still unsafe to claim.
 
-The latest Colab T4 result proved that the pipeline can run, but it did not prove learning quality. The adapter changed answers, but it still hit 0/4 held-out facts. That means the next work should redesign the learning loop before changing random training knobs.
+The latest Colab T4 result proved that the pipeline can run, but it did not prove learning quality. The 2026-06-08 fact-ledger smoke trained on 24 fact-ledger rows and scored 8 held-out eval questions. The adapter changed all 8 answers, but base and trained answers both hit 0/8 exact expected facts. That means the next work should diagnose the learning loop before changing random training knobs.
 
 ## Scope
 
@@ -47,7 +47,7 @@ Out of scope for now:
 
 Use a data-first learning loop.
 
-The failed 30-step run is more likely a data and evaluation problem than a pure optimizer problem. A tiny LoRA adapter cannot reliably learn exact personal facts if the training examples are weak, too few, poorly targeted, or evaluated through a leaky or mismatched test.
+The failed 30-step runs are more likely data and evaluation problems than pure optimizer problems. A tiny LoRA adapter cannot reliably learn exact personal facts if the training examples are weak, too few, poorly targeted, or evaluated through a leaky or mismatched test.
 
 The recommended loop is:
 
@@ -242,6 +242,8 @@ Pass condition:
 - The report prints the failed questions and raw answers.
 
 This is not a benchmark claim. It is the first credible product smoke that says the small model can learn a controlled set of personal note facts from generated training data.
+
+Update on 2026-06-08: this gate shape has now been exercised once with 8 facts, 24 train rows, 8 held-out eval rows, zero leakage, and a 30-step Colab T4 LoRA run. It did not pass because the adapter scored 0/8 exact held-out fact hits, the same as the base model. The pass condition above remains the bar for a useful next GPU smoke.
 
 ## Library Choices
 

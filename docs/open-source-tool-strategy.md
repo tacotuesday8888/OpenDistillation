@@ -9,6 +9,8 @@ Checked on 2026-06-08. The rule for v0 is simple: use proven open-source ML tool
 - Hugging Face Datasets inside the optional training engine, where rows become a trainer-ready in-memory dataset.
 - TRL `SFTTrainer` and PEFT LoRA for opt-in supervised fine-tuning. This keeps training on a proven path instead of custom GPU/trainer code.
 
+The 2026-06-08 bounded Colab T4 fact-ledger smoke used the standard open-source stack already chosen for v0: Colab's GPU `torch`, Transformers `4.57.6`, Datasets `5.0.0`, TRL `0.29.1`, PEFT `0.18.1`, and Accelerate `1.13.0`. That run completed a 30-step LoRA adapter but still scored 0/8 exact held-out fact hits before and after training. The result points to a learning-signal problem, not a need for custom GPU code.
+
 ## Later
 
 - RapidFuzz: likely first add if local near-duplicate checks need stronger fuzzy matching at larger row counts. Not needed now because the standard-library gate catches exact, sequence-similar, and token-overlap leaks covered by tests.
@@ -23,6 +25,7 @@ Checked on 2026-06-08. The rule for v0 is simple: use proven open-source ML tool
 - No new dependency for fact extraction, leakage checks, or exact-term scoring in this goal.
 - No custom optimizer, custom LoRA implementation, custom tokenizer, custom trainer, or GPU memory manager.
 - No SaaS, backend, vector database, broad benchmark suite, export path, or multi-profile system while the notes-model quality loop is still unproven.
+- No Unsloth migration yet. Faster training would not fix that the current bounded fact-ledger run changed answers without improving exact fact hits.
 
 ## Sources Checked
 

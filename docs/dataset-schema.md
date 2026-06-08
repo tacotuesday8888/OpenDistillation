@@ -73,4 +73,6 @@ The committed `examples/sample-notes.md` file also has four fixed held-out compa
 
 The current notebook also builds a deterministic fact-ledger report from the committed sample notes. The safe default path shows the number of extracted facts, generated fact train rows, held-out eval rows, train/eval leakage count, expected-term checks, and the first few fact cards before any optional training starts. A passing report means the local data/eval split is safer to test; it does not mean the small model has learned the facts.
 
+The 2026-06-08 Colab T4 fact-ledger smoke used this same public schema for 24 fact-ledger train rows and 8 held-out eval rows. The schema and leakage checks passed, but the trained adapter still scored 0/8 exact expected-term hits, the same as the base model. That is why the next work should improve the learning signal rather than expand the JSONL schema.
+
 Any future remote teacher path must clearly say when uploaded notes leave the notebook runtime.
