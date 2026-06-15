@@ -17,6 +17,9 @@ from .dataset import validate_dataset
 from .text import TextChunk
 
 
+DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT = 6
+
+
 @dataclass(frozen=True)
 class FactCard:
     """One learnable atomic fact extracted from a notes chunk."""
@@ -69,6 +72,7 @@ class FactQualityGateReport:
     near_leak_count: int
     missing_expected_term_count: int
     unknown_source_chunk_count: int
+    missing_manifest_metadata_count: int
     issues: tuple[FactQualityIssue, ...]
 
     @property
@@ -84,10 +88,19 @@ class FactAnswerScore:
     answer: str
     expected_terms: tuple[str, ...]
     missing_terms: tuple[str, ...]
+    fact_id: str = ""
+    label: str = ""
+    source_chunk_id: str = ""
+    row_style: str = ""
+    unscored_reason: str = ""
+
+    @property
+    def scored(self) -> bool:
+        return not self.unscored_reason
 
     @property
     def hit(self) -> bool:
-        return not self.missing_terms
+        return self.scored and not self.missing_terms
 
 
 @dataclass(frozen=True)
@@ -107,6 +120,84 @@ class FactOutputScore:
     @property
     def miss_count(self) -> int:
         return self.answer_count - self.hit_count
+
+    @property
+    def unscored_count(self) -> int:
+        return sum(1 for item in self.items if not item.scored)
+
+
+@dataclass(frozen=True)
+class FactScoreComparisonItem:
+    """One base/trained exact fact outcome."""
+
+    question: str
+    expected_terms: tuple[str, ...]
+    base_answer: str
+    trained_answer: str
+    base_hit: bool
+    trained_hit: bool
+    base_missing_terms: tuple[str, ...]
+    trained_missing_terms: tuple[str, ...]
+    outcome: str
+    fact_id: str = ""
+    label: str = ""
+    source_chunk_id: str = ""
+    row_style: str = ""
+
+
+@dataclass(frozen=True)
+class FactScoreComparison:
+    """Per-fact outcome summary for exact fact-hit scoring."""
+
+    items: tuple[FactScoreComparisonItem, ...]
+
+    @property
+    def learned_count(self) -> int:
+        return self._count("learned")
+
+    @property
+    def missed_count(self) -> int:
+        return self._count("missed")
+
+    @property
+    def unchanged_count(self) -> int:
+        return self._count("unchanged")
+
+    @property
+    def worse_count(self) -> int:
+        return self._count("worse")
+
+    @property
+    def unscored_count(self) -> int:
+        return self._count("unscored")
+
+    def _count(self, outcome: str) -> int:
+        return sum(1 for item in self.items if item.outcome == outcome)
+
+
+@dataclass(frozen=True)
+class FactReadinessReport:
+    """Plain-language local readiness summary before spending GPU time."""
+
+    fact_count: int
+    train_row_count: int
+    eval_row_count: int
+    train_examples_per_fact: int
+    label_value_fact_coverage: int
+    label_value_train_row_count: int
+    sft_preview_row_count: int
+    quality_report: FactQualityGateReport
+
+    @property
+    def ready_for_gpu_smoke(self) -> bool:
+        return (
+            self.fact_count > 0
+            and self.quality_report.passes_required_checks
+            and self.train_examples_per_fact >= DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT
+            and self.label_value_fact_coverage == self.fact_count
+            and self.label_value_train_row_count >= self.fact_count
+            and self.sft_preview_row_count > 0
+        )
 
 
 def extract_fact_ledger(chunks: Iterable[TextChunk]) -> list[FactCard]:
@@ -146,7 +237,7 @@ def extract_fact_ledger(chunks: Iterable[TextChunk]) -> list[FactCard]:
 def build_fact_train_eval_split(
     facts: Iterable[FactCard],
     *,
-    train_examples_per_fact: int = 3,
+    train_examples_per_fact: int = DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT,
 ) -> FactTrainEvalSplit:
     """Build public train rows, held-out eval rows, and sidecar metadata."""
 
@@ -252,6 +343,11 @@ def analyze_fact_quality_gate(
         for row in split.manifest_rows
         if isinstance(row.get("instruction"), str)
     }
+    manifest_by_public_row = {
+        _public_row_key(row): row
+        for row in split.manifest_rows
+        if row.get("split") in {"train", "eval"}
+    }
 
     train_by_normalized = {_normalize_question(row["instruction"]): row for row in train_rows}
     exact_leak_count = 0
@@ -316,6 +412,25 @@ def analyze_fact_quality_gate(
                 )
             )
 
+    missing_manifest_metadata_count = 0
+    for split_name, public_rows in (("train", train_rows), ("eval", eval_rows)):
+        for row in public_rows:
+            manifest_row = manifest_by_public_row.get(_public_row_key(row))
+            if _has_complete_manifest_metadata(manifest_row, split_name=split_name):
+                continue
+            missing_manifest_metadata_count += 1
+            issues.append(
+                FactQualityIssue(
+                    code=f"missing_{split_name}_manifest_metadata",
+                    severity="error",
+                    message=(
+                        f"A {split_name} row does not have matching complete fact-ledger "
+                        "manifest metadata. The row may be stale or detached from its expected terms."
+                    ),
+                    row_ids=_row_ids_for_instruction(manifest_by_instruction, row["instruction"]),
+                )
+            )
+
     unknown_source_chunk_count = 0
     for row in (*train_rows, *eval_rows):
         if row["source_chunk_id"] not in known_chunk_ids:
@@ -369,6 +484,7 @@ def analyze_fact_quality_gate(
         near_leak_count=near_leak_count,
         missing_expected_term_count=missing_expected_term_count,
         unknown_source_chunk_count=unknown_source_chunk_count,
+        missing_manifest_metadata_count=missing_manifest_metadata_count,
         issues=tuple(issues),
     )
 
@@ -384,6 +500,7 @@ def format_fact_quality_report(report: FactQualityGateReport) -> list[str]:
         f"Fact coverage: train {report.train_fact_coverage}/{report.fact_count}, eval {report.eval_fact_coverage}/{report.fact_count}",
         f"Train/eval leakage: {report.exact_leak_count} exact, {report.near_leak_count} near-duplicate",
         f"Expected-term checks: {report.missing_expected_term_count} missing expected term(s)",
+        f"Manifest metadata checks: {report.missing_manifest_metadata_count} row(s) missing fact metadata",
         "A leakage failure means the model could pass by memorizing a copied question instead of learning the note fact.",
         "Expected terms are the exact note details that a correct answer must contain.",
     ]
@@ -402,15 +519,25 @@ def score_fact_answer(
     expected_terms: Sequence[str],
     *,
     question: str = "",
+    fact_id: str = "",
+    label: str = "",
+    source_chunk_id: str = "",
+    row_style: str = "",
 ) -> FactAnswerScore:
     """Score one answer by requiring every expected term to appear."""
 
     terms = tuple(str(term).strip() for term in expected_terms if str(term).strip())
+    unscored_reason = "" if terms else "missing_expected_terms"
     return FactAnswerScore(
         question=question,
         answer=answer,
         expected_terms=terms,
-        missing_terms=_missing_terms(answer, terms),
+        missing_terms=_missing_terms(answer, terms) if terms else (),
+        fact_id=fact_id,
+        label=label,
+        source_chunk_id=source_chunk_id,
+        row_style=row_style,
+        unscored_reason=unscored_reason,
     )
 
 
@@ -424,9 +551,42 @@ def score_fact_outputs(outputs: Iterable[Mapping[str, object]]) -> FactOutputSco
                 str(output.get("answer", "")),
                 [str(term) for term in output.get("expected_terms", ())],
                 question=str(output.get("question", "")),
+                fact_id=str(output.get("fact_id", "")),
+                label=str(output.get("label", "")),
+                source_chunk_id=str(output.get("source_chunk_id", "")),
+                row_style=str(output.get("row_style", "")),
             )
         )
     return FactOutputScore(items=tuple(items))
+
+
+def compare_fact_scores(base_score: FactOutputScore, trained_score: FactOutputScore) -> FactScoreComparison:
+    """Compare base and trained exact fact hits row by row."""
+
+    if base_score.answer_count != trained_score.answer_count:
+        raise ValueError("base and trained scores must cover the same number of answers")
+
+    items: list[FactScoreComparisonItem] = []
+    for base_item, trained_item in zip(base_score.items, trained_score.items):
+        _validate_score_alignment(base_item, trained_item)
+        items.append(
+            FactScoreComparisonItem(
+                question=trained_item.question or base_item.question,
+                expected_terms=trained_item.expected_terms or base_item.expected_terms,
+                base_answer=base_item.answer,
+                trained_answer=trained_item.answer,
+                base_hit=base_item.hit,
+                trained_hit=trained_item.hit,
+                base_missing_terms=base_item.missing_terms,
+                trained_missing_terms=trained_item.missing_terms,
+                outcome=_fact_score_outcome(base_item, trained_item),
+                fact_id=trained_item.fact_id or base_item.fact_id,
+                label=trained_item.label or base_item.label,
+                source_chunk_id=trained_item.source_chunk_id or base_item.source_chunk_id,
+                row_style=trained_item.row_style or base_item.row_style,
+            )
+        )
+    return FactScoreComparison(items=tuple(items))
 
 
 def format_fact_score_report(
@@ -440,6 +600,7 @@ def format_fact_score_report(
     if base_score.answer_count != trained_score.answer_count:
         raise ValueError("base and trained scores must cover the same number of answers")
 
+    comparison = compare_fact_scores(base_score, trained_score)
     total = trained_score.answer_count
     if trained_score.hit_count > base_score.hit_count:
         judgment = "better"
@@ -456,11 +617,116 @@ def format_fact_score_report(
     if changed_answer_count is not None:
         lines.append(f"Changed answers: {changed_answer_count}/{total}")
     lines.append(f"Judgment: {judgment}")
+    lines.append(
+        "Outcome counts: "
+        f"learned {comparison.learned_count}, "
+        f"missed {comparison.missed_count}, "
+        f"unchanged {comparison.unchanged_count}, "
+        f"worse {comparison.worse_count}"
+    )
+    if comparison.unscored_count:
+        lines.append(f"Unscored answers: {comparison.unscored_count}/{total} missing expected terms")
     lines.append("Exact fact hits require the expected note value to appear in the answer.")
     if changed_answer_count and trained_score.hit_count <= base_score.hit_count:
         lines.append("Changed answers with wrong facts are still a failure, not learned note memory.")
     if trained_score.hit_count == 0:
         lines.append("The trained adapter did not hit any checked facts.")
+    for outcome in ("learned", "missed", "worse"):
+        for item in comparison.items:
+            if item.outcome != outcome:
+                continue
+            title = {"learned": "Learned", "missed": "Missed", "worse": "Worse"}[outcome]
+            lines.append(f"{title} fact: {_fact_score_label(item)}")
+            if item.expected_terms:
+                lines.append("  expected term(s): " + ", ".join(item.expected_terms))
+            if item.trained_missing_terms:
+                lines.append("  trained missing term(s): " + ", ".join(item.trained_missing_terms))
+            lines.append(f"  base answer: {item.base_answer}")
+            lines.append(f"  trained answer: {item.trained_answer}")
+    return lines
+
+
+def analyze_fact_readiness(
+    split: FactTrainEvalSplit,
+    *,
+    sft_preview_row_count: int = 0,
+) -> FactReadinessReport:
+    """Summarize whether local fact rows are ready for one bounded GPU smoke."""
+
+    if sft_preview_row_count < 0:
+        raise ValueError("sft_preview_row_count must be non-negative")
+
+    quality_report = analyze_fact_quality_gate(split)
+    fact_count = len(split.facts)
+    train_row_count = len(validate_dataset(split.train_rows))
+    train_examples_per_fact = train_row_count // fact_count if fact_count and train_row_count % fact_count == 0 else 0
+    label_value_rows_by_fact: dict[str, int] = {}
+    for manifest_row in split.manifest_rows:
+        if manifest_row.get("split") != "train":
+            continue
+        fact_id = str(manifest_row.get("fact_id", ""))
+        binding = _canonical_label_value_binding(
+            str(manifest_row.get("label", "")),
+            str(manifest_row.get("value", "")),
+        )
+        if binding and binding in str(manifest_row.get("response", "")):
+            label_value_rows_by_fact[fact_id] = label_value_rows_by_fact.get(fact_id, 0) + 1
+
+    return FactReadinessReport(
+        fact_count=fact_count,
+        train_row_count=train_row_count,
+        eval_row_count=len(validate_dataset(split.eval_rows)),
+        train_examples_per_fact=train_examples_per_fact,
+        label_value_fact_coverage=sum(1 for fact in split.facts if label_value_rows_by_fact.get(fact.fact_id, 0) > 0),
+        label_value_train_row_count=sum(label_value_rows_by_fact.values()),
+        sft_preview_row_count=sft_preview_row_count,
+        quality_report=quality_report,
+    )
+
+
+def format_fact_readiness_report(report: FactReadinessReport) -> list[str]:
+    """Format a plain-language ready/not-ready report for the next GPU run."""
+
+    lines = [
+        "Fact-ledger label/value readiness report",
+        f"Facts: {report.fact_count}",
+        f"Train rows: {report.train_row_count}, {report.train_examples_per_fact} per fact",
+        f"Held-out eval rows: {report.eval_row_count}",
+        (
+            "Canonical Label: value bindings: "
+            f"{report.label_value_fact_coverage}/{report.fact_count} facts covered, "
+            f"{report.label_value_train_row_count} total rows"
+        ),
+        (
+            "Train/eval leakage: "
+            f"{report.quality_report.exact_leak_count} exact, "
+            f"{report.quality_report.near_leak_count} near-duplicate"
+        ),
+        f"Expected-term checks: {report.quality_report.missing_expected_term_count} missing",
+        f"Manifest metadata checks: {report.quality_report.missing_manifest_metadata_count} missing",
+        f"SFT preview: {report.sft_preview_row_count} exact prompt/completion row(s)",
+    ]
+    if report.ready_for_gpu_smoke:
+        lines.append("Verdict: ready for one bounded GPU training smoke")
+        lines.append(
+            "Reason: local data checks pass and the training rows explicitly repeat each Label: value fact; "
+            "this does not claim model quality."
+        )
+        return lines
+
+    lines.append("Verdict: not ready for another GPU training smoke")
+    if not report.quality_report.passes_required_checks:
+        lines.append("Reason: fact-ledger quality checks failed.")
+    elif report.fact_count == 0:
+        lines.append("Reason: no explicit facts were extracted from the TXT/MD notes.")
+    elif report.train_examples_per_fact < DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT:
+        lines.append("Reason: each fact needs the stronger default six training rows before another GPU run.")
+    elif report.label_value_fact_coverage < report.fact_count:
+        lines.append("Reason: at least one fact is missing canonical Label: value training signal.")
+    elif report.sft_preview_row_count == 0:
+        lines.append("Reason: inspectable SFT prompt/completion preview has not been produced.")
+    else:
+        lines.append("Reason: local readiness checks found a problem that should be inspected before training.")
     return lines
 
 
@@ -498,46 +764,47 @@ def _public_row_key(row: Mapping[str, object]) -> tuple[str, str, str]:
 
 def _train_templates(fact: FactCard) -> tuple[tuple[str, str, str], ...]:
     label = fact.label.lower()
+    binding = _canonical_label_value_binding(fact.label, fact.value)
     return (
         (
-            "exact_value_answer_only",
-            f"Answer only with the exact saved value for {label}.",
-            fact.value,
+            "canonical_label_value_statement",
+            f"Learn this exact note fact as a label/value pair: {label}.",
+            f"Exact answer: {fact.value}. {binding}.",
         ),
         (
-            "exact_value_with_label",
-            f"What should the notes model reply for {label}?",
-            f"Exact answer: {fact.value}.",
+            "exact_value_from_label",
+            f"Answer with the exact value stored for {label}.",
+            f"Exact answer: {fact.value}. {binding}.",
         ),
         (
-            "closed_book_direct_recall",
-            f"Closed-book practice for {label}: give the recorded value.",
-            f"Exact answer: {fact.value}. {fact.label}: {fact.value}.",
+            "label_value_flashcard",
+            f"Create the back of a flashcard for the note label {label}.",
+            f"Exact answer: {fact.value}. {binding}.",
         ),
         (
-            "label_value_mapping",
-            f"Which value should be remembered for {label}?",
-            f"Exact answer: {fact.value}. Remember that {label} is {fact.value}.",
+            "closed_book_label_value",
+            f"Closed-book drill: recall the stored label/value pair for {label}.",
+            f"Exact answer: {fact.value}. {binding}.",
         ),
         (
-            "source_note_direct_answer",
-            f"Use the source note to name {label}.",
-            f"Exact answer: {fact.value}. The source note names {label} as {fact.value}.",
+            "source_note_label_value",
+            f"Use the source note to give the value for {label}.",
+            f"Exact answer: {fact.value}. {binding}.",
         ),
         (
-            "review_quiz_direct_answer",
+            "review_quiz_label_value",
             f"For a review quiz, give the recorded answer for {label}.",
-            f"Exact answer: {fact.value}.",
+            f"Exact answer: {fact.value}. {binding}.",
         ),
         (
-            "notes_only_direct_answer",
+            "notes_only_label_value",
             f"State the notes-only answer linked to {label}.",
-            f"Exact answer: {fact.value}.",
+            f"Exact answer: {fact.value}. {binding}.",
         ),
         (
-            "short_recall_answer",
-            f"Turn {label} into a short recall answer.",
-            f"Exact answer: {fact.value}.",
+            "short_label_value_recall",
+            f"Turn the label {label} into a short exact recall answer.",
+            f"Exact answer: {fact.value}. {binding}.",
         ),
     )
 
@@ -692,17 +959,69 @@ def _row_ids_for_instruction(
     return (str(row.get("row_id", "")),)
 
 
+def _has_complete_manifest_metadata(row: Mapping[str, object] | None, *, split_name: str) -> bool:
+    if row is None:
+        return False
+    if row.get("split") != split_name:
+        return False
+    for field in ("row_id", "fact_id", "source_chunk_id", "row_style", "label", "value"):
+        if not str(row.get(field, "")).strip():
+            return False
+    return bool(tuple(str(term).strip() for term in row.get("expected_terms", ()) if str(term).strip()))
+
+
+def _canonical_label_value_binding(label: str, value: str) -> str:
+    clean_label = label.strip()
+    clean_value = value.strip()
+    if not clean_label or not clean_value:
+        return ""
+    return f"{clean_label}: {clean_value}"
+
+
+def _validate_score_alignment(base_item: FactAnswerScore, trained_item: FactAnswerScore) -> None:
+    if base_item.expected_terms != trained_item.expected_terms:
+        raise ValueError("base and trained scores must use matching expected terms")
+    if base_item.fact_id and trained_item.fact_id and base_item.fact_id != trained_item.fact_id:
+        raise ValueError("base and trained scores must use matching fact_id values")
+    if not base_item.fact_id and not trained_item.fact_id and base_item.question != trained_item.question:
+        raise ValueError("base and trained scores must use matching questions when fact_id is absent")
+
+
+def _fact_score_outcome(base_item: FactAnswerScore, trained_item: FactAnswerScore) -> str:
+    if not base_item.scored or not trained_item.scored:
+        return "unscored"
+    if base_item.hit and trained_item.hit:
+        return "unchanged"
+    if base_item.hit and not trained_item.hit:
+        return "worse"
+    if not base_item.hit and trained_item.hit:
+        return "learned"
+    return "missed"
+
+
+def _fact_score_label(item: FactScoreComparisonItem) -> str:
+    parts = [part for part in (item.fact_id, item.label or item.question, item.source_chunk_id) if part]
+    return " | ".join(parts) if parts else item.question
+
+
 __all__ = [
+    "DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT",
     "FactAnswerScore",
     "FactCard",
     "FactOutputScore",
     "FactQualityGateReport",
     "FactQualityIssue",
+    "FactReadinessReport",
+    "FactScoreComparison",
+    "FactScoreComparisonItem",
     "FactTrainEvalSplit",
     "analyze_fact_quality_gate",
+    "analyze_fact_readiness",
     "build_fact_train_eval_split",
+    "compare_fact_scores",
     "extract_fact_ledger",
     "format_fact_quality_report",
+    "format_fact_readiness_report",
     "score_fact_answer",
     "score_fact_outputs",
 ]
