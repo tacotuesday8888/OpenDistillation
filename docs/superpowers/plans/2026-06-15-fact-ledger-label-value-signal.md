@@ -10,47 +10,47 @@
 
 ---
 
-### Task 1: Strengthen Fact Rows And Readiness
+## Task 1: Strengthen Fact Rows And Readiness
 
 **Files:**
 - Modify: `src/opendistillation/fact_ledger.py`
 - Modify: `src/opendistillation/__init__.py`
 - Test: `tests/test_fact_ledger.py`
 
-- [ ] Write failing tests for six-row default label/value training rows, manifest integrity checks, and a plain-language readiness report.
-- [ ] Run the targeted fact-ledger tests and confirm they fail for missing behavior.
-- [ ] Add a fact-ledger default row count constant, richer label/value templates, manifest coverage checks, and readiness formatting.
-- [ ] Re-run targeted tests and confirm they pass.
+- [x] Write failing tests for six-row default label/value training rows, manifest integrity checks, and a plain-language readiness report.
+- [x] Run the targeted fact-ledger tests and confirm they fail for missing behavior.
+- [x] Add a fact-ledger default row count constant, richer label/value templates, manifest coverage checks, and readiness formatting.
+- [x] Re-run targeted tests and confirm they pass.
 
-### Task 2: Add Metadata-Aware Exact Scoring
+## Task 2: Add Metadata-Aware Exact Scoring
 
 **Files:**
 - Modify: `src/opendistillation/fact_ledger.py`
 - Modify: `src/opendistillation/__init__.py`
 - Test: `tests/test_fact_ledger.py`
 
-- [ ] Write failing tests for preserved scoring metadata, unscored empty expected terms, and per-fact learned/missed/unchanged/worse outcomes.
-- [ ] Run the targeted tests and confirm they fail for missing behavior.
-- [ ] Extend score dataclasses and report formatting without changing comparison inputs.
-- [ ] Re-run targeted tests and confirm they pass.
+- [x] Write failing tests for preserved scoring metadata, unscored empty expected terms, and per-fact learned/missed/unchanged/worse outcomes.
+- [x] Run the targeted tests and confirm they fail for missing behavior.
+- [x] Extend score dataclasses and report formatting without changing comparison inputs.
+- [x] Re-run targeted tests and confirm they pass.
 
-### Task 3: Wire Notebook Defaults
+## Task 3: Wire Notebook Defaults
 
 **Files:**
 - Modify: `notebooks/opendistillation_v0_demo.ipynb`
 - Modify: `tests/test_notebook.py`
 
-- [ ] Write failing notebook skeleton expectations for stronger fact-ledger defaults and readiness output.
-- [ ] Update notebook imports and cells to use the stronger default and print the readiness report before training.
-- [ ] Validate notebook JSON and notebook skeleton tests.
+- [x] Write failing notebook skeleton expectations for stronger fact-ledger defaults and readiness output.
+- [x] Update notebook imports and cells to use the stronger default and print the readiness report before training.
+- [x] Validate notebook JSON and notebook skeleton tests.
 
-### Task 4: Final Verification
+## Task 4: Final Verification
 
 **Files:**
 - No new production files.
 
-- [ ] Run full unit tests.
-- [ ] Validate notebook JSON.
-- [ ] Run `git diff --check`.
-- [ ] Scan for secrets and generated model/data artifacts.
-- [ ] Inspect `git status` and the final diff before reporting.
+- [x] Run full unit tests.
+- [x] Validate notebook JSON.
+- [x] Run `git diff --check`.
+- [x] Scan for secrets and generated model/data artifacts.
+- [x] Inspect `git status` and the final diff before reporting.

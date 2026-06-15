@@ -330,6 +330,67 @@ class FactLedgerTests(unittest.TestCase):
         self.assertTrue(any("Verdict: ready for one bounded GPU training smoke" in line for line in lines))
         self.assertTrue(any("does not claim model quality" in line for line in lines))
 
+    def test_fact_readiness_rejects_partial_label_value_binding_coverage(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks))
+        train_rows = []
+        manifest_rows = []
+        first_train_row_kept = False
+        for manifest_row in split.manifest_rows:
+            if manifest_row["split"] != "train":
+                manifest_rows.append(manifest_row)
+                continue
+
+            if not first_train_row_kept:
+                first_train_row_kept = True
+                public_row = {
+                    "instruction": manifest_row["instruction"],
+                    "response": manifest_row["response"],
+                    "source_chunk_id": manifest_row["source_chunk_id"],
+                }
+            else:
+                public_row = {
+                    "instruction": str(manifest_row["instruction"]),
+                    "response": "Exact answer: Glass Harbor.",
+                    "source_chunk_id": str(manifest_row["source_chunk_id"]),
+                }
+            train_rows.append(public_row)
+            manifest_rows.append({**manifest_row, **public_row})
+        weakened_split = split.replace(train_rows=tuple(train_rows), manifest_rows=tuple(manifest_rows))
+
+        readiness = analyze_fact_readiness(weakened_split, sft_preview_row_count=6)
+        lines = format_fact_readiness_report(readiness)
+
+        self.assertTrue(readiness.quality_report.passes_required_checks)
+        self.assertEqual(readiness.train_examples_per_fact, 6)
+        self.assertEqual(readiness.label_value_fact_coverage, 1)
+        self.assertEqual(readiness.label_value_train_row_count, 1)
+        self.assertFalse(readiness.ready_for_gpu_smoke)
+        self.assertEqual(readiness.skip_reason, "missing_label_value_training_signal")
+        self.assertTrue(any("canonical Label: value" in line for line in lines))
+
+    def test_empty_fact_ledger_reports_no_facts_without_crashing(self):
+        split = build_fact_train_eval_split([])
+
+        readiness = analyze_fact_readiness(split, sft_preview_row_count=0)
+        lines = format_fact_readiness_report(readiness)
+
+        self.assertEqual(split.facts, ())
+        self.assertEqual(split.train_rows, ())
+        self.assertEqual(split.eval_rows, ())
+        self.assertEqual(build_fact_comparison_rows(split), ())
+        self.assertFalse(readiness.ready_for_gpu_smoke)
+        self.assertEqual(readiness.skip_reason, "no_fact_ledger_facts")
+        self.assertTrue(any("no explicit facts were extracted" in line for line in lines))
+
     def test_fact_quality_gate_flags_exact_and_near_duplicate_eval_leakage(self):
         chunks = [
             TextChunk(

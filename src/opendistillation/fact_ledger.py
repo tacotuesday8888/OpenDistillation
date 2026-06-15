@@ -195,9 +195,27 @@ class FactReadinessReport:
             and self.quality_report.passes_required_checks
             and self.train_examples_per_fact >= DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT
             and self.label_value_fact_coverage == self.fact_count
-            and self.label_value_train_row_count >= self.fact_count
+            and self.label_value_train_row_count == self.train_row_count
             and self.sft_preview_row_count > 0
         )
+
+    @property
+    def skip_reason(self) -> str:
+        """Machine-readable reason when rows are not ready for a GPU smoke."""
+
+        if self.ready_for_gpu_smoke:
+            return ""
+        if self.fact_count == 0:
+            return "no_fact_ledger_facts"
+        if not self.quality_report.passes_required_checks:
+            return "fact_ledger_quality_gate_failed"
+        if self.train_examples_per_fact < DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT:
+            return "insufficient_fact_training_rows"
+        if self.label_value_fact_coverage < self.fact_count or self.label_value_train_row_count < self.train_row_count:
+            return "missing_label_value_training_signal"
+        if self.sft_preview_row_count == 0:
+            return "missing_sft_preview"
+        return "fact_ledger_not_training_ready"
 
 
 def extract_fact_ledger(chunks: Iterable[TextChunk]) -> list[FactCard]:
@@ -245,6 +263,9 @@ def build_fact_train_eval_split(
         raise ValueError("train_examples_per_fact must be at least 1")
 
     fact_tuple = tuple(facts)
+    if not fact_tuple:
+        return FactTrainEvalSplit(facts=(), train_rows=(), eval_rows=(), manifest_rows=())
+
     train_rows: list[dict[str, str]] = []
     eval_rows: list[dict[str, str]] = []
     manifest_rows: list[dict[str, object]] = []
@@ -305,6 +326,9 @@ def build_fact_comparison_rows(split: FactTrainEvalSplit) -> tuple[dict[str, obj
     comparison helper reorders rows for source-chunk diversity.
     """
 
+    if not split.eval_rows:
+        return ()
+
     manifest_by_public_row = {
         _public_row_key(row): row
         for row in split.manifest_rows
@@ -334,8 +358,8 @@ def analyze_fact_quality_gate(
     """Check the fact-ledger train/eval split for leakage and coverage."""
 
     issues: list[FactQualityIssue] = []
-    train_rows = tuple(validate_dataset(split.train_rows))
-    eval_rows = tuple(validate_dataset(split.eval_rows))
+    train_rows = tuple(validate_dataset(split.train_rows)) if split.train_rows else ()
+    eval_rows = tuple(validate_dataset(split.eval_rows)) if split.eval_rows else ()
     known_fact_ids = {fact.fact_id for fact in split.facts}
     known_chunk_ids = {fact.source_chunk_id for fact in split.facts}
     manifest_by_instruction = {
@@ -505,6 +529,11 @@ def format_fact_quality_report(report: FactQualityGateReport) -> list[str]:
         "Expected terms are the exact note details that a correct answer must contain.",
     ]
     if report.passes_required_checks:
+        if report.fact_count == 0:
+            lines.append("No explicit facts were extracted, so fact-ledger training and held-out fact scoring are skipped.")
+            lines.append("Generated teacher rows can still be previewed, but they do not prove held-out fact learning.")
+            return lines
+
         lines.append("Fact-ledger checks passed; this split is safe enough for a bounded training smoke.")
         lines.append("This does not prove the model will learn; it only proves the local train/eval split is separated and checkable.")
         return lines
@@ -567,7 +596,7 @@ def compare_fact_scores(base_score: FactOutputScore, trained_score: FactOutputSc
         raise ValueError("base and trained scores must cover the same number of answers")
 
     items: list[FactScoreComparisonItem] = []
-    for base_item, trained_item in zip(base_score.items, trained_score.items):
+    for base_item, trained_item in zip(base_score.items, trained_score.items, strict=True):
         _validate_score_alignment(base_item, trained_item)
         items.append(
             FactScoreComparisonItem(
@@ -658,7 +687,7 @@ def analyze_fact_readiness(
 
     quality_report = analyze_fact_quality_gate(split)
     fact_count = len(split.facts)
-    train_row_count = len(validate_dataset(split.train_rows))
+    train_row_count = len(validate_dataset(split.train_rows)) if split.train_rows else 0
     train_examples_per_fact = train_row_count // fact_count if fact_count and train_row_count % fact_count == 0 else 0
     label_value_rows_by_fact: dict[str, int] = {}
     for manifest_row in split.manifest_rows:
@@ -675,7 +704,7 @@ def analyze_fact_readiness(
     return FactReadinessReport(
         fact_count=fact_count,
         train_row_count=train_row_count,
-        eval_row_count=len(validate_dataset(split.eval_rows)),
+        eval_row_count=len(validate_dataset(split.eval_rows)) if split.eval_rows else 0,
         train_examples_per_fact=train_examples_per_fact,
         label_value_fact_coverage=sum(1 for fact in split.facts if label_value_rows_by_fact.get(fact.fact_id, 0) > 0),
         label_value_train_row_count=sum(label_value_rows_by_fact.values()),
@@ -715,15 +744,16 @@ def format_fact_readiness_report(report: FactReadinessReport) -> list[str]:
         return lines
 
     lines.append("Verdict: not ready for another GPU training smoke")
-    if not report.quality_report.passes_required_checks:
+    skip_reason = report.skip_reason
+    if skip_reason == "fact_ledger_quality_gate_failed":
         lines.append("Reason: fact-ledger quality checks failed.")
-    elif report.fact_count == 0:
+    elif skip_reason == "no_fact_ledger_facts":
         lines.append("Reason: no explicit facts were extracted from the TXT/MD notes.")
-    elif report.train_examples_per_fact < DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT:
+    elif skip_reason == "insufficient_fact_training_rows":
         lines.append("Reason: each fact needs the stronger default six training rows before another GPU run.")
-    elif report.label_value_fact_coverage < report.fact_count:
-        lines.append("Reason: at least one fact is missing canonical Label: value training signal.")
-    elif report.sft_preview_row_count == 0:
+    elif skip_reason == "missing_label_value_training_signal":
+        lines.append("Reason: at least one training row is missing canonical Label: value training signal.")
+    elif skip_reason == "missing_sft_preview":
         lines.append("Reason: inspectable SFT prompt/completion preview has not been produced.")
     else:
         lines.append("Reason: local readiness checks found a problem that should be inspected before training.")

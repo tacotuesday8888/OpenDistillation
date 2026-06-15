@@ -129,8 +129,8 @@ The notebook builds a deterministic fact ledger from explicit `Label: value` not
 Default behavior:
 
 - Extract stable fact cards from the current chunks when simple explicit facts or safe bullet/list facts are present.
-- Build separate train rows and held-out eval rows from those facts.
-- Put exact fact values first in fact-ledger train responses, including one answer-only target per fact.
+- Build six label/value train rows per fact and separate held-out eval rows from those facts.
+- Put exact fact values first where useful, keep one answer-only target per fact, and repeat canonical `Label: value` bindings in the local training signal.
 - Use direct exact-recall wording for held-out eval rows.
 - Keep the public rows in the same `instruction`, `response`, and `source_chunk_id` schema.
 - Keep row metadata in an internal sidecar manifest for quality checks.
@@ -162,7 +162,7 @@ Default behavior:
 - Show a plan for `Qwen/Qwen2.5-0.5B-Instruct` with TRL `SFTTrainer` and PEFT LoRA.
 - Require `RUN_TRAINING = True` before model download or adapter training begins.
 - Run a readiness check before training that reports missing optional packages and whether a CUDA GPU is available.
-- Use a bounded 30-step optional training plan for the current sample-fact experiment.
+- Use a bounded 30-step optional training plan for the current fact-ledger smoke.
 - Save any adapter output under `outputs/`, which is ignored by git.
 
 Expected output:
@@ -202,7 +202,7 @@ The optional training and comparison wiring is verified with two multi-question 
 
 The next bounded quality smoke used the fact-rich sample notes, 24 mock rows, the four held-out sample-fact questions, and a 30-step optional LoRA run through `google-colab-cli` on 2026-06-06. It changed all four trained-adapter answers, but the trained answers still hit 0/4 expected facts and were wrong or hallucinated.
 
-The latest bounded quality smoke used the revised value-first fact-ledger split through `google-colab-cli` on 2026-06-08. It printed a passing local data gate first: 8 facts, 24 value-first fact-ledger train rows, 8 direct held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, and zero missing expected terms. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers, but base and trained answers both hit 0/8 exact expected facts. A later local audit fixed the reporting risk where expected terms could be matched by row position after comparison reordering, and the notebook now prints a bounded exact SFT prompt/completion preview before training. The demo should not claim useful note learning yet; the next work should strengthen label-value training rows locally before spending more GPU.
+The latest bounded GPU evidence used the revised value-first fact-ledger split through `google-colab-cli` on 2026-06-08. It printed a passing local data gate first: 8 facts, 24 value-first fact-ledger train rows, 8 direct held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, and zero missing expected terms. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers, but base and trained answers both hit 0/8 exact expected facts. A later local audit fixed the reporting risk where expected terms could be matched by row position after comparison reordering, and this branch now implements the six-row label/value local signal with an SFT preview before training. The demo should not claim useful note learning yet. The next GPU experiment is exactly one bounded T4 smoke with 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 30-step `Qwen/Qwen2.5-0.5B-Instruct` LoRA, and exact fact-hit scoring; if answers change but facts are still missed, record failure.
 
 The checklist records:
 
@@ -270,7 +270,7 @@ Included now:
 
 Planned later in v0:
 
-- Strengthen canonical label-value training rows locally before running another GPU smoke.
+- Run one bounded T4 smoke for the six-row label/value fact-ledger signal before more local row redesign.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance, after the notes-model quality loop shows useful note-grounded answers.
 
