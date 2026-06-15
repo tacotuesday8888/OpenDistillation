@@ -1,4 +1,7 @@
+import contextlib
+import io
 import json
+import os
 import unittest
 from pathlib import Path
 
@@ -7,6 +10,24 @@ NOTEBOOK_PATH = Path(__file__).resolve().parents[1] / "notebooks" / "opendistill
 
 
 class NotebookSkeletonTests(unittest.TestCase):
+    def _run_notebook_code_cells(self):
+        repo_root = NOTEBOOK_PATH.parents[1]
+        notebook = json.loads(NOTEBOOK_PATH.read_text(encoding="utf-8"))
+        state = {"__name__": "__main__"}
+        output = io.StringIO()
+        old_cwd = Path.cwd()
+        try:
+            os.chdir(repo_root)
+            with contextlib.redirect_stdout(output):
+                for index, cell in enumerate(notebook["cells"], start=1):
+                    if cell.get("cell_type") != "code":
+                        continue
+                    code = "".join(cell.get("source", []))
+                    exec(compile(code, f"notebook-cell-{index}", "exec"), state)
+        finally:
+            os.chdir(old_cwd)
+        return state, output.getvalue()
+
     def test_notebook_has_notes_flow_sections_and_no_saved_outputs(self):
         notebook = json.loads(NOTEBOOK_PATH.read_text(encoding="utf-8"))
         sources = "\n".join("".join(cell.get("source", [])) for cell in notebook["cells"])
@@ -82,6 +103,42 @@ class NotebookSkeletonTests(unittest.TestCase):
         self.assertIn("Export placeholder", sources)
         self.assertTrue(all(not cell.get("outputs") for cell in notebook["cells"] if cell["cell_type"] == "code"))
         self.assertTrue(all(cell.get("execution_count") is None for cell in notebook["cells"] if cell["cell_type"] == "code"))
+
+    def test_safe_notebook_path_builds_gpu_ready_fact_rows_without_training(self):
+        state, output = self._run_notebook_code_cells()
+
+        self.assertFalse(state["INSTALL_TRAINING_DEPS"])
+        self.assertTrue(state["USE_SAMPLE_NOTES"])
+        self.assertFalse(state["RUN_REAL_TEACHER"])
+        self.assertFalse(state["RUN_TRAINING"])
+        self.assertIsNone(state["training_result"])
+
+        self.assertEqual(len(state["chunks"]), 4)
+        self.assertEqual(len(state["rows"]), 24)
+        self.assertEqual(len(state["fact_ledger"]), 8)
+        self.assertEqual(len(state["fact_training_rows"]), 48)
+        self.assertEqual(len(state["held_out_fact_eval_rows"]), 8)
+        self.assertEqual(state["training_row_source"], "fact-ledger train rows")
+        self.assertEqual(len(state["sft_preview_rows"]), 6)
+
+        fact_quality_report = state["fact_quality_report"]
+        self.assertTrue(fact_quality_report.passes_required_checks)
+        self.assertEqual(fact_quality_report.exact_leak_count, 0)
+        self.assertEqual(fact_quality_report.near_leak_count, 0)
+        self.assertEqual(fact_quality_report.missing_expected_term_count, 0)
+
+        fact_readiness_report = state["fact_readiness_report"]
+        self.assertTrue(fact_readiness_report.ready_for_gpu_smoke)
+        self.assertEqual(fact_readiness_report.skip_reason, "")
+        self.assertEqual(fact_readiness_report.train_examples_per_fact, 6)
+        self.assertEqual(fact_readiness_report.label_value_fact_coverage, 8)
+        self.assertEqual(fact_readiness_report.label_value_train_row_count, 48)
+
+        self.assertIn("SFT preview before any training:", output)
+        self.assertIn("Exact SFT preview", output)
+        self.assertIn("Verdict: ready for one bounded GPU training smoke", output)
+        self.assertIn("Training skipped. Set RUN_TRAINING = True", output)
+        self.assertIn('OD_STATUS stage=training status=skipped', output)
 
 
 if __name__ == "__main__":
