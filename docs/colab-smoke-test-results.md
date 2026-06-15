@@ -1,6 +1,6 @@
 # Colab GPU Smoke-Test Results
 
-Last updated: 2026-06-08
+Last updated: 2026-06-15
 
 ## Result
 
@@ -20,6 +20,8 @@ The fact-ledger learning-signal experiment is **verified in a Colab CLI T4 train
 
 The revised value-first fact-ledger learning-signal experiment is **verified in a Colab CLI T4 training run** on 2026-06-08. The run used commit `9a173f4655cfca9385397717f4dd2c081b545e6d`, 8 facts, 24 value-first fact-ledger train rows, 8 direct held-out eval rows, zero exact leaks, zero near-duplicate/token-overlap leaks, and zero missing expected terms. The 30-step LoRA adapter again changed all 8 answers, but it still did **not** improve exact held-out fact hits. Base fact hits: 0/8. Trained-adapter fact hits: 0/8. Final judgment: **unchanged / not useful yet**.
 
+The six-row label/value fact-ledger experiment is **verified in a Colab CLI T4 training run** on 2026-06-15. The run used commit `d918f5d1845a4651ea00427fa91d139c3862d935`, 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, zero exact leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a visible six-row SFT prompt/completion preview. The 30-step LoRA adapter changed all 8 answers and improved exact held-out fact hits from 0/8 to 1/8. This is a bounded positive learning signal, not proof of general model quality. Final judgment: **better by exact hit count but still weak** because 7/8 held-out facts were still missed.
+
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
 The clean run passed after three fixes were pushed:
@@ -29,6 +31,151 @@ The clean run passed after three fixes were pushed:
 - Load `examples/sample-notes.md` by default in Colab so the first smoke path does not block on a file picker.
 
 The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
+
+## Colab GPU Quality Smoke: Six-Row Label/Value Fact-Ledger 30-Step CLI Run
+
+Date: 2026-06-15
+
+Status: **ran on Colab T4 / exact fact hits improved from 0/8 to 1/8**.
+
+Verified path:
+
+```text
+fact-rich sample-notes.md -> six-row label/value fact ledger -> 48 fact-ledger train rows -> 30-step Qwen2.5-0.5B LoRA adapter -> 8 held-out fact-ledger eval questions
+```
+
+CLI execution:
+
+```text
+First attempt: run-4cfea7 failed before script execution with SSLEOFError while opening /api/kernels.
+Successful retry command: /Users/langqi/.local/bin/colab --auth adc run --session six-row-t4-smoke-retry --gpu T4 /private/tmp/opendistillation_six_row_t4_smoke.py
+Successful session: six-row-t4-smoke-retry
+Git commit used by Colab clone: d918f5d1845a4651ea00427fa91d139c3862d935
+Runtime: Colab T4 GPU
+GPU: Tesla T4
+CUDA available: true
+python: 3.12.13
+torch: 2.11.0+cu128
+transformers: 4.57.6
+datasets: 5.0.0
+trl: 0.29.1
+peft: 0.18.1
+accelerate: 1.14.0
+```
+
+Fact-ledger quality evidence before training:
+
+```text
+Input file: examples/sample-notes.md
+Facts: 8
+Mock teacher rows: 24
+Fact-ledger train rows: 48
+Held-out eval rows: 8
+Train fact coverage: 8/8
+Eval fact coverage: 8/8
+Exact train/eval leaks: 0
+Near-duplicate/token-overlap train/eval leaks: 0
+Missing expected terms: 0
+Quality gate passed: true
+Readiness gate passed: true
+Training source: fact-ledger train rows
+Comparison source: held-out fact-ledger eval questions
+SFT preview printed: yes, 6 exact prompt/completion rows
+```
+
+Training evidence:
+
+```text
+Training ran: true
+Training engine: trl-sfttrainer-peft-lora
+Student model: Qwen/Qwen2.5-0.5B-Instruct
+Max steps: 30
+Adapter path: /content/opendistillation_six_row_t4_outputs/notes-lora-six-row/adapter
+Adapter exists: true
+Training elapsed runtime: 79.595 seconds
+End-to-end script runtime: 162.95 seconds
+```
+
+Comparison evidence:
+
+```text
+Comparison ran: true
+Comparison engine: transformers-peft-before-after
+Comparison questions: 8
+Changed answers: 8/8
+Base fact hits: 0/8
+Trained-adapter fact hits: 1/8
+Hit delta: +1
+Learned: 1
+Missed: 7
+Unchanged: 0
+Worse: 0
+Unscored: 0
+Automatic judgment: better
+Scoring method: expected terms scored by fact/question metadata identity, not row position
+Final marker: OD_SIX_ROW_SMOKE_RESULT_JSON {"status": "completed", "base_hits": 0, "trained_hits": 1, "changed_answers": 8, "learned": 1, "missed": 7, "automatic_judgment": "better"}
+```
+
+Question and answer evidence:
+
+```text
+1. Closed-book check: what exact notes value should be recalled for "project codename"?
+Expected term: Glass Harbor
+Base answer summary: generic project-overview guidance, not the expected note value.
+Trained adapter answer: Exact answer: Mira Vale. Project codename: Mira Vale.
+Expected term hit: base false, trained false
+
+2. Closed-book check: what exact notes value should be recalled for "notebook signal phrase"?
+Expected term: copper-lantern-47
+Base answer summary: generic contextual-understanding guidance, not the expected note phrase.
+Trained adapter answer: Exact answer: 10. Notebook signal phrase: 10.
+Expected term hit: base false, trained false
+
+3. Closed-book check: what exact notes value should be recalled for "local runner label"?
+Expected term: llama-harbor-alpha
+Base answer summary: generic Alibaba Cloud / label guidance, not the expected runner label.
+Trained adapter answer: Exact answer: "local runner label": "local runner label".
+Expected term hit: base false, trained false
+
+4. Closed-book check: what exact notes value should be recalled for "review ritual time"?
+Expected term: 4:17 PM
+Base answer summary: generic review-time explanation, not the expected time.
+Trained adapter answer: Exact answer: 14:07 PM. Review ritual time: 14:07 PM.
+Expected term hit: base false, trained false
+
+5. Closed-book check: what exact notes value should be recalled for "demo owner alias"?
+Expected term: Mira Vale
+Base answer summary: generic account/alias details, not the expected owner alias.
+Trained adapter answer: Exact answer: "demo owner alias": "demo-owner-alias".
+Expected term hit: base false, trained false
+
+6. Closed-book check: what exact notes value should be recalled for "safety boundary phrase"?
+Expected term: notes-only-v0
+Base answer summary: generic safety-boundary phrase explanation, not the expected phrase.
+Trained adapter answer: Exact answer: 10. Safety boundary phrase: 10.
+Expected term hit: base false, trained false
+
+7. Closed-book check: what exact notes value should be recalled for "export placeholder name"?
+Expected term: basalt-arc-29
+Base answer summary: generic export reminder text, not the expected placeholder name.
+Trained adapter answer: Exact answer: "image-alpha-stretch-4". Export placeholder name: "image-alpha-stretch-4".
+Expected term hit: base false, trained false
+
+8. Closed-book check: what exact notes value should be recalled for "review ritual color"?
+Expected term: ultramarine
+Base answer summary: generic color explanation, not the expected color.
+Trained adapter answer: Exact answer: ultramarine. Review ritual color: ultramarine.
+Expected term hit: base false, trained true
+```
+
+Interpretation:
+
+- Improved exact held-out fact hits from 0/8 to 1/8. This is a bounded positive learning signal, not proof of general model quality.
+- The six-row signal is better than the previous 0/8 result, but still not good enough: the adapter missed 7/8 facts and confused several labels with other values or invented values.
+- Changed wording alone is still not progress. The useful evidence is only the one exact expected-term hit for `ultramarine`.
+- The next local work should target label/value disambiguation before another GPU run, especially preventing value swaps such as `Project codename: Mira Vale` and invented numeric answers like `10`.
+
+Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
 ## Colab GPU Quality Smoke: Value-First Fact-Ledger 30-Step CLI Run
 
