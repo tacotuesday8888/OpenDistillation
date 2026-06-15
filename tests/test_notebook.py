@@ -23,6 +23,8 @@ class NotebookSkeletonTests(unittest.TestCase):
                     if cell.get("cell_type") != "code":
                         continue
                     code = "".join(cell.get("source", []))
+                    # This executes only the repository's trusted pure-Python notebook cells,
+                    # not user-uploaded notes or arbitrary runtime input.
                     exec(compile(code, f"notebook-cell-{index}", "exec"), state)
         finally:
             os.chdir(old_cwd)
