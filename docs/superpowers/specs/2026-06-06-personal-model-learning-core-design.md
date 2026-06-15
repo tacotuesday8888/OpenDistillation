@@ -12,7 +12,7 @@ The important product promise is not "we ran training." The promise is:
 
 > Your notes became controlled training data, the model was tested on questions it did not see during training, and the quality report shows what improved, what failed, and what is still unsafe to claim.
 
-The latest Colab T4 result proved that the pipeline can run, but it did not prove learning quality. The 2026-06-08 revised value-first fact-ledger smoke trained on 24 fact-ledger rows and scored 8 held-out eval questions. The adapter changed all 8 answers, but base and trained answers both hit 0/8 exact expected facts. Follow-up local diagnosis had already ruled out an obvious TRL/PEFT formatting bug and improved the row wording. The later local audit fixed exact expected-term scoring through comparison row reordering and added an SFT prompt/completion preview. The current product-layer path is stronger label/value training signal before another GPU run.
+The latest Colab T4 result proved that the pipeline can run, but it did not prove learning quality. The 2026-06-08 revised value-first fact-ledger smoke trained on 24 fact-ledger rows and scored 8 held-out eval questions. The adapter changed all 8 answers, but base and trained answers both hit 0/8 exact expected facts. Follow-up local diagnosis had already ruled out an obvious TRL/PEFT formatting bug and improved the row wording. The later local audit fixed exact expected-term scoring through comparison row reordering and added an SFT prompt/completion preview. The current branch now implements the six-row label/value local signal; the next evidence should be one bounded T4 smoke, not a broader product change.
 
 ## Scope
 
@@ -226,7 +226,7 @@ Recommended gate:
 
 - Use a committed fact-rich TXT/MD sample with at least 8 atomic facts across several chunks.
 - Generate a fact ledger.
-- Generate at least 3 training paraphrases per fact.
+- Generate 6 training rows per fact with explicit label/value signal.
 - Generate 1 held-out eval question per fact.
 - Prove zero train/eval question leakage.
 - Train the current Qwen2.5-0.5B LoRA adapter in a bounded Colab T4 run.
@@ -243,7 +243,9 @@ Pass condition:
 
 This is not a benchmark claim. It is the first credible product smoke that says the small model can learn a controlled set of personal note facts from generated training data.
 
-Update on 2026-06-08: this gate shape has now been exercised twice with 8 facts, 24 train rows, 8 held-out eval rows, zero leakage, and 30-step Colab T4 LoRA runs. The first run used earlier fact-ledger wording and scored 0/8 exact held-out fact hits, the same as the base model. Follow-up local diagnosis found the SFT prompt/completion format matches current TRL docs and the adapter-disabled comparison path matches current PEFT docs, so the rows were changed to put exact values first, use direct exact-recall eval questions, and record row styles in the sidecar. The revised value-first run also scored base 0/8 and trained 0/8. A later local audit fixed expected-term scoring through comparison row reordering and added an SFT preview; the preview shows only three train rows per fact. The pass condition above remains the bar, but the next work should strengthen label/value training rows before spending more GPU.
+Update on 2026-06-08: this gate shape was exercised twice with 8 facts, 24 train rows, 8 held-out eval rows, zero leakage, and 30-step Colab T4 LoRA runs. The first run used earlier fact-ledger wording and scored 0/8 exact held-out fact hits, the same as the base model. Follow-up local diagnosis found the SFT prompt/completion format matches current TRL docs and the adapter-disabled comparison path matches current PEFT docs, so the rows were changed to put exact values first, use direct exact-recall eval questions, and record row styles in the sidecar. The revised value-first run also scored base 0/8 and trained 0/8.
+
+Current branch update: expected-term scoring now survives comparison row reordering, the SFT preview is visible before training, and the local fact-ledger signal now uses six label/value rows per fact. The next GPU experiment should test exactly 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, zero leakage, a 30-step `Qwen/Qwen2.5-0.5B-Instruct` LoRA adapter, and exact fact-hit scoring. The pass condition above remains the bar. If trained answers change but still miss the expected facts, the result is failed.
 
 ## Library Choices
 
@@ -338,17 +340,19 @@ If a secret or token is ever exposed in logs or git, treat it as compromised and
 
 The next implementation goal should be:
 
-> Build the fact-ledger train/eval data builder and contamination-safe quality gate for the notes model.
+> Run one bounded Colab T4 smoke for the current six-row fact-ledger label/value signal.
 
-This should happen before Unsloth migration, export, local runtime packaging, new model profiles, or another training-parameter sweep.
+This should happen before Unsloth migration, export, local runtime packaging, new model profiles, another local row redesign, or a training-parameter sweep.
 
-Concrete next files are likely:
+The exact next smoke is:
 
-- `src/opendistillation/evaluation.py` or a new fact-ledger helper for fact cards and held-out eval rows.
-- `src/opendistillation/quality.py` for train/eval contamination checks.
-- `src/opendistillation/teacher.py` for fact-card-aware teacher prompts.
-- Notebook cells that preview the train/eval split and print leakage checks.
-- Tests for duplicate/near-duplicate train/eval questions and expected-term scoring.
+- 8 sample facts.
+- 48 fact-ledger train rows.
+- 8 held-out eval rows.
+- Zero train/eval leakage before training.
+- 30-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA on Colab T4.
+- Exact fact-hit scoring by fact/question identity.
+- Failure if answers change but expected facts are still missed.
 
 ## Source Notes Checked
 

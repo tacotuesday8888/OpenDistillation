@@ -7,13 +7,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from opendistillation.dataset import validate_dataset
 from opendistillation.fact_ledger import (
+    DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT,
     analyze_fact_quality_gate,
+    analyze_fact_readiness,
     build_fact_comparison_rows,
     build_fact_train_eval_split,
     extract_fact_ledger,
     FactTrainEvalSplit,
     format_fact_score_report,
     format_fact_quality_report,
+    format_fact_readiness_report,
+    compare_fact_scores,
     score_fact_answer,
     score_fact_outputs,
 )
@@ -101,9 +105,43 @@ class FactLedgerTests(unittest.TestCase):
         self.assertTrue(train_questions.isdisjoint(eval_questions))
         self.assertTrue(all(row["split"] in {"train", "eval"} for row in split.manifest_rows))
         self.assertTrue(all(row["expected_terms"] for row in split.manifest_rows))
-        self.assertEqual(split.manifest_rows[0]["row_style"], "exact_value_answer_only")
+        self.assertEqual(split.manifest_rows[0]["row_style"], "canonical_label_value_statement")
         self.assertEqual(split.manifest_rows[-1]["row_style"], "held_out_direct_recall")
         self.assertEqual(split.manifest_rows[0]["value"], "Glass Harbor")
+
+    def test_build_fact_train_eval_split_defaults_to_six_label_value_rows_per_fact(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks))
+
+        self.assertEqual(DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT, 6)
+        self.assertEqual(len(split.train_rows), 6)
+        self.assertEqual(
+            [row["row_style"] for row in split.manifest_rows if row["split"] == "train"],
+            [
+                "canonical_label_value_statement",
+                "exact_value_from_label",
+                "label_value_flashcard",
+                "closed_book_label_value",
+                "source_note_label_value",
+                "review_quiz_label_value",
+            ],
+        )
+        self.assertTrue(
+            all(
+                "Project codename: Glass Harbor" in str(row["response"])
+                for row in split.manifest_rows
+                if row["split"] == "train"
+            )
+        )
 
     def test_build_fact_comparison_rows_adds_sidecar_metadata_without_changing_public_eval_rows(self):
         chunks = [
@@ -211,14 +249,15 @@ class FactLedgerTests(unittest.TestCase):
         split = build_fact_train_eval_split(extract_fact_ledger(chunks), train_examples_per_fact=3)
         responses = [row["response"] for row in split.train_rows]
 
-        self.assertEqual(responses[0], "Glass Harbor")
+        self.assertEqual(responses[0], "Exact answer: Glass Harbor. Project codename: Glass Harbor.")
         self.assertTrue(all("Glass Harbor" in response for response in responses))
         self.assertTrue(
             all(
-                response.startswith("Glass Harbor") or response.startswith("Exact answer: Glass Harbor")
+                response.startswith("Exact answer: Glass Harbor")
                 for response in responses
             )
         )
+        self.assertTrue(all("Project codename: Glass Harbor" in response for response in responses))
 
     def test_eval_rows_use_direct_recall_instead_of_note_field_matching_wording(self):
         chunks = [
@@ -244,18 +283,19 @@ class FactLedgerTests(unittest.TestCase):
         sample_path = Path(__file__).resolve().parents[1] / "examples" / "sample-notes.md"
         document = load_text_document(sample_path.name, sample_path.read_text(encoding="utf-8"))
         chunks = chunk_text(document.text, max_chars=300)
-        split = build_fact_train_eval_split(extract_fact_ledger(chunks), train_examples_per_fact=3)
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks))
 
         report = analyze_fact_quality_gate(split)
         lines = format_fact_quality_report(report)
 
         self.assertTrue(report.passes_required_checks)
         self.assertEqual(report.fact_count, 8)
-        self.assertEqual(report.train_row_count, 24)
+        self.assertEqual(report.train_row_count, 48)
         self.assertEqual(report.eval_row_count, 8)
         self.assertEqual(report.exact_leak_count, 0)
         self.assertEqual(report.near_leak_count, 0)
         self.assertEqual(report.missing_expected_term_count, 0)
+        self.assertEqual(report.missing_manifest_metadata_count, 0)
         self.assertIn("Fact-ledger quality gate", lines[0])
         self.assertTrue(any("Facts: 8" in line for line in lines))
         self.assertTrue(any("Train/eval leakage: 0 exact, 0 near-duplicate" in line for line in lines))
@@ -263,6 +303,93 @@ class FactLedgerTests(unittest.TestCase):
         self.assertTrue(any("Expected terms are the exact note details" in line for line in lines))
         self.assertTrue(any("safe enough for a bounded training smoke" in line for line in lines))
         self.assertTrue(any("does not prove the model will learn" in line for line in lines))
+
+    def test_fact_readiness_report_says_ready_only_for_clean_label_value_split(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks))
+
+        readiness = analyze_fact_readiness(split, sft_preview_row_count=6)
+        lines = format_fact_readiness_report(readiness)
+
+        self.assertTrue(readiness.ready_for_gpu_smoke)
+        self.assertEqual(readiness.fact_count, 1)
+        self.assertEqual(readiness.train_examples_per_fact, 6)
+        self.assertEqual(readiness.label_value_fact_coverage, 1)
+        self.assertTrue(any("Fact-ledger label/value readiness report" in line for line in lines))
+        self.assertTrue(any("Train rows: 6, 6 per fact" in line for line in lines))
+        self.assertTrue(any("Canonical Label: value bindings: 1/1 facts covered, 6 total rows" in line for line in lines))
+        self.assertTrue(any("SFT preview: 6 exact prompt/completion row(s)" in line for line in lines))
+        self.assertTrue(any("Verdict: ready for one bounded GPU training smoke" in line for line in lines))
+        self.assertTrue(any("does not claim model quality" in line for line in lines))
+
+    def test_fact_readiness_rejects_partial_label_value_binding_coverage(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks))
+        train_rows = []
+        manifest_rows = []
+        first_train_row_kept = False
+        for manifest_row in split.manifest_rows:
+            if manifest_row["split"] != "train":
+                manifest_rows.append(manifest_row)
+                continue
+
+            if not first_train_row_kept:
+                first_train_row_kept = True
+                public_row = {
+                    "instruction": manifest_row["instruction"],
+                    "response": manifest_row["response"],
+                    "source_chunk_id": manifest_row["source_chunk_id"],
+                }
+            else:
+                public_row = {
+                    "instruction": str(manifest_row["instruction"]),
+                    "response": "Exact answer: Glass Harbor.",
+                    "source_chunk_id": str(manifest_row["source_chunk_id"]),
+                }
+            train_rows.append(public_row)
+            manifest_rows.append({**manifest_row, **public_row})
+        weakened_split = split.replace(train_rows=tuple(train_rows), manifest_rows=tuple(manifest_rows))
+
+        readiness = analyze_fact_readiness(weakened_split, sft_preview_row_count=6)
+        lines = format_fact_readiness_report(readiness)
+
+        self.assertTrue(readiness.quality_report.passes_required_checks)
+        self.assertEqual(readiness.train_examples_per_fact, 6)
+        self.assertEqual(readiness.label_value_fact_coverage, 1)
+        self.assertEqual(readiness.label_value_train_row_count, 1)
+        self.assertFalse(readiness.ready_for_gpu_smoke)
+        self.assertEqual(readiness.skip_reason, "missing_label_value_training_signal")
+        self.assertTrue(any("canonical Label: value" in line for line in lines))
+
+    def test_empty_fact_ledger_reports_no_facts_without_crashing(self):
+        split = build_fact_train_eval_split([])
+
+        readiness = analyze_fact_readiness(split, sft_preview_row_count=0)
+        lines = format_fact_readiness_report(readiness)
+
+        self.assertEqual(split.facts, ())
+        self.assertEqual(split.train_rows, ())
+        self.assertEqual(split.eval_rows, ())
+        self.assertEqual(build_fact_comparison_rows(split), ())
+        self.assertFalse(readiness.ready_for_gpu_smoke)
+        self.assertEqual(readiness.skip_reason, "no_fact_ledger_facts")
+        self.assertTrue(any("no explicit facts were extracted" in line for line in lines))
 
     def test_fact_quality_gate_flags_exact_and_near_duplicate_eval_leakage(self):
         chunks = [
@@ -311,7 +438,7 @@ class FactLedgerTests(unittest.TestCase):
             eval_rows=[
                 {
                     **split.eval_rows[0],
-                    "instruction": "project codename exact saved value answer only",
+                    "instruction": "learn this exact note fact label value pair project codename",
                 }
             ]
         )
@@ -322,6 +449,32 @@ class FactLedgerTests(unittest.TestCase):
         self.assertEqual(report.near_leak_count, 1)
         self.assertIn("train_eval_near_leak", {issue.code for issue in report.issues})
 
+    def test_fact_quality_gate_fails_when_eval_row_has_no_matching_manifest_metadata(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks), train_examples_per_fact=1)
+        stale_eval_split = split.replace(
+            eval_rows=[
+                {
+                    **split.eval_rows[0],
+                    "response": "Exact answer: Mira Vale.",
+                }
+            ]
+        )
+
+        report = analyze_fact_quality_gate(stale_eval_split)
+
+        self.assertFalse(report.passes_required_checks)
+        self.assertEqual(report.missing_manifest_metadata_count, 1)
+        self.assertIn("missing_eval_manifest_metadata", {issue.code for issue in report.issues})
+
     def test_fact_hit_scoring_requires_all_expected_terms(self):
         single = score_fact_answer("The project codename is Glass Harbor.", ["Glass Harbor"])
         partial = score_fact_answer("The ritual uses ultramarine.", ["4:17", "ultramarine"])
@@ -330,6 +483,7 @@ class FactLedgerTests(unittest.TestCase):
         partial_word = score_fact_answer("The codename is glass harboring.", ["Glass Harbor"])
         exact_identifier = score_fact_answer("The token is copper-lantern-47.", ["copper-lantern-47"])
         changed_identifier = score_fact_answer("The token is copper lantern 47.", ["copper-lantern-47"])
+        unscored = score_fact_answer("Any answer should not pass without expected terms.", [])
 
         self.assertTrue(single.hit)
         self.assertFalse(partial.hit)
@@ -338,19 +492,30 @@ class FactLedgerTests(unittest.TestCase):
         self.assertFalse(partial_word.hit)
         self.assertTrue(exact_identifier.hit)
         self.assertFalse(changed_identifier.hit)
+        self.assertFalse(unscored.hit)
+        self.assertFalse(unscored.scored)
         self.assertEqual(partial.missing_terms, ("4:17",))
+        self.assertEqual(unscored.unscored_reason, "missing_expected_terms")
 
-    def test_score_fact_outputs_counts_hits_and_preserves_raw_answers(self):
+    def test_score_fact_outputs_counts_hits_and_preserves_raw_answers_and_metadata(self):
         outputs = [
             {
                 "question": "What is the project codename?",
                 "answer": "The project codename is Glass Harbor.",
                 "expected_terms": ["Glass Harbor"],
+                "fact_id": "fact-0001",
+                "label": "Project codename",
+                "source_chunk_id": "chunk-0001",
+                "row_style": "held_out_direct_recall",
             },
             {
                 "question": "What is the ritual pair?",
                 "answer": "The ritual uses violet.",
                 "expected_terms": ["4:17", "ultramarine"],
+                "fact_id": "fact-0002",
+                "label": "Review ritual pair",
+                "source_chunk_id": "chunk-0002",
+                "row_style": "held_out_direct_recall",
             },
         ]
 
@@ -360,7 +525,61 @@ class FactLedgerTests(unittest.TestCase):
         self.assertEqual(summary.hit_count, 1)
         self.assertEqual(summary.miss_count, 1)
         self.assertEqual(summary.items[0].question, "What is the project codename?")
+        self.assertEqual(summary.items[0].fact_id, "fact-0001")
+        self.assertEqual(summary.items[0].label, "Project codename")
+        self.assertEqual(summary.items[0].source_chunk_id, "chunk-0001")
+        self.assertEqual(summary.items[0].row_style, "held_out_direct_recall")
         self.assertEqual(summary.items[1].missing_terms, ("4:17", "ultramarine"))
+
+    def test_fact_score_report_detects_mixed_learned_and_worse_when_total_hits_match(self):
+        base_score = score_fact_outputs(
+            [
+                {
+                    "question": "What is the project codename?",
+                    "answer": "The project codename is Glass Harbor.",
+                    "expected_terms": ["Glass Harbor"],
+                    "fact_id": "fact-0001",
+                    "label": "Project codename",
+                },
+                {
+                    "question": "What is the review ritual color?",
+                    "answer": "A generic color.",
+                    "expected_terms": ["ultramarine"],
+                    "fact_id": "fact-0002",
+                    "label": "Review ritual color",
+                },
+            ]
+        )
+        trained_score = score_fact_outputs(
+            [
+                {
+                    "question": "What is the project codename?",
+                    "answer": "The project codename is Mira Vale.",
+                    "expected_terms": ["Glass Harbor"],
+                    "fact_id": "fact-0001",
+                    "label": "Project codename",
+                },
+                {
+                    "question": "What is the review ritual color?",
+                    "answer": "The review ritual color is ultramarine.",
+                    "expected_terms": ["ultramarine"],
+                    "fact_id": "fact-0002",
+                    "label": "Review ritual color",
+                },
+            ]
+        )
+
+        comparison = compare_fact_scores(base_score, trained_score)
+        lines = format_fact_score_report(base_score, trained_score, changed_answer_count=2)
+
+        self.assertEqual(comparison.learned_count, 1)
+        self.assertEqual(comparison.worse_count, 1)
+        self.assertEqual(comparison.missed_count, 0)
+        self.assertEqual(comparison.unchanged_count, 0)
+        self.assertTrue(any("Outcome counts: learned 1, missed 0, unchanged 0, worse 1" in line for line in lines))
+        self.assertTrue(any("Learned fact: fact-0002 | Review ritual color" in line for line in lines))
+        self.assertTrue(any("Worse fact: fact-0001 | Project codename" in line for line in lines))
+        self.assertTrue(any("trained answer: The project codename is Mira Vale." in line for line in lines))
 
     def test_format_fact_score_report_calls_changed_wrong_answers_a_failure(self):
         base_score = score_fact_outputs(
