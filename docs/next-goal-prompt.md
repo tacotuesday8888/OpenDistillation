@@ -1,66 +1,62 @@
 # Recommended Next Goal Prompt
 
-Use this as the next `/goal` after the six-row label/value fact-ledger branch lands:
+Use this as the next `/goal` after the six-row label/value T4 evidence lands:
 
 ```text
-/goal Run one bounded OpenDistillation fact-ledger T4 quality smoke for the six-row label/value signal.
+/goal Strengthen OpenDistillation's local fact-ledger label/value disambiguation signal before another GPU run.
+
+For this task, write yourself a new goal and spawn agents in parallel — as many as needed to do it better and faster. Split the work into independent pieces, dispatch them concurrently, and synthesize the results as they return. Give each agent its own dedicated /goal.
 
 Context:
-Work in /Users/langqi/Developer/Projects/OpenDistillation on the current fact-ledger branch. Keep v0 narrow: TXT/MD notes only, one notes/school model only, Colab-first, MockTeacherEngine as the safe default, optional local/open-source Qwen teacher, optional short TRL/PEFT LoRA training, and honest before/after quality reporting. Do not build SaaS, Mac app, phone app, accounts, backend, GGUF export, local runtime packaging, multiple profiles, coding model, writing model, work model, phone model, broad benchmark suite, Unsloth migration, bitsandbytes migration, or a larger training platform.
+Work in /Users/langqi/Developer/Projects/OpenDistillation. Keep v0 narrow: TXT/MD notes only, one notes/school model only, Colab-first, MockTeacherEngine as the safe default, optional local/open-source Qwen teacher, optional short TRL/PEFT LoRA training, and honest before/after quality reporting. Do not build SaaS, Mac app, phone app, accounts, backend, GGUF export, local runtime packaging, multiple profiles, coding model, writing model, work model, phone model, broad benchmark suite, Unsloth migration, bitsandbytes migration, or a larger training platform.
 
 Evidence:
-Two bounded Colab T4 fact-ledger runs failed exact learning. The latest value-first run used 8 facts, 24 train rows, 8 held-out eval rows, zero train/eval leakage, `Qwen/Qwen2.5-0.5B-Instruct`, and 30 TRL/PEFT LoRA steps. It changed 8/8 answers, but base and trained answers both hit 0/8 exact facts.
-
-The follow-up local work fixed a reporting risk: exact expected terms now travel with comparison examples by fact/question identity even when comparison rows are reordered for source-chunk coverage. The notebook also prints a bounded SFT preview showing exact prompt/completion pairs before training. The current branch now implements the six-row label/value local signal, so the sample uses 8 facts, 48 fact-ledger train rows, and 8 held-out eval rows before any GPU work starts.
+The 2026-06-15 bounded Colab T4 smoke used commit d918f5d1845a4651ea00427fa91d139c3862d935, Tesla T4, 8 extracted facts, 48 fact-ledger train rows, 8 held-out eval rows, zero leakage, zero missing expected terms, a six-row SFT preview, Qwen/Qwen2.5-0.5B-Instruct, and 30 TRL/PEFT LoRA steps. The adapter changed all 8 answers and improved exact held-out fact hits from 0/8 to 1/8. This is a bounded positive learning signal, not proof of general model quality. It still missed 7/8 facts and confused labels/values, such as Project codename -> Mira Vale and Review ritual time -> 14:07 PM.
 
 Task:
-Run exactly one bounded Colab T4 quality smoke for the current six-row label/value signal if the local checks pass and non-interactive `google-colab-cli` is usable. Do not change training knobs, broaden scope, or edit product surfaces. Do not change public JSONL schema: it remains `instruction`, `response`, `source_chunk_id`.
+Build a local, deterministic fact-ledger training-signal upgrade that specifically reduces label/value confusion before spending more GPU. Prefer simple maintainable Python changes in the existing package and notebook flow. Keep the public JSONL schema unchanged as instruction/response/source_chunk_id unless there is a proven reason to change it. Preserve exact train/eval separation, SFT preview visibility, readiness checks, and exact fact-hit scoring by fact/question identity.
 
-Exact GPU smoke:
-- 8 extracted facts.
-- 48 fact-ledger train rows.
-- 8 held-out eval rows.
-- Zero exact train/eval leaks and zero near-duplicate/token-overlap leaks before training.
-- 30-step `Qwen/Qwen2.5-0.5B-Instruct` TRL/PEFT LoRA on Colab T4.
-- Exact fact-hit scoring attached by fact/question identity, not row position.
+Likely local direction:
+- Add train row styles that teach label discrimination, not only value recall.
+- Add negative or contrastive rows only if they are simple, deterministic, and still produce clear SFT prompt/completion text.
+- Add validation that every expected label/value pair remains attached to the right fact after row generation and comparison selection.
+- Add previews that make label/value swaps easy to inspect.
+- Add tests for the exact failure pattern seen in the T4 run: swapped values, invented numeric values, and copied labels instead of values.
 
-Quality rule:
-Treat the smoke as failed if answers change but still miss the expected facts. Changed wording is not useful learning unless exact held-out fact hits improve over the base model.
+Do not:
+- Change training knobs as the main intervention.
+- Run another GPU smoke until the local report explains why the data should reduce label/value swaps.
+- Claim model quality from adapter creation or changed answers.
+- Broaden beyond TXT/MD notes or the notes/school model.
 
-Preserve:
-Notebook defaults stay `INSTALL_TRAINING_DEPS = False`, `RUN_REAL_TEACHER = False`, and `RUN_TRAINING = False`. Fact metadata stays internal/sidecar. Do not commit generated datasets, adapters, checkpoints, model files, secrets, `.env` files, API keys, or local config.
-
-Docs to keep aligned:
-README.md, START_HERE.md, docs/current-decisions.md, docs/agent-handoff.md, docs/roadmap.md, docs/first-demo-flow.md, docs/colab-smoke-test-results.md, docs/dataset-schema.md, notebooks/README.md, and this file.
+Exact next GPU experiment after local changes pass:
+Run one bounded Colab T4 smoke with 8 facts, the new fact-ledger train rows, 8 held-out eval rows, 30-step Qwen/Qwen2.5-0.5B-Instruct LoRA, and exact fact-hit scoring. Treat it as useful only if trained exact held-out fact hits improve beyond 1/8 without increasing leakage or unscored answers.
 
 Verification:
-Before the T4 run, run unit tests, notebook JSON validation, confirm safe notebook defaults, `git diff --check`, secret scan, artifact/model/data scan, and git status. After the T4 run, update only the evidence docs with the exact result, including raw base/trained fact-hit counts and whether the adapter changed answers.
+Run focused unit tests for changed behavior, full unit tests, notebook JSON validation if notebooks change, safe notebook CPU execution, git diff checks, secret scan, generated artifact/model/data scan, and final git status. If docs change, update docs/colab-smoke-test-results.md, docs/current-decisions.md, START_HERE.md, and this file only where the evidence requires it.
 
 Finish:
-Final response must include commit hash if any, diagnosis, files changed, verification results, GPU runtime used or blocker, exact base/trained fact-hit counts, and whether the result passed or failed.
+Report what changed, what was verified, what remains next, and the exact next GPU experiment. Do not commit generated datasets, adapters, checkpoints, model files, secrets, .env files, API keys, or local config.
 ```
 
 ## Why This Goal
 
-The value-first rows were cleaner, but the tiny adapter still did not bind labels to values after 30 steps. This branch has now strengthened the supervised signal locally from three rows per fact to six. The next evidence must be a bounded GPU check, not more speculation.
+The six-row label/value signal finally produced one exact held-out fact hit, which means the direction is not completely dead. But the run still failed most facts and exposed the next local problem: the adapter often learned answer shape without binding the right label to the right value.
 
 ## Done Means
 
-- Local tests still prove stronger label/value binding in train rows.
-- Public JSONL schema stays unchanged.
-- Train/eval leakage checks still pass.
-- The SFT preview makes the exact training signal visible.
-- Safe committed notebook defaults stay off.
+- Local train rows more directly teach each label's own value.
+- The readiness report and SFT preview make that signal inspectable.
+- Train/eval leakage remains zero.
+- Exact fact-hit scoring remains attached by fact/question identity.
+- Tests protect the failure pattern from the 2026-06-15 T4 run.
+- Safe notebook defaults stay off for installs, real teacher, and training.
 - Generated datasets, adapters, model artifacts, checkpoints, secrets, and local config stay out of git.
-- The bounded T4 smoke either records improved exact fact hits or honestly records failure.
-- Unit tests, notebook checks, `git diff --check`, secret scan, artifact scan, staged diff inspection, and git status are checked.
-- Changes are committed and pushed if docs or code changed.
 
 ## Do Not Use This Goal For
 
-- More local row redesign before the six-row signal is tested once.
 - Expanding beyond TXT/MD notes.
-- Adding coding, writing, work, phone, or multi-profile flows.
-- Implementing GGUF export or local runtime.
+- Adding product surfaces, accounts, SaaS, backend, Mac, phone, export, or multi-profile work.
 - Migrating to Unsloth or bitsandbytes.
-- Claiming benchmark results.
+- Running broad benchmarks.
+- Claiming model quality from changed answers alone.
