@@ -185,6 +185,9 @@ class FactReadinessReport:
     train_examples_per_fact: int
     label_value_fact_coverage: int
     label_value_train_row_count: int
+    contrastable_fact_count: int
+    disambiguation_fact_coverage: int
+    disambiguation_train_row_count: int
     sft_preview_row_count: int
     quality_report: FactQualityGateReport
 
@@ -196,6 +199,14 @@ class FactReadinessReport:
             and self.train_examples_per_fact >= DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT
             and self.label_value_fact_coverage == self.fact_count
             and self.label_value_train_row_count == self.train_row_count
+            and (
+                self.contrastable_fact_count == 0
+                or (
+                    self.disambiguation_fact_coverage == self.contrastable_fact_count
+                    and self.disambiguation_train_row_count
+                    >= self.contrastable_fact_count * len(_DISAMBIGUATION_ROW_STYLES)
+                )
+            )
             and self.sft_preview_row_count > 0
         )
 
@@ -213,6 +224,11 @@ class FactReadinessReport:
             return "insufficient_fact_training_rows"
         if self.label_value_fact_coverage < self.fact_count or self.label_value_train_row_count < self.train_row_count:
             return "missing_label_value_training_signal"
+        if self.contrastable_fact_count and (
+            self.disambiguation_fact_coverage < self.contrastable_fact_count
+            or self.disambiguation_train_row_count < self.contrastable_fact_count * len(_DISAMBIGUATION_ROW_STYLES)
+        ):
+            return "missing_label_value_disambiguation_signal"
         if self.sft_preview_row_count == 0:
             return "missing_sft_preview"
         return "fact_ledger_not_training_ready"
@@ -270,8 +286,14 @@ def build_fact_train_eval_split(
     eval_rows: list[dict[str, str]] = []
     manifest_rows: list[dict[str, object]] = []
 
+    facts_by_chunk: dict[str, tuple[FactCard, ...]] = {}
     for fact in fact_tuple:
-        train_templates = _train_templates(fact)
+        facts_by_chunk.setdefault(fact.source_chunk_id, ())
+        facts_by_chunk[fact.source_chunk_id] = (*facts_by_chunk[fact.source_chunk_id], fact)
+
+    for fact in fact_tuple:
+        contrast_fact = _contrast_fact_for(fact, facts_by_chunk)
+        train_templates = _train_templates(fact, contrast_fact=contrast_fact)
         for index in range(train_examples_per_fact):
             row_style, instruction, response = train_templates[index % len(train_templates)]
             row = {
@@ -287,6 +309,7 @@ def build_fact_train_eval_split(
                     fact=fact,
                     row=row,
                     row_style=row_style,
+                    contrast_fact=contrast_fact if row_style in _DISAMBIGUATION_ROW_STYLES else None,
                 )
             )
 
@@ -690,6 +713,10 @@ def analyze_fact_readiness(
     train_row_count = len(validate_dataset(split.train_rows)) if split.train_rows else 0
     train_examples_per_fact = train_row_count // fact_count if fact_count and train_row_count % fact_count == 0 else 0
     label_value_rows_by_fact: dict[str, int] = {}
+    facts_by_id = {fact.fact_id: fact for fact in split.facts}
+    contrastable_fact_ids = _contrastable_fact_ids(split.facts)
+    disambiguation_styles_by_fact: dict[str, set[str]] = {}
+    disambiguation_train_row_count = 0
     for manifest_row in split.manifest_rows:
         if manifest_row.get("split") != "train":
             continue
@@ -700,6 +727,10 @@ def analyze_fact_readiness(
         )
         if binding and binding in str(manifest_row.get("response", "")):
             label_value_rows_by_fact[fact_id] = label_value_rows_by_fact.get(fact_id, 0) + 1
+        if _has_complete_disambiguation_signal(manifest_row, facts_by_id=facts_by_id):
+            row_style = str(manifest_row.get("row_style", ""))
+            disambiguation_styles_by_fact.setdefault(fact_id, set()).add(row_style)
+            disambiguation_train_row_count += 1
 
     return FactReadinessReport(
         fact_count=fact_count,
@@ -708,6 +739,13 @@ def analyze_fact_readiness(
         train_examples_per_fact=train_examples_per_fact,
         label_value_fact_coverage=sum(1 for fact in split.facts if label_value_rows_by_fact.get(fact.fact_id, 0) > 0),
         label_value_train_row_count=sum(label_value_rows_by_fact.values()),
+        contrastable_fact_count=len(contrastable_fact_ids),
+        disambiguation_fact_coverage=sum(
+            1
+            for fact_id in contrastable_fact_ids
+            if _DISAMBIGUATION_ROW_STYLES.issubset(disambiguation_styles_by_fact.get(fact_id, set()))
+        ),
+        disambiguation_train_row_count=disambiguation_train_row_count,
         sft_preview_row_count=sft_preview_row_count,
         quality_report=quality_report,
     )
@@ -727,6 +765,11 @@ def format_fact_readiness_report(report: FactReadinessReport) -> list[str]:
             f"{report.label_value_train_row_count} total rows"
         ),
         (
+            "Label/value disambiguation rows: "
+            f"{report.disambiguation_fact_coverage}/{report.contrastable_fact_count} contrastable facts, "
+            f"{report.disambiguation_train_row_count} total rows"
+        ),
+        (
             "Train/eval leakage: "
             f"{report.quality_report.exact_leak_count} exact, "
             f"{report.quality_report.near_leak_count} near-duplicate"
@@ -738,8 +781,8 @@ def format_fact_readiness_report(report: FactReadinessReport) -> list[str]:
     if report.ready_for_gpu_smoke:
         lines.append("Verdict: ready for one bounded GPU training smoke")
         lines.append(
-            "Reason: local data checks pass and the training rows explicitly repeat each Label: value fact; "
-            "this does not claim model quality."
+            "Reason: local data checks pass, the training rows repeat each Label: value fact, "
+            "and contrast rows distinguish nearby labels; this does not claim model quality."
         )
         return lines
 
@@ -753,11 +796,16 @@ def format_fact_readiness_report(report: FactReadinessReport) -> list[str]:
         lines.append("Reason: each fact needs the stronger default six training rows before another GPU run.")
     elif skip_reason == "missing_label_value_training_signal":
         lines.append("Reason: at least one training row is missing canonical Label: value training signal.")
+    elif skip_reason == "missing_label_value_disambiguation_signal":
+        lines.append("Reason: contrastable facts need rows that distinguish nearby labels and values.")
     elif skip_reason == "missing_sft_preview":
         lines.append("Reason: inspectable SFT prompt/completion preview has not been produced.")
     else:
         lines.append("Reason: local readiness checks found a problem that should be inspected before training.")
     return lines
+
+
+_DISAMBIGUATION_ROW_STYLES = frozenset({"same_chunk_label_disambiguation", "swapped_value_correction"})
 
 
 def _manifest_row(
@@ -767,8 +815,9 @@ def _manifest_row(
     fact: FactCard,
     row: Mapping[str, str],
     row_style: str,
+    contrast_fact: FactCard | None = None,
 ) -> dict[str, object]:
-    return {
+    manifest = {
         "row_id": row_id,
         "fact_id": fact.fact_id,
         "split": split,
@@ -782,6 +831,11 @@ def _manifest_row(
         "instruction": row["instruction"],
         "response": row["response"],
     }
+    if contrast_fact is not None:
+        manifest["contrast_label"] = contrast_fact.label
+        manifest["contrast_value"] = contrast_fact.value
+        manifest["contrast_fact_id"] = contrast_fact.fact_id
+    return manifest
 
 
 def _public_row_key(row: Mapping[str, object]) -> tuple[str, str, str]:
@@ -792,9 +846,38 @@ def _public_row_key(row: Mapping[str, object]) -> tuple[str, str, str]:
     )
 
 
-def _train_templates(fact: FactCard) -> tuple[tuple[str, str, str], ...]:
+def _train_templates(fact: FactCard, *, contrast_fact: FactCard | None = None) -> tuple[tuple[str, str, str], ...]:
     label = fact.label.lower()
     binding = _canonical_label_value_binding(fact.label, fact.value)
+    contrast_templates: tuple[tuple[str, str, str], ...] = ()
+    if contrast_fact is not None:
+        contrast_label = contrast_fact.label.lower()
+        contrast_binding = _canonical_label_value_binding(contrast_fact.label, contrast_fact.value)
+        contrast_templates = (
+            (
+                "same_chunk_label_disambiguation",
+                (
+                    f"Choose the exact value for {label}, not the value for "
+                    f"{contrast_label}."
+                ),
+                (
+                    f"Exact answer: {fact.value}. {binding}. "
+                    f"{contrast_fact.value} belongs to {contrast_fact.label}, not {fact.label}. "
+                    f"{contrast_binding}."
+                ),
+            ),
+            (
+                "swapped_value_correction",
+                (
+                    f"Correct this label/value swap from the notes: "
+                    f"{fact.label}: {contrast_fact.value}."
+                ),
+                (
+                    f"Incorrect swap. Exact answer: {fact.value}. {binding}. "
+                    f"{contrast_fact.value} belongs to {contrast_fact.label}, not {fact.label}."
+                ),
+            ),
+        )
     return (
         (
             "canonical_label_value_statement",
@@ -816,6 +899,7 @@ def _train_templates(fact: FactCard) -> tuple[tuple[str, str, str], ...]:
             f"Closed-book drill: recall the stored label/value pair for {label}.",
             f"Exact answer: {fact.value}. {binding}.",
         ),
+        *contrast_templates,
         (
             "source_note_label_value",
             f"Use the source note to give the value for {label}.",
@@ -837,6 +921,60 @@ def _train_templates(fact: FactCard) -> tuple[tuple[str, str, str], ...]:
             f"Exact answer: {fact.value}. {binding}.",
         ),
     )
+
+
+def _contrast_fact_for(fact: FactCard, facts_by_chunk: Mapping[str, Sequence[FactCard]]) -> FactCard | None:
+    same_chunk_facts = facts_by_chunk.get(fact.source_chunk_id, ())
+    for candidate in same_chunk_facts:
+        if candidate.fact_id != fact.fact_id:
+            return candidate
+    return None
+
+
+def _contrastable_fact_ids(facts: Sequence[FactCard]) -> set[str]:
+    facts_by_chunk: dict[str, list[FactCard]] = {}
+    for fact in facts:
+        facts_by_chunk.setdefault(fact.source_chunk_id, []).append(fact)
+    return {
+        fact.fact_id
+        for same_chunk_facts in facts_by_chunk.values()
+        if len(same_chunk_facts) > 1
+        for fact in same_chunk_facts
+    }
+
+
+def _has_complete_disambiguation_signal(
+    row: Mapping[str, object],
+    *,
+    facts_by_id: Mapping[str, FactCard],
+) -> bool:
+    if str(row.get("row_style", "")) not in _DISAMBIGUATION_ROW_STYLES:
+        return False
+    fact_id = str(row.get("fact_id", "")).strip()
+    label = str(row.get("label", "")).strip()
+    value = str(row.get("value", "")).strip()
+    contrast_label = str(row.get("contrast_label", "")).strip()
+    contrast_value = str(row.get("contrast_value", "")).strip()
+    contrast_fact_id = str(row.get("contrast_fact_id", "")).strip()
+    response = str(row.get("response", ""))
+    if not all((fact_id, label, value, contrast_label, contrast_value, contrast_fact_id)):
+        return False
+    fact = facts_by_id.get(fact_id)
+    contrast_fact = facts_by_id.get(contrast_fact_id)
+    if fact is None or contrast_fact is None:
+        return False
+    if contrast_fact.fact_id == fact.fact_id:
+        return False
+    if fact.source_chunk_id != contrast_fact.source_chunk_id:
+        return False
+    if str(row.get("source_chunk_id", "")).strip() != fact.source_chunk_id:
+        return False
+    if label != fact.label or value != fact.value:
+        return False
+    if contrast_label != contrast_fact.label or contrast_value != contrast_fact.value:
+        return False
+    own_binding = _canonical_label_value_binding(label, value)
+    return own_binding in response and f"{contrast_value} belongs to {contrast_label}" in response
 
 
 def _extract_note_facts(text: str) -> list[tuple[str, str, str]]:

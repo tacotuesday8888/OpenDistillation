@@ -47,6 +47,7 @@ This file records decisions that should not be reopened without a concrete reaso
 - Comparison rows now carry internal fact IDs, labels, row styles, and expected terms through source-chunk reordering. The temporary T4 runner's row-position scoring issue is fixed in product code; exact fact-hit scoring should use fact/question identity, not list position.
 - A local SFT preview now shows the exact prompt/completion pairs before training. The sample fact-ledger training signal has six rows per fact.
 - The 2026-06-15 six-row label/value Colab T4 smoke used commit `d918f5d1845a4651ea00427fa91d139c3862d935`, Tesla T4, 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 30 TRL/PEFT LoRA steps, and fact/question-identity exact scoring. It changed all 8 answers and improved exact held-out fact hits from base 0/8 to trained 1/8. Treat this as a bounded positive learning signal, not proof of general model quality, because 7/8 held-out facts were still missed.
+- Fact-ledger train rows now replace two generic rows per same-chunk fact with deterministic disambiguation rows: one asks for the target label's value instead of a nearby label's value, and one corrects an explicit swapped `Label: wrong value` prompt. The public JSONL schema is still unchanged. The sidecar manifest records contrast label/value metadata, and readiness reports disambiguation coverage before another GPU run.
 
 ## Not Decided Yet
 
@@ -124,7 +125,7 @@ Still deferred or unverified:
 - Whether larger notes files or more generated rows fit comfortably on T4 without extra memory cleanup.
 - Whether a tiny Colab adapter run can produce useful note-grounded answers after the adapter-disabled comparison fix. The second smoke and the later 30-step sample-fact smoke both produced visible answer movement, but not useful note grounding.
 - Why the revised value-first fact-ledger Colab T4 run still changed all 8 answers but hit 0/8 exact held-out facts after the row-position scoring issue was ruled out.
-- Whether a local label/value disambiguation signal can improve beyond the six-row result of 1/8 exact held-out fact hits without changing training knobs or broadening scope.
+- Whether the newly implemented local label/value disambiguation rows improve beyond the six-row result of 1/8 exact held-out fact hits without changing training knobs or broadening scope.
 - GGUF export and local runtime instructions.
 - Adapter quality beyond deterministic local quality helpers and the two three-question Colab quality smokes.
 - Larger uploaded notes files and higher row counts beyond the tiny TXT/MD rehearsal files.

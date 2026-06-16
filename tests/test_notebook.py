@@ -135,9 +135,13 @@ class NotebookSkeletonTests(unittest.TestCase):
         self.assertEqual(fact_readiness_report.train_examples_per_fact, 6)
         self.assertEqual(fact_readiness_report.label_value_fact_coverage, 8)
         self.assertEqual(fact_readiness_report.label_value_train_row_count, 48)
+        self.assertEqual(fact_readiness_report.contrastable_fact_count, 8)
+        self.assertEqual(fact_readiness_report.disambiguation_fact_coverage, 8)
+        self.assertEqual(fact_readiness_report.disambiguation_train_row_count, 16)
 
         self.assertIn("SFT preview before any training:", output)
         self.assertIn("Exact SFT preview", output)
+        self.assertIn("Label/value disambiguation rows: 8/8 contrastable facts, 16 total rows", output)
         self.assertIn("Verdict: ready for one bounded GPU training smoke", output)
         self.assertIn("Training skipped. Set RUN_TRAINING = True", output)
         self.assertIn('OD_STATUS stage=training status=skipped', output)

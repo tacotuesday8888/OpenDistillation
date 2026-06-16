@@ -143,6 +143,56 @@ class FactLedgerTests(unittest.TestCase):
             )
         )
 
+    def test_train_rows_include_same_chunk_disambiguation_for_label_value_swaps(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor. Demo owner alias: Mira Vale.",
+                char_count=61,
+                word_count=8,
+            )
+        ]
+
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks))
+
+        self.assertEqual(len(split.train_rows), 12)
+        self.assertTrue(
+            all(set(row) == {"instruction", "response", "source_chunk_id"} for row in split.train_rows)
+        )
+        project_rows = [
+            row
+            for row in split.manifest_rows
+            if row["split"] == "train" and row["label"] == "Project codename"
+        ]
+        self.assertEqual(
+            [row["row_style"] for row in project_rows],
+            [
+                "canonical_label_value_statement",
+                "exact_value_from_label",
+                "label_value_flashcard",
+                "closed_book_label_value",
+                "same_chunk_label_disambiguation",
+                "swapped_value_correction",
+            ],
+        )
+        disambiguation_rows = [
+            row
+            for row in project_rows
+            if row["row_style"] in {"same_chunk_label_disambiguation", "swapped_value_correction"}
+        ]
+        self.assertEqual(len(disambiguation_rows), 2)
+        for row in disambiguation_rows:
+            self.assertEqual(row["contrast_label"], "Demo owner alias")
+            self.assertEqual(row["contrast_value"], "Mira Vale")
+            self.assertEqual(row["contrast_fact_id"], "fact-0002")
+            self.assertIn("Project codename: Glass Harbor", str(row["response"]))
+            self.assertIn("Mira Vale belongs to Demo owner alias", str(row["response"]))
+            self.assertIn("Glass Harbor", str(row["response"]))
+        swapped_row = disambiguation_rows[1]
+        self.assertIn("Project codename: Mira Vale", str(swapped_row["instruction"]))
+        self.assertIn("Incorrect swap", str(swapped_row["response"]))
+
     def test_build_fact_comparison_rows_adds_sidecar_metadata_without_changing_public_eval_rows(self):
         chunks = [
             TextChunk(
@@ -323,12 +373,127 @@ class FactLedgerTests(unittest.TestCase):
         self.assertEqual(readiness.fact_count, 1)
         self.assertEqual(readiness.train_examples_per_fact, 6)
         self.assertEqual(readiness.label_value_fact_coverage, 1)
+        self.assertEqual(readiness.contrastable_fact_count, 0)
+        self.assertEqual(readiness.disambiguation_fact_coverage, 0)
+        self.assertEqual(readiness.disambiguation_train_row_count, 0)
         self.assertTrue(any("Fact-ledger label/value readiness report" in line for line in lines))
         self.assertTrue(any("Train rows: 6, 6 per fact" in line for line in lines))
         self.assertTrue(any("Canonical Label: value bindings: 1/1 facts covered, 6 total rows" in line for line in lines))
+        self.assertTrue(any("Label/value disambiguation rows: 0/0 contrastable facts, 0 total rows" in line for line in lines))
         self.assertTrue(any("SFT preview: 6 exact prompt/completion row(s)" in line for line in lines))
         self.assertTrue(any("Verdict: ready for one bounded GPU training smoke" in line for line in lines))
         self.assertTrue(any("does not claim model quality" in line for line in lines))
+
+    def test_fact_readiness_report_says_sample_notes_have_disambiguation_signal(self):
+        sample_path = Path(__file__).resolve().parents[1] / "examples" / "sample-notes.md"
+        document = load_text_document(sample_path.name, sample_path.read_text(encoding="utf-8"))
+        chunks = chunk_text(document.text, max_chars=300)
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks))
+
+        readiness = analyze_fact_readiness(split, sft_preview_row_count=6)
+        lines = format_fact_readiness_report(readiness)
+
+        self.assertTrue(readiness.ready_for_gpu_smoke)
+        self.assertEqual(readiness.contrastable_fact_count, 8)
+        self.assertEqual(readiness.disambiguation_fact_coverage, 8)
+        self.assertEqual(readiness.disambiguation_train_row_count, 16)
+        self.assertTrue(
+            any(
+                "Label/value disambiguation rows: 8/8 contrastable facts, 16 total rows" in line
+                for line in lines
+            )
+        )
+
+    def test_fact_readiness_rejects_missing_disambiguation_rows_for_contrastable_facts(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor. Demo owner alias: Mira Vale.",
+                char_count=61,
+                word_count=8,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks))
+        manifest_rows = []
+        for row in split.manifest_rows:
+            if row.get("row_style") in {"same_chunk_label_disambiguation", "swapped_value_correction"}:
+                stale_row = {
+                    key: value
+                    for key, value in row.items()
+                    if key not in {"contrast_label", "contrast_value", "contrast_fact_id"}
+                }
+                manifest_rows.append({**stale_row, "row_style": "source_note_label_value"})
+            else:
+                manifest_rows.append(row)
+        weakened_split = split.replace(manifest_rows=tuple(manifest_rows))
+
+        readiness = analyze_fact_readiness(weakened_split, sft_preview_row_count=6)
+        lines = format_fact_readiness_report(readiness)
+
+        self.assertTrue(readiness.quality_report.passes_required_checks)
+        self.assertEqual(readiness.contrastable_fact_count, 2)
+        self.assertEqual(readiness.disambiguation_fact_coverage, 0)
+        self.assertEqual(readiness.disambiguation_train_row_count, 0)
+        self.assertFalse(readiness.ready_for_gpu_smoke)
+        self.assertEqual(readiness.skip_reason, "missing_label_value_disambiguation_signal")
+        self.assertTrue(any("contrastable facts need rows that distinguish nearby labels" in line for line in lines))
+
+    def test_fact_readiness_requires_both_disambiguation_row_styles_per_contrastable_fact(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor. Demo owner alias: Mira Vale.",
+                char_count=61,
+                word_count=8,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks))
+        manifest_rows = [
+            {**row, "row_style": "same_chunk_label_disambiguation"}
+            if row.get("row_style") == "swapped_value_correction"
+            else row
+            for row in split.manifest_rows
+        ]
+        weakened_split = split.replace(manifest_rows=tuple(manifest_rows))
+
+        readiness = analyze_fact_readiness(weakened_split, sft_preview_row_count=6)
+
+        self.assertTrue(readiness.quality_report.passes_required_checks)
+        self.assertEqual(readiness.contrastable_fact_count, 2)
+        self.assertEqual(readiness.disambiguation_fact_coverage, 0)
+        self.assertEqual(readiness.disambiguation_train_row_count, 4)
+        self.assertFalse(readiness.ready_for_gpu_smoke)
+        self.assertEqual(readiness.skip_reason, "missing_label_value_disambiguation_signal")
+
+    def test_fact_readiness_rejects_stale_contrast_fact_metadata(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor. Demo owner alias: Mira Vale.",
+                char_count=61,
+                word_count=8,
+            )
+        ]
+        split = build_fact_train_eval_split(extract_fact_ledger(chunks))
+        manifest_rows = [
+            {**row, "contrast_fact_id": str(row["fact_id"])}
+            if row.get("row_style") in {"same_chunk_label_disambiguation", "swapped_value_correction"}
+            else row
+            for row in split.manifest_rows
+        ]
+        weakened_split = split.replace(manifest_rows=tuple(manifest_rows))
+
+        readiness = analyze_fact_readiness(weakened_split, sft_preview_row_count=6)
+
+        self.assertTrue(readiness.quality_report.passes_required_checks)
+        self.assertEqual(readiness.contrastable_fact_count, 2)
+        self.assertEqual(readiness.disambiguation_fact_coverage, 0)
+        self.assertEqual(readiness.disambiguation_train_row_count, 0)
+        self.assertFalse(readiness.ready_for_gpu_smoke)
+        self.assertEqual(readiness.skip_reason, "missing_label_value_disambiguation_signal")
 
     def test_fact_readiness_rejects_partial_label_value_binding_coverage(self):
         chunks = [
