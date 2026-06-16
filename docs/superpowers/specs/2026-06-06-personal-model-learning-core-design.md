@@ -12,7 +12,7 @@ The important product promise is not "we ran training." The promise is:
 
 > Your notes became controlled training data, the model was tested on questions it did not see during training, and the quality report shows what improved, what failed, and what is still unsafe to claim.
 
-The latest Colab T4 result proved that the pipeline can run, but it did not prove useful learning quality. The 2026-06-16 same-chunk disambiguation fact-ledger smoke trained on 48 fact-ledger rows with 16 disambiguation rows and scored 8 held-out eval questions. The adapter changed all 8 answers but hit 0/8 exact facts, below the previous best 1/8. Follow-up local diagnostics now classify that failure as invented numeric/time/identifier values rather than learned note facts. The current anti-invention signal uses that diagnosis by replacing the risky swapped-value correction row with a known-values-only same-chunk row that lists real note values and warns against invented number/time/identifier/name/color substitutes. This is a local row-signal change, not new GPU evidence or a broader product direction.
+The latest Colab T4 result proved that the pipeline can run and gave a bounded positive signal, but it did not prove useful learning quality. The 2026-06-16 manifest-gated anti-invention fact-ledger smoke trained on 48 fact-ledger rows with 8 same-chunk disambiguation rows and 8 known-values-only anti-invention rows, then scored 8 held-out eval questions. The adapter changed all 8 answers and improved exact fact hits from base 0/8 to trained 2/8, beating the previous best 1/8. This met the narrow pass rule exactly, but 6/8 facts were still missed and every miss was still classified as an invented numeric/time/identifier value rather than learned note memory. The next gate is at least 3/8 exact hits with at most 5/8 invented-value misses.
 
 ## Scope
 
@@ -245,7 +245,7 @@ This is not a benchmark claim. It is the first credible product smoke that says 
 
 Update on 2026-06-08: this gate shape was exercised twice with 8 facts, 24 train rows, 8 held-out eval rows, zero leakage, and 30-step Colab T4 LoRA runs. The first run used earlier fact-ledger wording and scored 0/8 exact held-out fact hits, the same as the base model. Follow-up local diagnosis found the SFT prompt/completion format matches current TRL docs and the adapter-disabled comparison path matches current PEFT docs, so the rows were changed to put exact values first, use direct exact-recall eval questions, and record row styles in the sidecar. The revised value-first run also scored base 0/8 and trained 0/8.
 
-Current evidence update: expected-term scoring now survives comparison row reordering, the SFT preview is visible before training, and the local fact-ledger signal uses six label/value rows per fact. The 2026-06-16 T4 smoke tested the earlier same-chunk disambiguation plus swapped-value correction shape and failed: 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 16 disambiguation rows, zero leakage, 30-step `Qwen/Qwen2.5-0.5B-Instruct` LoRA, 8 changed answers, and trained 0/8 exact fact hits. Local exact-miss diagnostics now explain wrong trained answers as same-chunk value confusion, known-value confusion, invented numeric/time/identifier values, label echo, answer-shape-without-fact, or generic misses. The current row signal targets that failure locally by replacing the swapped-value correction row with a known-values-only same-chunk row that lists recorded note values and explicitly warns against invented number, time, identifier, name, or color substitutes. The pass condition above remains the bar. If trained answers change but still miss the expected facts, the result is failed.
+Current evidence update: expected-term scoring now survives comparison row reordering, the SFT preview is visible before training, and the local fact-ledger signal uses six label/value rows per fact. The 2026-06-16 same-chunk disambiguation T4 smoke failed with trained 0/8 exact fact hits, and local exact-miss diagnostics classified that trained-answer pattern as invented numeric/time/identifier values. The follow-up anti-invention row signal replaced the swapped-value correction row with a known-values-only same-chunk row that lists recorded note values and warns against invented number, time, identifier, name, or color substitutes. The manifest-gated 2026-06-16 anti-invention T4 smoke improved exact hits from base 0/8 to trained 2/8, but it still missed 6/8 facts and every miss was still an invented-value failure. The larger pass condition above remains the credible demo bar. The next GPU smoke gate is stricter than the new best: at least 3/8 exact hits and at most 5/8 invented-value misses. If trained answers change but still miss the expected facts, the result is failed.
 
 ## Library Choices
 
@@ -346,12 +346,12 @@ This should happen before Unsloth migration, export, local runtime packaging, ne
 
 The exact next local work is:
 
-- Use the exact-miss diagnostics to compare the 2026-06-15 six-row 1/8 signal against the 2026-06-16 disambiguation 0/8 signal at the prompt/completion level.
+- Use the exact-miss diagnostics to explain why the 2026-06-16 anti-invention run learned two facts but still invented values for the six missed facts.
 - Change rows only where the diagnostics show a concrete target, especially invented-value answer shape without exact value binding.
 - Add local diagnostics or row changes only when they directly make exact label/value facts clearer.
 - Preserve the public JSONL schema, train/eval split, leakage checks, SFT preview, and exact fact-hit scoring by fact/question identity.
 - Keep treating changed answers as failure when expected facts are still missed.
-- Do not spend another T4 run until the local signal has a concrete, testable reason to beat the previous best trained score of 1/8.
+- Do not spend another T4 run until the local signal has a concrete, testable reason to beat the current best trained score of 2/8 and reduce the six invented-value misses.
 
 ## Source Notes Checked
 

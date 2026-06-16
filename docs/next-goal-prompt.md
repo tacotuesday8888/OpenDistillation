@@ -1,6 +1,6 @@
 # Recommended Next Goal Prompt
 
-Status: completed by the local fact-miss diagnostics work, then followed by the anti-invention row-signal work. Keep this file as historical context until the next task is chosen; do not treat it as the current next-goal prompt.
+Status: completed by the local fact-miss diagnostics work, the anti-invention row-signal work, and the follow-up manifest-gated T4 smoke. Keep this file as historical context; do not treat it as the current next-goal prompt.
 
 Use this as the next `/goal` after the failed same-chunk disambiguation T4 smoke:
 
@@ -43,7 +43,7 @@ Report what changed, what was verified, what remains next, and the exact criteri
 
 ## Why This Goal
 
-The same-chunk disambiguation rows were locally valid and GPU-runnable, but they regressed the exact-hit result to 0/8. This goal added local exact-miss diagnostics that classify the 2026-06-16 trained-answer failure as invented numeric/time/identifier values. The follow-up anti-invention row signal uses those diagnostics for a targeted row-signal change by replacing the risky swapped-value correction row with a known-values-only same-chunk row. Do not spend another T4 run on the old row shape or change training knobs.
+The same-chunk disambiguation rows were locally valid and GPU-runnable, but they regressed the exact-hit result to 0/8. This historical goal added local exact-miss diagnostics that classify the 2026-06-16 trained-answer failure as invented numeric/time/identifier values. The follow-up anti-invention row signal used those diagnostics for a targeted row-signal change by replacing the risky swapped-value correction row with a known-values-only same-chunk row, then the manifest-gated T4 smoke improved to 2/8 while still missing 6/8 facts.
 
 ## Done Means
 

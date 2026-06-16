@@ -39,8 +39,10 @@ ANTI_INVENTION_CHUNK_MAX_CHARS = 300
 ANTI_INVENTION_PREVIEW_ROWS = 6
 ANTI_INVENTION_MAX_STEPS = 30
 ANTI_INVENTION_MAX_COMPARISON_EXAMPLES = 8
-ANTI_INVENTION_PREVIOUS_BEST_EXACT_HITS = 1
-ANTI_INVENTION_REQUIRED_EXACT_HITS = 2
+ANTI_INVENTION_PREVIOUS_BEST_EXACT_HITS = 2
+ANTI_INVENTION_REQUIRED_EXACT_HITS = 3
+ANTI_INVENTION_PREVIOUS_INVENTED_VALUE_MISSES = 6
+ANTI_INVENTION_REQUIRED_MAX_INVENTED_VALUE_MISSES = 5
 
 
 @dataclass(frozen=True)
@@ -57,6 +59,8 @@ class AntiInventionSmokeContract:
     comparison_question_count: int = 8
     previous_best_exact_hits: int = ANTI_INVENTION_PREVIOUS_BEST_EXACT_HITS
     required_trained_exact_hits: int = ANTI_INVENTION_REQUIRED_EXACT_HITS
+    previous_invented_value_misses: int = ANTI_INVENTION_PREVIOUS_INVENTED_VALUE_MISSES
+    maximum_invented_value_misses: int = ANTI_INVENTION_REQUIRED_MAX_INVENTED_VALUE_MISSES
 
 
 @dataclass(frozen=True)
@@ -159,7 +163,8 @@ def build_anti_invention_smoke_manifest(
         "experiment_name": ANTI_INVENTION_SMOKE_NAME,
         "purpose": (
             "Verify whether anti-invention known-values rows help the small notes "
-            "model beat the previous best held-out exact fact score."
+            "model beat the previous best held-out exact fact score and reduce "
+            "invented-value misses."
         ),
         "repo": dict(git_state) if git_state is not None else _collect_git_state(repo_path),
         "source": {
@@ -233,9 +238,12 @@ def build_anti_invention_smoke_manifest(
             "previous_best_trained_exact_hits": contract.previous_best_exact_hits,
             "required_trained_exact_hits": contract.required_trained_exact_hits,
             "required_total_questions": contract.comparison_question_count,
+            "previous_invented_value_misses": contract.previous_invented_value_misses,
+            "maximum_invented_value_misses": contract.maximum_invented_value_misses,
             "failure_rule": (
                 "Changed answers are a failure when trained exact fact hits do not "
-                "beat the previous best held-out score."
+                "beat the previous best held-out score, or when invented-value "
+                "misses do not decrease."
             ),
         },
     }
@@ -343,10 +351,18 @@ def validate_anti_invention_smoke_manifest(
         errors.append("comparison questions are missing")
 
     quality_rule = _mapping(manifest.get("quality_rule"))
+    if quality_rule.get("previous_best_trained_exact_hits") != contract.previous_best_exact_hits:
+        errors.append("quality rule previous best exact-hit score is stale")
     if quality_rule.get("required_trained_exact_hits") != contract.required_trained_exact_hits:
         errors.append("quality rule does not require beating the previous best exact-hit score")
     if contract.required_trained_exact_hits <= contract.previous_best_exact_hits:
         errors.append("quality contract must require a trained score above the previous best")
+    if quality_rule.get("previous_invented_value_misses") != contract.previous_invented_value_misses:
+        errors.append("quality rule previous invented-value miss count is stale")
+    if quality_rule.get("maximum_invented_value_misses") != contract.maximum_invented_value_misses:
+        errors.append("quality rule does not require fewer invented-value misses")
+    if contract.maximum_invented_value_misses >= contract.previous_invented_value_misses:
+        errors.append("quality contract must require invented-value misses to decrease")
 
     repo = _mapping(manifest.get("repo"))
     if repo.get("dirty") is True:
@@ -403,6 +419,8 @@ def format_anti_invention_smoke_report(manifest: Mapping[str, object]) -> list[s
             f"{quality_rule.get('required_trained_exact_hits', 0)}/"
             f"{quality_rule.get('required_total_questions', 0)} "
             f"and beat the previous best {quality_rule.get('previous_best_trained_exact_hits', 0)}/"
+            f"{quality_rule.get('required_total_questions', 0)}, with invented-value misses at most "
+            f"{quality_rule.get('maximum_invented_value_misses', 0)}/"
             f"{quality_rule.get('required_total_questions', 0)}."
         ),
         "Changed answers with wrong facts are failure evidence, not progress.",
@@ -434,6 +452,8 @@ def _contract_dict(contract: AntiInventionSmokeContract) -> dict[str, int]:
         "comparison_question_count": contract.comparison_question_count,
         "previous_best_exact_hits": contract.previous_best_exact_hits,
         "required_trained_exact_hits": contract.required_trained_exact_hits,
+        "previous_invented_value_misses": contract.previous_invented_value_misses,
+        "maximum_invented_value_misses": contract.maximum_invented_value_misses,
     }
 
 
