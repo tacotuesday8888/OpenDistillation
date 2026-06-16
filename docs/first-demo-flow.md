@@ -202,7 +202,7 @@ The optional training and comparison wiring is verified with two multi-question 
 
 The next bounded quality smoke used the fact-rich sample notes, 24 mock rows, the four held-out sample-fact questions, and a 30-step optional LoRA run through `google-colab-cli` on 2026-06-06. It changed all four trained-adapter answers, but the trained answers still hit 0/4 expected facts and were wrong or hallucinated.
 
-The latest bounded GPU evidence used the six-row label/value fact-ledger split through `google-colab-cli` on 2026-06-15. It printed a passing local data gate first: 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a visible SFT preview. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers and improved exact fact hits from 0/8 to 1/8, but still missed 7/8 checked facts. This branch now keeps the same 48-row shape while replacing two generic same-chunk rows per fact with disambiguation and swapped-value correction rows. The demo should not claim useful note learning yet. The next GPU experiment is exactly one bounded T4 smoke with 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 16 disambiguation rows, 30-step `Qwen/Qwen2.5-0.5B-Instruct` LoRA, and exact fact-hit scoring; if answers change but facts are still missed, record failure.
+The latest bounded GPU evidence used the same-chunk disambiguation fact-ledger split through `google-colab-cli` on 2026-06-16. It printed a passing local data gate first: 8 facts, 48 fact-ledger train rows, 16 disambiguation rows, 8 held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a visible SFT preview. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers but scored 0/8 exact fact hits, below the previous best 1/8. The demo should not claim useful note learning yet. The next work is local learning-signal diagnosis before another GPU run; if answers change but facts are still missed, record failure.
 
 The checklist records:
 
@@ -270,7 +270,7 @@ Included now:
 
 Planned later in v0:
 
-- Run one bounded T4 smoke for the six-row label/value fact-ledger signal before more local row redesign.
+- Diagnose and improve the local fact-ledger learning signal after the 2026-06-16 disambiguation T4 run changed answers but hit 0/8 exact facts.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance, after the notes-model quality loop shows useful note-grounded answers.
 

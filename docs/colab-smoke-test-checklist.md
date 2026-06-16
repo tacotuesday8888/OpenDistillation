@@ -79,7 +79,7 @@ Use this checklist before marking the optional real teacher, training, or before
 
 - [ ] Run the comparison cell after training succeeds.
   - Expected markers include `OD_STATUS stage=comparison status=configured`, `OD_STATUS stage=comparison status=started`, and `OD_STATUS stage=comparison status=succeeded`.
-- [ ] Confirm up to three questions and generated reference answers are shown.
+- [ ] Confirm comparison questions and generated reference answers are shown. Current fact-ledger runs can show up to 8 held-out fact questions; fallback generated-question runs may show fewer.
 - [ ] Confirm both base-model answers and trained-adapter answers are shown with crude reference-overlap values.
   - Expected headings include `Model quality report`, `Question:`, `Reference answer:`, `Base answer`, and `Trained adapter answer`.
 - [ ] Confirm the notebook labels this as a qualitative smoke report, not a benchmark.

@@ -1,6 +1,6 @@
 # Colab GPU Smoke-Test Results
 
-Last updated: 2026-06-15
+Last updated: 2026-06-16
 
 ## Result
 
@@ -22,6 +22,8 @@ The revised value-first fact-ledger learning-signal experiment is **verified in 
 
 The six-row label/value fact-ledger experiment is **verified in a Colab CLI T4 training run** on 2026-06-15. The run used commit `d918f5d1845a4651ea00427fa91d139c3862d935`, 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, zero exact leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a visible six-row SFT prompt/completion preview. The 30-step LoRA adapter changed all 8 answers and improved exact held-out fact hits from 0/8 to 1/8. This is a bounded positive learning signal, not proof of general model quality. Final judgment: **better by exact hit count but still weak** because 7/8 held-out facts were still missed.
 
+The same-chunk label/value disambiguation experiment is **verified in a Colab CLI T4 training run** on 2026-06-16. The run used commit `f8090fcb533159a9e22668c6b42f9f5f9a61b0b3`, 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 16 disambiguation rows, zero exact leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a visible SFT prompt/completion preview. The 30-step LoRA adapter changed all 8 answers but scored 0/8 exact held-out fact hits, worse than the previous best trained score of 1/8. Final judgment: **failed exact-hit rule / not useful learned note memory** because changed answers still missed every checked fact.
+
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
 The clean run passed after three fixes were pushed:
@@ -31,6 +33,148 @@ The clean run passed after three fixes were pushed:
 - Load `examples/sample-notes.md` by default in Colab so the first smoke path does not block on a file picker.
 
 The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
+
+## Colab GPU Quality Smoke: Same-Chunk Disambiguation Fact-Ledger 30-Step CLI Run
+
+Date: 2026-06-16
+
+Status: **ran on Colab T4 / exact fact hits failed at 0/8**.
+
+Verified path:
+
+```text
+fact-rich sample-notes.md -> six-row label/value fact ledger with same-chunk disambiguation -> 48 fact-ledger train rows -> 30-step Qwen2.5-0.5B LoRA adapter -> 8 held-out fact-ledger eval questions
+```
+
+CLI execution:
+
+```text
+Command: /Users/langqi/.local/bin/colab --auth adc run --session disambiguation-t4-smoke --gpu T4 /private/tmp/opendistillation_disambiguation_t4_smoke.py
+Session: disambiguation-t4-smoke
+Git commit used by Colab clone: f8090fcb533159a9e22668c6b42f9f5f9a61b0b3
+Runtime: Colab T4 GPU
+GPU: Tesla T4
+CUDA available: true
+python: 3.12.13
+torch: 2.11.0+cu128
+transformers: 4.57.6
+datasets: 5.0.0
+trl: 0.29.1
+peft: 0.18.1
+accelerate: 1.14.0
+CLI note: the script emitted the completed result marker, then the local Colab CLI timed out waiting for the final kernel reply during cleanup. `colab status` immediately afterward reported no active sessions.
+```
+
+Fact-ledger quality evidence before training:
+
+```text
+Input file: examples/sample-notes.md
+Facts: 8
+Mock teacher rows: 24
+Fact-ledger train rows: 48
+Held-out eval rows: 8
+Contrastable facts: 8
+Disambiguation coverage: 8/8 contrastable facts
+Disambiguation rows: 16
+Train fact coverage: 8/8
+Eval fact coverage: 8/8
+Exact train/eval leaks: 0
+Near-duplicate/token-overlap train/eval leaks: 0
+Missing expected terms: 0
+Quality gate passed: true
+Readiness gate passed: true
+Training source: fact-ledger train rows
+Comparison source: held-out fact-ledger eval questions
+SFT preview printed: yes, 6 exact prompt/completion rows
+```
+
+Training evidence:
+
+```text
+Training ran: true
+Training engine: trl-sfttrainer-peft-lora
+Student model: Qwen/Qwen2.5-0.5B-Instruct
+Max steps: 30
+Adapter path: /content/opendistillation_disambiguation_t4_outputs/notes-lora-disambiguation/adapter
+Adapter exists: true
+Training elapsed runtime: 83.74 seconds
+End-to-end script runtime: 174.774 seconds
+```
+
+Comparison evidence:
+
+```text
+Comparison ran: true
+Comparison engine: transformers-peft-before-after
+Comparison questions: 8
+Changed answers: 8/8
+Base fact hits: 0/8
+Trained-adapter fact hits: 0/8
+Hit delta: 0
+Previous best trained exact fact hits: 1/8
+Learned: 0
+Missed: 8
+Unchanged: 0
+Worse: 0
+Unscored: 0
+Automatic judgment versus base: unchanged
+Quality-rule result: failed because trained exact hits did not improve beyond 1/8
+Scoring method: expected terms scored by fact/question metadata identity, not row position
+Final marker: OD_DISAMBIGUATION_SMOKE_RESULT_JSON {"status": "completed", "base_hits": 0, "trained_hits": 0, "changed_answers": 8, "learned": 0, "missed": 8, "unscored": 0, "passed_quality_rule": false}
+```
+
+Question and answer evidence:
+
+```text
+1. Closed-book check: what exact notes value should be recalled for "project codename"?
+Expected term: Glass Harbor
+Trained adapter answer: Exact answer: 1047. Project codename: Project 1047.
+Expected term hit: base false, trained false
+
+2. Closed-book check: what exact notes value should be recalled for "notebook signal phrase"?
+Expected term: copper-lantern-47
+Trained adapter answer: Exact answer: 10. Notebook signal phrase: 10.
+Expected term hit: base false, trained false
+
+3. Closed-book check: what exact notes value should be recalled for "local runner label"?
+Expected term: llama-harbor-alpha
+Trained adapter answer: Exact answer: 10. Local runner label: 10.
+Expected term hit: base false, trained false
+
+4. Closed-book check: what exact notes value should be recalled for "review ritual time"?
+Expected term: 4:17 PM
+Trained adapter answer: Exact answer: 10:45 AM. Review ritual time: 10:45 AM.
+Expected term hit: base false, trained false
+
+5. Closed-book check: what exact notes value should be recalled for "demo owner alias"?
+Expected term: Mira Vale
+Trained adapter answer: Exact answer: 104. demo owner alias belongs to Alpha Zero, not demo owner alias. Demo owner alias belongs to Alpha Zero. Alpha Zero has an exact note value of 104.
+Expected term hit: base false, trained false
+
+6. Closed-book check: what exact notes value should be recalled for "safety boundary phrase"?
+Expected term: notes-only-v0
+Trained adapter answer: Exact answer: 10. Safety boundary phrase: 10.
+Expected term hit: base false, trained false
+
+7. Closed-book check: what exact notes value should be recalled for "export placeholder name"?
+Expected term: basalt-arc-29
+Trained adapter answer: Exact answer: 104. export-placeholder-name belongs to version 2. 104. Export Placeholder Name.
+Expected term hit: base false, trained false
+
+8. Closed-book check: what exact notes value should be recalled for "review ritual color"?
+Expected term: ultramarine
+Trained adapter answer: Exact answer: 10. Review ritual color: 10.
+Expected term hit: base false, trained false
+```
+
+Interpretation:
+
+- The disambiguation rows did not improve the adapter. They regressed from the previous best trained exact fact score of 1/8 to 0/8.
+- The adapter changed all 8 answers, but every changed answer still missed the expected note value. This is a failure, not learned note memory.
+- The failure pattern shifted from some label/value swaps toward invented simple numeric values such as `10`, `104`, `1047`, and `10:45 AM`.
+- Do not run another GPU smoke by changing training knobs. The next work should return to local learning-signal diagnosis: inspect why the rows teach answer shape without exact value binding, and improve the local data/eval signal before spending more T4 time.
+
+Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
 ## Colab GPU Quality Smoke: Six-Row Label/Value Fact-Ledger 30-Step CLI Run
 
@@ -173,7 +317,7 @@ Interpretation:
 - Improved exact held-out fact hits from 0/8 to 1/8. This is a bounded positive learning signal, not proof of general model quality.
 - The six-row signal is better than the previous 0/8 result, but still not good enough: the adapter missed 7/8 facts and confused several labels with other values or invented values.
 - Changed wording alone is still not progress. The useful evidence is only the one exact expected-term hit for `ultramarine`.
-- The next local work should target label/value disambiguation before another GPU run, especially preventing value swaps such as `Project codename: Mira Vale` and invented numeric answers like `10`.
+- Historical follow-up: this result led to same-chunk label/value disambiguation rows. The later 2026-06-16 T4 smoke tested that signal and regressed to 0/8 exact hits, so current work should diagnose the local signal before another GPU run.
 
 Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
@@ -320,7 +464,7 @@ Interpretation:
 - The revised value-first data/eval gate still did its local job: separated train/eval rows, full fact coverage, and zero leakage.
 - The GPU result is still a failed learning result. The adapter changed every answer but missed every exact expected term.
 - A later local audit fixed the reporting risk noted above: exact expected terms now travel with comparison examples by fact/question identity instead of by row position.
-- Do not run another GPU smoke by changing random training knobs. The next work should strengthen the local label-value training signal, likely by increasing per-fact examples and making every train response include an explicit canonical `Label: value` binding before one bounded rerun.
+- Historical follow-up: later local work strengthened the label/value training signal, added metadata-safe scoring, and exercised six-row and disambiguation T4 smokes. The current evidence after those reruns still points back to local signal diagnosis, not training-knob changes.
 
 Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
