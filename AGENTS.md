@@ -18,7 +18,7 @@ Model quality comes before GitHub polish, product packaging, or broad platform f
 
 The repo has a Colab-first prototype. The wiring works: notes loading, chunking, dataset validation, mock teacher rows, optional Hugging Face teacher path, optional TRL/PEFT LoRA training, and before/after comparison have all been exercised.
 
-The latest meaningful GPU quality result is a failure: a bounded Colab T4 smoke on the same-chunk label/value disambiguation rows trained a 30-step adapter on 48 fact-ledger rows. It changed every answer but scored base `0/8` and trained `0/8` exact held-out facts, below the previous best trained result of `1/8`. Follow-up local diagnostics now classify that trained-answer failure as invented numeric/time/identifier values such as `10`, `104`, and `1047`, with exact facts still missed. The next work should use that local diagnosis for a targeted row-signal change, not training-knob chasing or another GPU rerun.
+The latest meaningful GPU quality result is a failure: a bounded Colab T4 smoke on the same-chunk label/value disambiguation rows trained a 30-step adapter on 48 fact-ledger rows. It changed every answer but scored base `0/8` and trained `0/8` exact held-out facts, below the previous best trained result of `1/8`. Follow-up local diagnostics now classify that trained-answer failure as invented numeric/time/identifier values such as `10`, `104`, and `1047`, with exact facts still missed. The current anti-invention row signal uses that diagnosis by replacing the risky swapped-value correction row with a known-values-only same-chunk row that lists real note values and warns against invented number/time/identifier/name/color substitutes. Do not turn this into training-knob chasing or another GPU rerun before the local change is verified.
 
 The current product-core design lives under `docs/superpowers/specs/`.
 
@@ -142,4 +142,4 @@ If verification cannot run, state exactly what was not verified and why.
 
 ## Near-Term Priority
 
-The next implementation work should use the local fact-miss diagnostics to make a targeted fact-ledger row-signal change before another GPU run. Do not change training knobs, add export, or build product surfaces before the notes-model quality loop shows stronger exact held-out fact improvement.
+The current fact-ledger row-signal work should stay narrow and local: use the fact-miss diagnostics, preserve train/eval separation, and verify that known-values-only rows are visible before any GPU run. Do not change training knobs, add export, or build product surfaces before the notes-model quality loop shows stronger exact held-out fact improvement.
