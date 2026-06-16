@@ -172,7 +172,7 @@ Interpretation:
 - The disambiguation rows did not improve the adapter. They regressed from the previous best trained exact fact score of 1/8 to 0/8.
 - The adapter changed all 8 answers, but every changed answer still missed the expected note value. This is a failure, not learned note memory.
 - The failure pattern shifted from some label/value swaps toward invented simple numeric values such as `10`, `104`, `1047`, and `10:45 AM`.
-- Do not run another GPU smoke by changing training knobs. Follow-up local work added exact-miss diagnostics that classify the trained-answer failure as invented numeric/time/identifier values; the next useful work is a targeted local row-signal change before spending more T4 time.
+- Do not run another GPU smoke by changing training knobs. Follow-up local work added exact-miss diagnostics that classify the trained-answer failure as invented numeric/time/identifier values. The current anti-invention signal targets that failure by replacing the risky swapped-value correction row with a known-values-only same-chunk row that lists real note values and warns against invented number/time/identifier/name/color substitutes before spending more T4 time.
 
 Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
