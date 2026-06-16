@@ -129,8 +129,10 @@ class BeforeAfterComparisonResult:
                 "question": item.question,
                 "answer": getattr(item, answer_field),
                 "expected_terms": item.expected_terms,
+                "row_id": item.row_id,
                 "fact_id": item.fact_id,
                 "label": item.label,
+                "value": item.value,
                 "row_style": item.row_style,
                 "source_chunk_id": item.source_chunk_id,
             }

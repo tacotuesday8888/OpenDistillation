@@ -18,8 +18,10 @@ from opendistillation.fact_ledger import (
     format_fact_quality_report,
     format_fact_readiness_report,
     compare_fact_scores,
+    diagnose_fact_misses,
     score_fact_answer,
     score_fact_outputs,
+    format_fact_miss_diagnostic_report,
 )
 from opendistillation.text import TextChunk, chunk_text, load_text_document
 
@@ -381,8 +383,9 @@ class FactLedgerTests(unittest.TestCase):
         self.assertTrue(any("Canonical Label: value bindings: 1/1 facts covered, 6 total rows" in line for line in lines))
         self.assertTrue(any("Label/value disambiguation rows: 0/0 contrastable facts, 0 total rows" in line for line in lines))
         self.assertTrue(any("SFT preview: 6 exact prompt/completion row(s)" in line for line in lines))
-        self.assertTrue(any("Verdict: ready for one bounded GPU training smoke" in line for line in lines))
+        self.assertTrue(any("Verdict: local data split is structurally ready" in line for line in lines))
         self.assertTrue(any("does not claim model quality" in line for line in lines))
+        self.assertTrue(any("by itself justify another GPU run" in line for line in lines))
 
     def test_fact_readiness_report_says_sample_notes_have_disambiguation_signal(self):
         sample_path = Path(__file__).resolve().parents[1] / "examples" / "sample-notes.md"
@@ -784,6 +787,184 @@ class FactLedgerTests(unittest.TestCase):
         self.assertTrue(any("Changed answers: 2/2" in line for line in lines))
         self.assertTrue(any("Judgment: unchanged" in line for line in lines))
         self.assertTrue(any("Changed answers with wrong facts are still a failure" in line for line in lines))
+
+    def test_fact_miss_diagnostics_capture_2026_06_16_changed_wrong_failure_pattern(self):
+        sample_path = Path(__file__).resolve().parents[1] / "examples" / "sample-notes.md"
+        document = load_text_document(sample_path.name, sample_path.read_text(encoding="utf-8"))
+        facts = extract_fact_ledger(chunk_text(document.text, max_chars=300))
+        trained_outputs = [
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "project codename"?',
+                "answer": "Exact answer: 1047. Project codename: Project 1047.",
+                "expected_terms": ["Glass Harbor"],
+                "fact_id": "fact-0001",
+                "label": "Project codename",
+                "value": "Glass Harbor",
+                "source_chunk_id": "chunk-0001",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "notebook signal phrase"?',
+                "answer": "Exact answer: 10. Notebook signal phrase: 10.",
+                "expected_terms": ["copper-lantern-47"],
+                "fact_id": "fact-0003",
+                "label": "Notebook signal phrase",
+                "value": "copper-lantern-47",
+                "source_chunk_id": "chunk-0002",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "local runner label"?',
+                "answer": "Exact answer: 10. Local runner label: 10.",
+                "expected_terms": ["llama-harbor-alpha"],
+                "fact_id": "fact-0005",
+                "label": "Local runner label",
+                "value": "llama-harbor-alpha",
+                "source_chunk_id": "chunk-0003",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "review ritual time"?',
+                "answer": "Exact answer: 10:45 AM. Review ritual time: 10:45 AM.",
+                "expected_terms": ["4:17 PM"],
+                "fact_id": "fact-0007",
+                "label": "Review ritual time",
+                "value": "4:17 PM",
+                "source_chunk_id": "chunk-0004",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "demo owner alias"?',
+                "answer": (
+                    "Exact answer: 104. demo owner alias belongs to Alpha Zero, not demo owner alias. "
+                    "Demo owner alias belongs to Alpha Zero. Alpha Zero has an exact note value of 104."
+                ),
+                "expected_terms": ["Mira Vale"],
+                "fact_id": "fact-0002",
+                "label": "Demo owner alias",
+                "value": "Mira Vale",
+                "source_chunk_id": "chunk-0001",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "safety boundary phrase"?',
+                "answer": "Exact answer: 10. Safety boundary phrase: 10.",
+                "expected_terms": ["notes-only-v0"],
+                "fact_id": "fact-0004",
+                "label": "Safety boundary phrase",
+                "value": "notes-only-v0",
+                "source_chunk_id": "chunk-0002",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "export placeholder name"?',
+                "answer": "Exact answer: 104. export-placeholder-name belongs to version 2. 104. Export Placeholder Name.",
+                "expected_terms": ["basalt-arc-29"],
+                "fact_id": "fact-0006",
+                "label": "Export placeholder name",
+                "value": "basalt-arc-29",
+                "source_chunk_id": "chunk-0003",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "review ritual color"?',
+                "answer": "Exact answer: 10. Review ritual color: 10.",
+                "expected_terms": ["ultramarine"],
+                "fact_id": "fact-0008",
+                "label": "Review ritual color",
+                "value": "ultramarine",
+                "source_chunk_id": "chunk-0004",
+            },
+        ]
+
+        trained_score = score_fact_outputs(trained_outputs)
+        report = diagnose_fact_misses(trained_score, facts)
+        lines = format_fact_miss_diagnostic_report(report, max_examples=8)
+
+        self.assertEqual(trained_score.hit_count, 0)
+        self.assertEqual(report.answer_count, 8)
+        self.assertEqual(report.miss_count, 8)
+        self.assertEqual(report.count("invented_numeric_time_identifier_value"), 8)
+        self.assertEqual(report.count("same_chunk_value_confusion"), 0)
+        self.assertTrue(any(item.invented_values for item in report.items))
+        self.assertTrue(any("1047" in item.invented_values for item in report.items))
+        self.assertTrue(any("10:45 AM" in item.invented_values for item in report.items))
+        self.assertTrue(any("version 2" in item.invented_values for item in report.items))
+        self.assertTrue(any("Fact miss diagnostic report" in line for line in lines))
+        self.assertTrue(any("Invented-value warning" in line for line in lines))
+        self.assertTrue(any("changed wording is still failed learning" in line for line in lines))
+
+    def test_fact_miss_diagnostics_distinguish_known_value_confusion_from_label_echo(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor. Demo owner alias: Mira Vale.",
+                char_count=61,
+                word_count=8,
+            )
+        ]
+        facts = extract_fact_ledger(chunks)
+        confused = score_fact_outputs(
+            [
+                {
+                    "question": "What is the project codename?",
+                    "answer": "Exact answer: Mira Vale. Project codename: Mira Vale.",
+                    "expected_terms": ["Glass Harbor"],
+                    "fact_id": "fact-0001",
+                    "label": "Project codename",
+                    "value": "Glass Harbor",
+                    "source_chunk_id": "chunk-0001",
+                },
+                {
+                    "question": "What is the demo owner alias?",
+                    "answer": "The answer is demo owner alias.",
+                    "expected_terms": ["Mira Vale"],
+                    "fact_id": "fact-0002",
+                    "label": "Demo owner alias",
+                    "value": "Mira Vale",
+                    "source_chunk_id": "chunk-0001",
+                },
+            ]
+        )
+
+        report = diagnose_fact_misses(confused, facts)
+
+        self.assertEqual(report.count("same_chunk_value_confusion"), 1)
+        self.assertEqual(report.count("label_echo"), 1)
+        self.assertEqual(report.items[0].value_matches[0].value, "Mira Vale")
+        self.assertEqual(report.items[0].value_matches[0].label, "Demo owner alias")
+        self.assertEqual(report.items[1].miss_kind, "label_echo")
+
+    def test_fact_miss_diagnostics_skip_hits_and_keep_unscored_separate(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+        score = score_fact_outputs(
+            [
+                {
+                    "question": "What is the project codename?",
+                    "answer": "Glass Harbor",
+                    "expected_terms": ["Glass Harbor"],
+                    "fact_id": "fact-0001",
+                    "label": "Project codename",
+                },
+                {
+                    "question": "What is missing metadata?",
+                    "answer": "Exact answer: 10.",
+                    "expected_terms": [],
+                    "fact_id": "fact-0002",
+                    "label": "Unknown",
+                },
+            ]
+        )
+
+        report = diagnose_fact_misses(score, extract_fact_ledger(chunks))
+        lines = format_fact_miss_diagnostic_report(report)
+
+        self.assertEqual(report.hit_count, 1)
+        self.assertEqual(report.unscored_count, 1)
+        self.assertEqual(report.items, ())
+        self.assertTrue(any("No scored misses were available" in line for line in lines))
 
 
 if __name__ == "__main__":

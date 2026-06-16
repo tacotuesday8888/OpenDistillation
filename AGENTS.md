@@ -18,7 +18,7 @@ Model quality comes before GitHub polish, product packaging, or broad platform f
 
 The repo has a Colab-first prototype. The wiring works: notes loading, chunking, dataset validation, mock teacher rows, optional Hugging Face teacher path, optional TRL/PEFT LoRA training, and before/after comparison have all been exercised.
 
-The latest meaningful GPU quality result is a failure: a bounded Colab T4 smoke on the same-chunk label/value disambiguation rows trained a 30-step adapter on 48 fact-ledger rows. It changed every answer but scored base `0/8` and trained `0/8` exact held-out facts, below the previous best trained result of `1/8`. The adapter mostly learned answer shape and invented values such as `10`, `104`, and `1047`. The next work should return to local learning-signal diagnosis, not training-knob chasing or another GPU rerun.
+The latest meaningful GPU quality result is a failure: a bounded Colab T4 smoke on the same-chunk label/value disambiguation rows trained a 30-step adapter on 48 fact-ledger rows. It changed every answer but scored base `0/8` and trained `0/8` exact held-out facts, below the previous best trained result of `1/8`. Follow-up local diagnostics now classify that trained-answer failure as invented numeric/time/identifier values such as `10`, `104`, and `1047`, with exact facts still missed. The next work should use that local diagnosis for a targeted row-signal change, not training-knob chasing or another GPU rerun.
 
 The current product-core design lives under `docs/superpowers/specs/`.
 
@@ -142,4 +142,4 @@ If verification cannot run, state exactly what was not verified and why.
 
 ## Near-Term Priority
 
-The next implementation work should diagnose the failed fact-ledger disambiguation signal locally before another GPU run. Do not change training knobs, add export, or build product surfaces before the notes-model quality loop shows stronger exact held-out fact improvement.
+The next implementation work should use the local fact-miss diagnostics to make a targeted fact-ledger row-signal change before another GPU run. Do not change training knobs, add export, or build product surfaces before the notes-model quality loop shows stronger exact held-out fact improvement.
