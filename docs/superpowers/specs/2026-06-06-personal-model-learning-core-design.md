@@ -12,7 +12,7 @@ The important product promise is not "we ran training." The promise is:
 
 > Your notes became controlled training data, the model was tested on questions it did not see during training, and the quality report shows what improved, what failed, and what is still unsafe to claim.
 
-The latest Colab T4 result proved that the pipeline can run, but it did not prove useful learning quality. The 2026-06-16 same-chunk disambiguation fact-ledger smoke trained on 48 fact-ledger rows with 16 disambiguation rows and scored 8 held-out eval questions. The adapter changed all 8 answers but hit 0/8 exact facts, below the previous best 1/8. The next work should diagnose the local learning signal before another GPU run, not broaden the product.
+The latest Colab T4 result proved that the pipeline can run, but it did not prove useful learning quality. The 2026-06-16 same-chunk disambiguation fact-ledger smoke trained on 48 fact-ledger rows with 16 disambiguation rows and scored 8 held-out eval questions. The adapter changed all 8 answers but hit 0/8 exact facts, below the previous best 1/8. Follow-up local diagnostics now classify that failure as invented numeric/time/identifier values rather than learned note facts. The next work should use that local diagnosis to change the row signal before another GPU run, not broaden the product.
 
 ## Scope
 
@@ -245,7 +245,7 @@ This is not a benchmark claim. It is the first credible product smoke that says 
 
 Update on 2026-06-08: this gate shape was exercised twice with 8 facts, 24 train rows, 8 held-out eval rows, zero leakage, and 30-step Colab T4 LoRA runs. The first run used earlier fact-ledger wording and scored 0/8 exact held-out fact hits, the same as the base model. Follow-up local diagnosis found the SFT prompt/completion format matches current TRL docs and the adapter-disabled comparison path matches current PEFT docs, so the rows were changed to put exact values first, use direct exact-recall eval questions, and record row styles in the sidecar. The revised value-first run also scored base 0/8 and trained 0/8.
 
-Current evidence update: expected-term scoring now survives comparison row reordering, the SFT preview is visible before training, and the local fact-ledger signal now uses six label/value rows per fact with same-chunk disambiguation and swapped-value correction rows where contrast facts exist. The 2026-06-16 T4 smoke tested exactly that shape and failed: 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 16 disambiguation rows, zero leakage, 30-step `Qwen/Qwen2.5-0.5B-Instruct` LoRA, 8 changed answers, and trained 0/8 exact fact hits. The pass condition above remains the bar. If trained answers change but still miss the expected facts, the result is failed.
+Current evidence update: expected-term scoring now survives comparison row reordering, the SFT preview is visible before training, and the local fact-ledger signal now uses six label/value rows per fact with same-chunk disambiguation and swapped-value correction rows where contrast facts exist. The 2026-06-16 T4 smoke tested exactly that shape and failed: 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 16 disambiguation rows, zero leakage, 30-step `Qwen/Qwen2.5-0.5B-Instruct` LoRA, 8 changed answers, and trained 0/8 exact fact hits. Local exact-miss diagnostics now explain wrong trained answers as same-chunk value confusion, known-value confusion, invented numeric/time/identifier values, label echo, answer-shape-without-fact, or generic misses. The pass condition above remains the bar. If trained answers change but still miss the expected facts, the result is failed.
 
 ## Library Choices
 
@@ -340,14 +340,14 @@ If a secret or token is ever exposed in logs or git, treat it as compromised and
 
 The next implementation goal should be:
 
-> Diagnose the failed fact-ledger disambiguation learning signal locally before another GPU run.
+> Use the local fact-miss diagnostics to make a targeted fact-ledger row-signal change before another GPU run.
 
 This should happen before Unsloth migration, export, local runtime packaging, new model profiles, another GPU smoke, or a training-parameter sweep.
 
 The exact next local work is:
 
-- Compare the 2026-06-15 six-row 1/8 signal against the 2026-06-16 disambiguation 0/8 signal at the exact prompt/completion level.
-- Explain why the disambiguation rows taught answer shape and invented numeric values without exact value binding.
+- Use the exact-miss diagnostics to compare the 2026-06-15 six-row 1/8 signal against the 2026-06-16 disambiguation 0/8 signal at the prompt/completion level.
+- Change rows only where the diagnostics show a concrete target, especially invented-value answer shape without exact value binding.
 - Add local diagnostics or row changes only when they directly make exact label/value facts clearer.
 - Preserve the public JSONL schema, train/eval split, leakage checks, SFT preview, and exact fact-hit scoring by fact/question identity.
 - Keep treating changed answers as failure when expected facts are still missed.

@@ -172,7 +172,7 @@ Interpretation:
 - The disambiguation rows did not improve the adapter. They regressed from the previous best trained exact fact score of 1/8 to 0/8.
 - The adapter changed all 8 answers, but every changed answer still missed the expected note value. This is a failure, not learned note memory.
 - The failure pattern shifted from some label/value swaps toward invented simple numeric values such as `10`, `104`, `1047`, and `10:45 AM`.
-- Do not run another GPU smoke by changing training knobs. The next work should return to local learning-signal diagnosis: inspect why the rows teach answer shape without exact value binding, and improve the local data/eval signal before spending more T4 time.
+- Do not run another GPU smoke by changing training knobs. Follow-up local work added exact-miss diagnostics that classify the trained-answer failure as invented numeric/time/identifier values; the next useful work is a targeted local row-signal change before spending more T4 time.
 
 Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
@@ -317,7 +317,7 @@ Interpretation:
 - Improved exact held-out fact hits from 0/8 to 1/8. This is a bounded positive learning signal, not proof of general model quality.
 - The six-row signal is better than the previous 0/8 result, but still not good enough: the adapter missed 7/8 facts and confused several labels with other values or invented values.
 - Changed wording alone is still not progress. The useful evidence is only the one exact expected-term hit for `ultramarine`.
-- Historical follow-up: this result led to same-chunk label/value disambiguation rows. The later 2026-06-16 T4 smoke tested that signal and regressed to 0/8 exact hits, so current work should diagnose the local signal before another GPU run.
+- Historical follow-up: this result led to same-chunk label/value disambiguation rows. The later 2026-06-16 T4 smoke tested that signal and regressed to 0/8 exact hits; follow-up local diagnostics now make the invented-value failure mode visible before another GPU run.
 
 Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 

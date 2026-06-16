@@ -1,5 +1,7 @@
 # Recommended Next Goal Prompt
 
+Status: completed by the local fact-miss diagnostics work. Keep this file as historical context until the next task is chosen; do not treat it as the current next-goal prompt.
+
 Use this as the next `/goal` after the failed same-chunk disambiguation T4 smoke:
 
 ```text
@@ -41,7 +43,7 @@ Report what changed, what was verified, what remains next, and the exact criteri
 
 ## Why This Goal
 
-The same-chunk disambiguation rows were locally valid and GPU-runnable, but they regressed the exact-hit result to 0/8. The next useful work is understanding and improving the local signal, not spending another T4 run on the same row shape or changing training knobs.
+The same-chunk disambiguation rows were locally valid and GPU-runnable, but they regressed the exact-hit result to 0/8. This goal added local exact-miss diagnostics that classify the 2026-06-16 trained-answer failure as invented numeric/time/identifier values. The next useful work should use those diagnostics for a targeted row-signal change, not spend another T4 run on the same row shape or change training knobs.
 
 ## Done Means
 

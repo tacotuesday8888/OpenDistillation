@@ -90,6 +90,7 @@ class FactAnswerScore:
     missing_terms: tuple[str, ...]
     fact_id: str = ""
     label: str = ""
+    value: str = ""
     source_chunk_id: str = ""
     row_style: str = ""
     unscored_reason: str = ""
@@ -127,6 +128,49 @@ class FactOutputScore:
 
 
 @dataclass(frozen=True)
+class FactValueMatch:
+    """Known fact value found in a wrong model answer."""
+
+    fact_id: str
+    label: str
+    value: str
+    source_chunk_id: str
+
+
+@dataclass(frozen=True)
+class FactMissDiagnostic:
+    """Local explanation for one exact fact miss."""
+
+    miss_kind: str
+    question: str
+    answer: str
+    expected_terms: tuple[str, ...]
+    missing_terms: tuple[str, ...]
+    fact_id: str = ""
+    label: str = ""
+    value: str = ""
+    source_chunk_id: str = ""
+    row_style: str = ""
+    value_matches: tuple[FactValueMatch, ...] = ()
+    invented_values: tuple[str, ...] = ()
+    shape_markers: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class FactMissDiagnosticReport:
+    """Summary of local failure patterns for exact fact misses."""
+
+    answer_count: int
+    hit_count: int
+    miss_count: int
+    unscored_count: int
+    items: tuple[FactMissDiagnostic, ...]
+
+    def count(self, miss_kind: str) -> int:
+        return sum(1 for item in self.items if item.miss_kind == miss_kind)
+
+
+@dataclass(frozen=True)
 class FactScoreComparisonItem:
     """One base/trained exact fact outcome."""
 
@@ -141,6 +185,7 @@ class FactScoreComparisonItem:
     outcome: str
     fact_id: str = ""
     label: str = ""
+    value: str = ""
     source_chunk_id: str = ""
     row_style: str = ""
 
@@ -573,6 +618,7 @@ def score_fact_answer(
     question: str = "",
     fact_id: str = "",
     label: str = "",
+    value: str = "",
     source_chunk_id: str = "",
     row_style: str = "",
 ) -> FactAnswerScore:
@@ -587,6 +633,7 @@ def score_fact_answer(
         missing_terms=_missing_terms(answer, terms) if terms else (),
         fact_id=fact_id,
         label=label,
+        value=value,
         source_chunk_id=source_chunk_id,
         row_style=row_style,
         unscored_reason=unscored_reason,
@@ -605,6 +652,7 @@ def score_fact_outputs(outputs: Iterable[Mapping[str, object]]) -> FactOutputSco
                 question=str(output.get("question", "")),
                 fact_id=str(output.get("fact_id", "")),
                 label=str(output.get("label", "")),
+                value=str(output.get("value", "")),
                 source_chunk_id=str(output.get("source_chunk_id", "")),
                 row_style=str(output.get("row_style", "")),
             )
@@ -634,11 +682,87 @@ def compare_fact_scores(base_score: FactOutputScore, trained_score: FactOutputSc
                 outcome=_fact_score_outcome(base_item, trained_item),
                 fact_id=trained_item.fact_id or base_item.fact_id,
                 label=trained_item.label or base_item.label,
+                value=trained_item.value or base_item.value,
                 source_chunk_id=trained_item.source_chunk_id or base_item.source_chunk_id,
                 row_style=trained_item.row_style or base_item.row_style,
             )
         )
     return FactScoreComparison(items=tuple(items))
+
+
+def diagnose_fact_misses(
+    score: FactOutputScore,
+    facts: Iterable[FactCard],
+) -> FactMissDiagnosticReport:
+    """Explain exact fact misses without changing the exact-hit score."""
+
+    fact_tuple = tuple(facts)
+    items = tuple(
+        diagnostic
+        for item in score.items
+        if (diagnostic := _diagnose_fact_answer_miss(item, facts=fact_tuple)) is not None
+    )
+    return FactMissDiagnosticReport(
+        answer_count=score.answer_count,
+        hit_count=score.hit_count,
+        miss_count=score.miss_count,
+        unscored_count=score.unscored_count,
+        items=items,
+    )
+
+
+def format_fact_miss_diagnostic_report(
+    report: FactMissDiagnosticReport,
+    *,
+    max_examples: int = 8,
+) -> list[str]:
+    """Format local exact-miss diagnostics in plain language."""
+
+    if max_examples < 1:
+        raise ValueError("max_examples must be at least 1")
+
+    lines = [
+        "Fact miss diagnostic report",
+        (
+            f"Answers checked: {report.answer_count}; exact hits: {report.hit_count}; "
+            f"exact misses: {report.miss_count}; unscored: {report.unscored_count}"
+        ),
+        (
+            "Miss patterns: "
+            f"same-chunk value confusion {report.count('same_chunk_value_confusion')}, "
+            f"known value confusion {report.count('known_value_confusion')}, "
+            f"invented numeric/time/identifier value {report.count('invented_numeric_time_identifier_value')}, "
+            f"label echo {report.count('label_echo')}, "
+            f"answer shape without fact {report.count('answer_shape_without_fact')}, "
+            f"generic miss {report.count('generic_miss')}"
+        ),
+        "Diagnostics explain wrong answers; they do not give credit unless exact expected terms are present.",
+    ]
+    if report.count("invented_numeric_time_identifier_value"):
+        lines.append("Invented-value warning: at least one answer gave a plausible-looking value that is not in the fact ledger.")
+    if report.count("same_chunk_value_confusion") or report.count("known_value_confusion"):
+        lines.append("Known-value warning: at least one answer used a real note value for the wrong label.")
+    if not report.items:
+        if report.unscored_count:
+            lines.append("No scored misses were available for diagnosis because expected terms were missing.")
+        else:
+            lines.append("No exact misses to diagnose.")
+        return lines
+
+    for item in report.items[:max_examples]:
+        lines.append(f"Miss example: {_fact_miss_label(item)} | {item.miss_kind}")
+        if item.expected_terms:
+            lines.append("  expected: " + ", ".join(item.expected_terms))
+        lines.append(f"  model answered: {item.answer}")
+        if item.value_matches:
+            matched = ", ".join(f"{match.value} ({match.label})" for match in item.value_matches)
+            lines.append("  wrong known value(s): " + matched)
+        if item.invented_values:
+            lines.append("  invented value candidate(s): " + ", ".join(item.invented_values))
+        if item.shape_markers:
+            lines.append("  answer-shape marker(s): " + ", ".join(item.shape_markers))
+        lines.append("  why this matters: changed wording is still failed learning when the exact note value is missing.")
+    return lines
 
 
 def format_fact_score_report(
@@ -779,10 +903,11 @@ def format_fact_readiness_report(report: FactReadinessReport) -> list[str]:
         f"SFT preview: {report.sft_preview_row_count} exact prompt/completion row(s)",
     ]
     if report.ready_for_gpu_smoke:
-        lines.append("Verdict: ready for one bounded GPU training smoke")
+        lines.append("Verdict: local data split is structurally ready; model quality is still unproven")
         lines.append(
             "Reason: local data checks pass, the training rows repeat each Label: value fact, "
-            "and contrast rows distinguish nearby labels; this does not claim model quality."
+            "and contrast rows distinguish nearby labels; this does not claim model quality "
+            "or by itself justify another GPU run."
         )
         return lines
 
@@ -1172,10 +1297,192 @@ def _fact_score_label(item: FactScoreComparisonItem) -> str:
     return " | ".join(parts) if parts else item.question
 
 
+def _diagnose_fact_answer_miss(
+    item: FactAnswerScore,
+    *,
+    facts: Sequence[FactCard],
+) -> FactMissDiagnostic | None:
+    if item.hit:
+        return None
+    if not item.scored:
+        return None
+
+    target_fact = _target_fact_for_score(item, facts)
+    value_matches = _known_value_matches(item.answer, facts=facts, target_fact=target_fact)
+    same_chunk_matches = tuple(
+        match
+        for match in value_matches
+        if target_fact is not None and match.source_chunk_id == target_fact.source_chunk_id
+    )
+    invented_values = _invented_value_candidates(item.answer, facts=facts)
+    shape_markers = _answer_shape_markers(item.answer)
+    label_echo = _answer_echoes_label(item.answer, item.label or (target_fact.label if target_fact else ""))
+
+    if same_chunk_matches:
+        miss_kind = "same_chunk_value_confusion"
+        selected_value_matches = same_chunk_matches
+    elif value_matches:
+        miss_kind = "known_value_confusion"
+        selected_value_matches = value_matches
+    elif invented_values:
+        miss_kind = "invented_numeric_time_identifier_value"
+        selected_value_matches = ()
+    elif label_echo:
+        miss_kind = "label_echo"
+        selected_value_matches = ()
+    elif shape_markers:
+        miss_kind = "answer_shape_without_fact"
+        selected_value_matches = ()
+    else:
+        miss_kind = "generic_miss"
+        selected_value_matches = ()
+
+    return FactMissDiagnostic(
+        miss_kind=miss_kind,
+        question=item.question,
+        answer=item.answer,
+        expected_terms=item.expected_terms,
+        missing_terms=item.missing_terms,
+        fact_id=item.fact_id or (target_fact.fact_id if target_fact else ""),
+        label=item.label or (target_fact.label if target_fact else ""),
+        value=item.value or (target_fact.value if target_fact else ""),
+        source_chunk_id=item.source_chunk_id or (target_fact.source_chunk_id if target_fact else ""),
+        row_style=item.row_style,
+        value_matches=selected_value_matches,
+        invented_values=invented_values if miss_kind == "invented_numeric_time_identifier_value" else (),
+        shape_markers=shape_markers,
+    )
+
+
+def _target_fact_for_score(item: FactAnswerScore, facts: Sequence[FactCard]) -> FactCard | None:
+    if item.fact_id:
+        for fact in facts:
+            if fact.fact_id == item.fact_id:
+                return fact
+    expected_terms = set(item.expected_terms)
+    label = _normalize_fact_text(item.label)
+    value = item.value.strip()
+    for fact in facts:
+        if value and fact.value == value:
+            return fact
+        if label and _normalize_fact_text(fact.label) == label and any(term in fact.expected_terms for term in expected_terms):
+            return fact
+    return None
+
+
+def _known_value_matches(
+    answer: str,
+    *,
+    facts: Sequence[FactCard],
+    target_fact: FactCard | None,
+) -> tuple[FactValueMatch, ...]:
+    answer_tokens = _text_tokens(answer)
+    matches: list[FactValueMatch] = []
+    seen_values: set[str] = set()
+    for fact in facts:
+        if target_fact is not None and fact.fact_id == target_fact.fact_id:
+            continue
+        normalized_value = _normalize_fact_text(fact.value)
+        if normalized_value in seen_values:
+            continue
+        if not _answer_contains_expected_term(answer, answer_tokens, fact.value):
+            continue
+        seen_values.add(normalized_value)
+        matches.append(
+            FactValueMatch(
+                fact_id=fact.fact_id,
+                label=fact.label,
+                value=fact.value,
+                source_chunk_id=fact.source_chunk_id,
+            )
+        )
+    return tuple(matches)
+
+
+def _invented_value_candidates(answer: str, *, facts: Sequence[FactCard]) -> tuple[str, ...]:
+    candidates: list[str] = []
+    for candidate in (*_exact_answer_candidates(answer), *_numeric_time_identifier_candidates(answer)):
+        clean_candidate = _clean_invented_candidate(candidate)
+        if not clean_candidate or clean_candidate in candidates:
+            continue
+        if _candidate_is_known_fact_value(clean_candidate, facts):
+            continue
+        if _candidate_looks_like_plausible_value(clean_candidate):
+            candidates.append(clean_candidate)
+    return tuple(candidates)
+
+
+def _exact_answer_candidates(answer: str) -> tuple[str, ...]:
+    candidates = []
+    for match in re.finditer(r"exact answer:\s*([^.\n]+)", answer, flags=re.IGNORECASE):
+        candidates.append(match.group(1))
+    return tuple(candidates)
+
+
+def _numeric_time_identifier_candidates(answer: str) -> tuple[str, ...]:
+    patterns = (
+        r"\b\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?\b",
+        r"\b[A-Za-z]+(?:-[A-Za-z0-9]+)+\b",
+        r"\b[A-Za-z]*\d+[A-Za-z0-9-]*\b",
+        r"\bversion\s+\d+\b",
+    )
+    candidates: list[str] = []
+    for pattern in patterns:
+        candidates.extend(match.group(0) for match in re.finditer(pattern, answer))
+    return tuple(candidates)
+
+
+def _clean_invented_candidate(candidate: str) -> str:
+    return candidate.strip().strip("\"'`*_ ").rstrip(".,;:!?")
+
+
+def _candidate_is_known_fact_value(candidate: str, facts: Sequence[FactCard]) -> bool:
+    candidate_tokens = _text_tokens(candidate)
+    return any(_answer_contains_expected_term(candidate, candidate_tokens, fact.value) for fact in facts)
+
+
+def _candidate_looks_like_plausible_value(candidate: str) -> bool:
+    if len(candidate) < 2:
+        return False
+    if re.search(r"\d", candidate):
+        return True
+    if "-" in candidate and re.search(r"[A-Za-z]", candidate):
+        return True
+    return False
+
+
+def _answer_shape_markers(answer: str) -> tuple[str, ...]:
+    markers: list[str] = []
+    checks = (
+        ("Exact answer:", r"\bexact answer\s*:"),
+        ("Label: value", r"\b[A-Za-z][A-Za-z ]{1,40}\s*:\s*[^.\n]+"),
+        ("belongs to", r"\bbelongs to\b"),
+        ("not <label>", r"\bnot\b"),
+    )
+    for label, pattern in checks:
+        if re.search(pattern, answer, flags=re.IGNORECASE):
+            markers.append(label)
+    return tuple(markers)
+
+
+def _answer_echoes_label(answer: str, label: str) -> bool:
+    normalized_label = _normalize_fact_text(label)
+    if not normalized_label:
+        return False
+    return _contains_token_phrase(_text_tokens(answer), _text_tokens(normalized_label))
+
+
+def _fact_miss_label(item: FactMissDiagnostic) -> str:
+    parts = [part for part in (item.fact_id, item.label or item.question, item.source_chunk_id) if part]
+    return " | ".join(parts) if parts else item.question
+
+
 __all__ = [
     "DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT",
     "FactAnswerScore",
     "FactCard",
+    "FactMissDiagnostic",
+    "FactMissDiagnosticReport",
     "FactOutputScore",
     "FactQualityGateReport",
     "FactQualityIssue",
@@ -1183,13 +1490,17 @@ __all__ = [
     "FactScoreComparison",
     "FactScoreComparisonItem",
     "FactTrainEvalSplit",
+    "FactValueMatch",
     "analyze_fact_quality_gate",
     "analyze_fact_readiness",
     "build_fact_train_eval_split",
     "compare_fact_scores",
+    "diagnose_fact_misses",
     "extract_fact_ledger",
+    "format_fact_miss_diagnostic_report",
     "format_fact_quality_report",
     "format_fact_readiness_report",
+    "format_fact_score_report",
     "score_fact_answer",
     "score_fact_outputs",
 ]

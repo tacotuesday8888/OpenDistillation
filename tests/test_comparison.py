@@ -612,7 +612,9 @@ class ComparisonPathTests(unittest.TestCase):
                         "source_chunk_id": "chunk-0001",
                         "fact_id": "fact-0001",
                         "label": "Project codename",
+                        "value": "Glass Harbor",
                         "expected_terms": ["base answer"],
+                        "row_id": "eval-000001",
                         "row_style": "held_out_direct_recall",
                     },
                     {
@@ -621,7 +623,9 @@ class ComparisonPathTests(unittest.TestCase):
                         "source_chunk_id": "chunk-0001",
                         "fact_id": "fact-0002",
                         "label": "Demo owner alias",
+                        "value": "Mira Vale",
                         "expected_terms": ["Mira Vale"],
+                        "row_id": "eval-000002",
                         "row_style": "held_out_direct_recall",
                     },
                     {
@@ -630,7 +634,9 @@ class ComparisonPathTests(unittest.TestCase):
                         "source_chunk_id": "chunk-0002",
                         "fact_id": "fact-0003",
                         "label": "Notebook signal phrase",
+                        "value": "copper-lantern-47",
                         "expected_terms": ["trained answer"],
+                        "row_id": "eval-000003",
                         "row_style": "held_out_direct_recall",
                     },
                 ],
@@ -661,6 +667,8 @@ class ComparisonPathTests(unittest.TestCase):
 
         self.assertEqual([item.fact_id for item in result.items], ["fact-0001", "fact-0003"])
         self.assertEqual([item.expected_terms for item in result.items], [("base answer",), ("trained answer",)])
+        self.assertEqual([item.row_id for item in result.items], ["eval-000001", "eval-000003"])
+        self.assertEqual([item.value for item in result.items], ["Glass Harbor", "copper-lantern-47"])
 
         trained_score = score_fact_outputs(result.fact_outputs("trained"))
 
@@ -668,6 +676,9 @@ class ComparisonPathTests(unittest.TestCase):
         self.assertEqual(trained_score.hit_count, 1)
         self.assertFalse(trained_score.items[0].hit)
         self.assertTrue(trained_score.items[1].hit)
+        trained_outputs = result.fact_outputs("trained")
+        self.assertEqual([output["row_id"] for output in trained_outputs], ["eval-000001", "eval-000003"])
+        self.assertEqual([output["value"] for output in trained_outputs], ["Glass Harbor", "copper-lantern-47"])
 
 
 if __name__ == "__main__":
