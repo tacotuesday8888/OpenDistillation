@@ -202,7 +202,7 @@ The optional training and comparison wiring is verified with two multi-question 
 
 The next bounded quality smoke used the fact-rich sample notes, 24 mock rows, the four held-out sample-fact questions, and a 30-step optional LoRA run through `google-colab-cli` on 2026-06-06. It changed all four trained-adapter answers, but the trained answers still hit 0/4 expected facts and were wrong or hallucinated.
 
-The latest bounded GPU evidence used the same-chunk disambiguation fact-ledger split through `google-colab-cli` on 2026-06-16. It printed a passing local data gate first: 8 facts, 48 fact-ledger train rows, 16 disambiguation rows, 8 held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a visible SFT preview. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers but scored 0/8 exact fact hits, below the previous best 1/8. Local exact-miss diagnostics now classify that failed trained-answer pattern as invented numeric/time/identifier values. The current flow responds with a local anti-invention row-signal change: replace the risky swapped-value correction row with a known-values-only same-chunk row that lists real note values and warns against invented number/time/identifier/name/color substitutes. The demo should not claim useful note learning yet; if answers change but facts are still missed, record failure.
+The latest bounded GPU evidence used the same-chunk disambiguation fact-ledger split through `google-colab-cli` on 2026-06-16. It printed a passing local data gate first: 8 facts, 48 fact-ledger train rows, 16 disambiguation rows, 8 held-out eval rows, zero exact train/eval leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a visible SFT preview. It then trained a 30-step LoRA adapter on Colab T4. The adapter changed all 8 held-out answers but scored 0/8 exact fact hits, below the previous best 1/8. Local exact-miss diagnostics now classify that failed trained-answer pattern as invented numeric/time/identifier values. The current flow responds with a local anti-invention row-signal change: replace the risky swapped-value correction row with a known-values-only same-chunk row that lists real note values and warns against invented number/time/identifier/name/color substitutes. Before the follow-up T4 smoke, run `scripts/prepare_anti_invention_smoke.py` and require its manifest to show 8 facts, 48 train rows, 8 disambiguation rows, 8 known-values-only rows, zero leakage, six SFT preview rows, and a pass condition of at least 2/8 trained exact hits. The demo should not claim useful note learning yet; if answers change but facts are still missed, record failure.
 
 The checklist records:
 
@@ -270,7 +270,7 @@ Included now:
 
 Planned later in v0:
 
-- Use exact-miss diagnostics to improve the local fact-ledger learning signal after the 2026-06-16 disambiguation T4 run changed answers but hit 0/8 exact facts.
+- Run the manifest-gated anti-invention T4 smoke and record whether trained exact fact hits beat the previous best 1/8.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance, after the notes-model quality loop shows useful note-grounded answers.
 

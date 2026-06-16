@@ -6,7 +6,7 @@
 
 ## Current State
 
-OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, deterministic dataset quality reporting, an opt-in local real teacher path, fact-ledger train/eval checks, bounded optional training and comparison entry points, and local exact-miss diagnostics. The latest GPU learning evidence failed: the 2026-06-16 same-chunk disambiguation fact-ledger Colab T4 smoke changed all 8 trained-adapter answers but scored base 0/8 and trained 0/8 exact held-out facts, below the previous best 1/8. The current flow now targets that diagnosed invented-value failure with a local anti-invention row-signal change before any new GPU run.
+OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, deterministic dataset quality reporting, an opt-in local real teacher path, fact-ledger train/eval checks, bounded optional training and comparison entry points, local exact-miss diagnostics, and an internal anti-invention T4 smoke preflight manifest. The latest GPU learning evidence failed: the 2026-06-16 same-chunk disambiguation fact-ledger Colab T4 smoke changed all 8 trained-adapter answers but scored base 0/8 and trained 0/8 exact held-out facts, below the previous best 1/8. The current flow now targets that diagnosed invented-value failure with a verified local anti-invention row-signal contract before the next GPU run.
 
 The repo now contains:
 
@@ -19,7 +19,8 @@ The repo now contains:
 - Optional `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL `SFTTrainer` + PEFT LoRA training engine for `Qwen/Qwen2.5-0.5B-Instruct`, skipped by default in the notebook.
 - Optional multi-question before/after quality report with exact-miss diagnostics, skipped by default in the notebook.
-- Fact-ledger quality gate with 8 sample facts, 48 train rows in the current flow, 8 held-out eval rows, 16 same-chunk contrast rows, leakage checks, exact expected-term checks, anti-invention known-values coverage, and exact fact-hit scoring.
+- Fact-ledger quality gate with 8 sample facts, 48 train rows in the current flow, 8 held-out eval rows, 8 same-chunk disambiguation rows, 8 known-values-only anti-invention rows, leakage checks, exact expected-term checks, anti-invention known-values coverage, and exact fact-hit scoring.
+- Internal anti-invention smoke preflight script and manifest builder that pins the next sample-notes T4 contract before GPU time.
 - Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
 - Manual Colab GPU smoke-test checklist.
 - Smoke-test results file recording the first real Colab T4 blockers, the recovered-runtime pass, one clean GitHub-opened T4 training/comparison pass, one real-teacher end-to-end T4 verification, the uploaded-notes rehearsals, the earlier multi-question quality smokes, the failed 0/8 fact-ledger T4 smokes, the weak 1/8 six-row label/value T4 smoke, and the failed 0/8 same-chunk disambiguation T4 smoke.
@@ -45,9 +46,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 ## Next Recommended Work
 
-Use `docs/next-goal-prompt.md`.
-
-The next task is to verify and finish the targeted local anti-invention row-signal change, not another GPU evidence run. The current flow replaces the risky swapped-value correction row with a known-values-only same-chunk row that lists real note values and warns against invented number/time/identifier/name/color substitutes. Do not run another T4 smoke until the local data/eval signal is verified and has a concrete, testable reason to beat the previous best 1/8.
+The next task is one bounded anti-invention Colab T4 smoke using the preflight manifest from `scripts/prepare_anti_invention_smoke.py`. The run should use the same 30-step TRL/PEFT LoRA setup and sample notes contract, then record whether trained exact held-out fact hits reach at least 2/8. If trained answers change but exact hits stay at 0/8 or 1/8, record that as failed learning, not progress.
 
 ## Important Guardrails
 
