@@ -88,13 +88,20 @@ class ExperimentManifestTests(unittest.TestCase):
         self.assertEqual(comparison["questions"][0]["expected_terms"], ["Glass Harbor"])
 
         quality_rule = manifest["quality_rule"]
-        self.assertEqual(quality_rule["previous_best_trained_exact_hits"], 1)
+        self.assertEqual(quality_rule["previous_best_trained_exact_hits"], 2)
         self.assertEqual(quality_rule["required_trained_exact_hits"], ANTI_INVENTION_REQUIRED_EXACT_HITS)
         self.assertGreater(
             quality_rule["required_trained_exact_hits"],
             quality_rule["previous_best_trained_exact_hits"],
         )
+        self.assertEqual(quality_rule["previous_invented_value_misses"], 6)
+        self.assertEqual(quality_rule["maximum_invented_value_misses"], 5)
+        self.assertLess(
+            quality_rule["maximum_invented_value_misses"],
+            quality_rule["previous_invented_value_misses"],
+        )
         self.assertIn("Changed answers", quality_rule["failure_rule"])
+        self.assertIn("invented-value misses do not decrease", quality_rule["failure_rule"])
         self.assertEqual(len(manifest["manifest_sha256"]), 64)
 
         report_lines = format_anti_invention_smoke_report(manifest)
@@ -113,6 +120,8 @@ class ExperimentManifestTests(unittest.TestCase):
         stale_manifest["readiness"]["ready_for_gpu_smoke"] = False
         stale_manifest["readiness"]["known_values_only_train_row_count"] = 0
         stale_manifest["comparison"]["questions"][0]["expected_terms"] = []
+        stale_manifest["quality_rule"]["previous_best_trained_exact_hits"] = 1
+        stale_manifest["quality_rule"]["previous_invented_value_misses"] = 8
 
         report = validate_anti_invention_smoke_manifest(stale_manifest)
 
@@ -120,6 +129,8 @@ class ExperimentManifestTests(unittest.TestCase):
         self.assertIn("readiness report is not ready for GPU smoke", report.errors)
         self.assertIn("known_values_only_train_row_count expected 8, got 0", report.errors)
         self.assertIn("comparison question 1 is missing fact identity or expected terms", report.errors)
+        self.assertIn("quality rule previous best exact-hit score is stale", report.errors)
+        self.assertIn("quality rule previous invented-value miss count is stale", report.errors)
 
     def test_manifest_validation_warns_when_repo_state_is_dirty(self):
         repo_root = Path(__file__).resolve().parents[1]

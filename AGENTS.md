@@ -18,7 +18,7 @@ Model quality comes before GitHub polish, product packaging, or broad platform f
 
 The repo has a Colab-first prototype. The wiring works: notes loading, chunking, dataset validation, mock teacher rows, optional Hugging Face teacher path, optional TRL/PEFT LoRA training, and before/after comparison have all been exercised.
 
-The latest meaningful GPU quality result is a failure: a bounded Colab T4 smoke on the same-chunk label/value disambiguation rows trained a 30-step adapter on 48 fact-ledger rows. It changed every answer but scored base `0/8` and trained `0/8` exact held-out facts, below the previous best trained result of `1/8`. Follow-up local diagnostics now classify that trained-answer failure as invented numeric/time/identifier values such as `10`, `104`, and `1047`, with exact facts still missed. The current anti-invention row signal uses that diagnosis by replacing the risky swapped-value correction row with a known-values-only same-chunk row that lists real note values and warns against invented number/time/identifier/name/color substitutes. Before the next GPU run, use `scripts/prepare_anti_invention_smoke.py` to verify the exact local contract: 8 facts, 48 train rows, 8 held-out eval rows, 8 disambiguation rows, 8 known-values-only rows, zero leakage, six SFT preview rows, and a pass rule requiring at least `2/8` trained exact hits.
+The latest meaningful GPU quality result is a bounded pass, not a model-quality breakthrough: a 2026-06-16 manifest-gated anti-invention Colab T4 smoke trained a 30-step adapter on 48 fact-ledger rows and improved exact held-out fact hits from base `0/8` to trained `2/8`, beating the previous best trained result of `1/8`. It met the predeclared pass rule exactly. It is still weak evidence because the adapter missed `6/8` facts, and every miss was still classified as an invented numeric/time/identifier value. Treat this as evidence that the anti-invention row signal helped a little, not proof that the small model learned the notes usefully.
 
 The current product-core design lives under `docs/superpowers/specs/`.
 
@@ -142,4 +142,4 @@ If verification cannot run, state exactly what was not verified and why.
 
 ## Near-Term Priority
 
-The next work should run one bounded, manifest-gated anti-invention Colab T4 smoke and record the result honestly. Do not change training knobs, add export, or build product surfaces before the notes-model quality loop shows stronger exact held-out fact improvement.
+The next work should diagnose the six remaining invented-value misses locally before another GPU run. Do not rerun the same smoke, change training knobs, add export, or build product surfaces until the data signal/reporting has a concrete reason to improve beyond `2/8` exact held-out fact hits and reduce invented number/time/identifier/name/color answers. The future preflight gate now requires at least `3/8` trained exact hits and at most `5/8` invented-value misses.

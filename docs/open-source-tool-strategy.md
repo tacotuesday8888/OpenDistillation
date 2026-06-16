@@ -9,7 +9,7 @@ Checked on 2026-06-08. The rule for v0 is simple: use proven open-source ML tool
 - Hugging Face Datasets inside the optional training engine, where rows become a trainer-ready in-memory dataset.
 - TRL `SFTTrainer` and PEFT LoRA for opt-in supervised fine-tuning. This keeps training on a proven path instead of custom GPU/trainer code.
 
-The bounded Colab T4 fact-ledger smokes have used the standard open-source stack already chosen for v0: Colab's GPU `torch`, Transformers, Datasets, TRL, PEFT, and Accelerate. The 2026-06-15 six-row run reached trained 1/8 exact held-out fact hits, but the 2026-06-16 same-chunk disambiguation run used `torch` 2.11.0+cu128, Transformers 4.57.6, Datasets 5.0.0, TRL 0.29.1, PEFT 0.18.1, and Accelerate 1.14.0 and regressed to trained 0/8 exact hits. The result points to a learning-signal problem, not a need for custom GPU code.
+The bounded Colab T4 fact-ledger smokes have used the standard open-source stack already chosen for v0: Colab's GPU `torch`, Transformers, Datasets, TRL, PEFT, and Accelerate. The 2026-06-15 six-row run reached trained 1/8 exact held-out fact hits, the 2026-06-16 same-chunk disambiguation run regressed to trained 0/8 exact hits, and the later 2026-06-16 manifest-gated anti-invention run used `torch` 2.11.0+cu128, Transformers 4.57.6, Datasets 5.0.0, TRL 0.29.1, PEFT 0.18.1, and Accelerate 1.14.0 to reach trained 2/8 exact hits. That is a narrow positive signal, but the remaining 6/8 misses were still invented-value failures, so the next work remains product-layer data diagnosis rather than custom GPU code. The future gate is at least 3/8 exact hits and at most 5/8 invented-value misses.
 
 Follow-up doc checks on 2026-06-08 found no reason to replace the training stack. Current TRL docs support conversational prompt/completion datasets and completion-only loss for prompt/completion SFT. Current PEFT docs confirm that `PeftModel.from_pretrained()` may modify the passed base model in place and that `disable_adapter()` is the supported way to run base-model inference. OpenDistillation's next fix should therefore stay in the product layer: better learning-signal diagnosis and local data/eval design before another GPU run.
 
@@ -27,7 +27,7 @@ Follow-up doc checks on 2026-06-08 found no reason to replace the training stack
 - No new dependency for fact extraction, leakage checks, or exact-term scoring in this goal.
 - No custom optimizer, custom LoRA implementation, custom tokenizer, custom trainer, or GPU memory manager.
 - No SaaS, backend, vector database, broad benchmark suite, export path, or multi-profile system while the notes-model quality loop is still unproven.
-- No Unsloth migration yet. Faster training would not fix that the current bounded fact-ledger run changed answers while missing every exact held-out fact.
+- No Unsloth migration yet. Faster training would not fix that the current bounded fact-ledger run still missed most exact held-out facts and invented values for the misses.
 
 ## Sources Checked
 

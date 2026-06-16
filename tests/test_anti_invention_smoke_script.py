@@ -49,7 +49,8 @@ class AntiInventionSmokeScriptTests(unittest.TestCase):
         self.assertEqual(marker["train_rows"], 48)
         self.assertEqual(marker["eval_rows"], 8)
         self.assertEqual(marker["known_values_only_rows"], 8)
-        self.assertEqual(marker["required_trained_exact_hits"], 2)
+        self.assertEqual(marker["required_trained_exact_hits"], 3)
+        self.assertEqual(marker["maximum_invented_value_misses"], 5)
 
         self.assertTrue(manifest["validation"]["ready"])
         self.assertEqual(manifest["comparison"]["question_count"], 8)

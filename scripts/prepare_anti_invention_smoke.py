@@ -46,6 +46,7 @@ def main(argv: list[str] | None = None) -> int:
         "eval_rows": manifest["data"]["eval_row_count"],
         "known_values_only_rows": manifest["readiness"]["known_values_only_train_row_count"],
         "required_trained_exact_hits": manifest["quality_rule"]["required_trained_exact_hits"],
+        "maximum_invented_value_misses": manifest["quality_rule"]["maximum_invented_value_misses"],
     }
     print("OD_ANTI_INVENTION_SMOKE_MANIFEST " + json.dumps(marker, sort_keys=True))
 

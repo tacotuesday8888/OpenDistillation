@@ -24,6 +24,8 @@ The six-row label/value fact-ledger experiment is **verified in a Colab CLI T4 t
 
 The same-chunk label/value disambiguation experiment is **verified in a Colab CLI T4 training run** on 2026-06-16. The run used commit `f8090fcb533159a9e22668c6b42f9f5f9a61b0b3`, 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 16 disambiguation rows, zero exact leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a visible SFT prompt/completion preview. The 30-step LoRA adapter changed all 8 answers but scored 0/8 exact held-out fact hits, worse than the previous best trained score of 1/8. Final judgment: **failed exact-hit rule / not useful learned note memory** because changed answers still missed every checked fact.
 
+The manifest-gated anti-invention experiment is **verified in a Colab CLI T4 training run** on 2026-06-16. The run used commit `633d3656a96c6c1085f19a95c0b20d0de1ee26db`, 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 8 same-chunk disambiguation rows, 8 known-values-only anti-invention rows, zero exact leaks, zero near-duplicate/token-overlap leaks, zero missing expected terms, and a visible SFT prompt/completion preview. The 30-step LoRA adapter changed all 8 answers and improved exact held-out fact hits from base 0/8 to trained 2/8. Final judgment: **passed the narrow exact-hit gate but still weak** because the run met the 2/8 threshold exactly, missed 6/8 facts, and every miss was still an invented-value failure.
+
 An earlier 2026-06-03 attempt failed before model execution because Chrome/Colab control timed out. That older result is kept below as a tooling note, but it is superseded by the successful real-teacher run recorded here.
 
 The clean run passed after three fixes were pushed:
@@ -33,6 +35,160 @@ The clean run passed after three fixes were pushed:
 - Load `examples/sample-notes.md` by default in Colab so the first smoke path does not block on a file picker.
 
 The clean run used the GitHub notebook at `main`, a fresh T4 runtime, `INSTALL_TRAINING_DEPS = True`, `USE_SAMPLE_NOTES = True`, and `RUN_TRAINING = True`. It installed the bounded Hugging Face package set without upgrading `torch`, loaded the sample notes, created mock QA examples, trained a LoRA adapter, and printed before/after answers.
+
+## Colab GPU Quality Smoke: Anti-Invention Fact-Ledger 30-Step CLI Run
+
+Date: 2026-06-16
+
+Status: **ran on Colab T4 / exact fact hits improved from 0/8 to 2/8**.
+
+Verified path:
+
+```text
+fact-rich sample-notes.md -> six-row label/value fact ledger with same-chunk disambiguation plus known-values-only anti-invention rows -> 48 fact-ledger train rows -> 30-step Qwen2.5-0.5B LoRA adapter -> 8 held-out fact-ledger eval questions
+```
+
+CLI execution:
+
+```text
+Command: /Users/langqi/.local/bin/colab --auth adc run --session anti-invention-t4-smoke --gpu T4 --timeout 3600 /private/tmp/opendistillation_anti_invention_t4_smoke.py
+Session: anti-invention-t4-smoke
+Git commit used by Colab clone: 633d3656a96c6c1085f19a95c0b20d0de1ee26db
+Runtime: Colab T4 GPU
+GPU: Tesla T4
+CUDA available: true
+python: 3.12.13
+torch: 2.11.0+cu128
+transformers: 4.57.6
+datasets: 5.0.0
+trl: 0.29.1
+peft: 0.18.1
+accelerate: 1.14.0
+```
+
+Fact-ledger quality evidence before training:
+
+```text
+Input file: examples/sample-notes.md
+Facts: 8
+Mock teacher rows: 24
+Fact-ledger train rows: 48
+Held-out eval rows: 8
+Disambiguation rows: 8
+Known-values-only anti-invention rows: 8
+Train fact coverage: 8/8
+Eval fact coverage: 8/8
+Exact train/eval leaks: 0
+Near-duplicate/token-overlap train/eval leaks: 0
+Missing expected terms: 0
+Quality gate passed: true
+Readiness gate passed: true
+Training source: fact-ledger train rows
+Comparison source: held-out fact-ledger eval questions
+SFT preview printed: yes, 6 exact prompt/completion rows
+Manifest SHA: 2a0288f351732c1f3bec271dd176e7f1e7e9130aa41df9ae603bf9d0b3d32e64
+Source SHA: a1a7bf40963685f5f3649a3fe51abcdf2c37e08aaab232b92df002087ddf84f8
+Questions SHA: 401209f75af9f803980372644a9a6bb08d084e8beea87e5f7667e1f0e907b683
+```
+
+Training evidence:
+
+```text
+Training ran: true
+Training engine: trl-sfttrainer-peft-lora
+Student model: Qwen/Qwen2.5-0.5B-Instruct
+Max steps: 30
+Adapter path: /content/opendistillation_anti_invention_t4_outputs/notes-lora-anti-invention/adapter
+Adapter exists: true
+Training elapsed runtime: 99.453 seconds
+End-to-end script runtime: 166.303 seconds
+```
+
+Comparison evidence:
+
+```text
+Comparison ran: true
+Comparison engine: transformers-peft-before-after
+Comparison questions: 8
+Changed answers: 8/8
+Base fact hits: 0/8
+Trained-adapter fact hits: 2/8
+Hit delta versus base: +2
+Previous best trained exact fact hits: 1/8
+Learned: 2
+Missed: 6
+Unchanged: 0
+Worse: 0
+Unscored: 0
+Automatic judgment versus base: better
+Quality-rule result: passed because trained exact hits reached 2/8, beating the previous best 1/8
+Scoring method: expected terms scored by fact/question metadata identity, not row position
+Final marker: OD_ANTI_INVENTION_SMOKE_RESULT_JSON {"status": "completed", "base_hits": 0, "trained_hits": 2, "changed_answers": 8, "learned": 2, "missed": 6, "unchanged": 0, "worse": 0, "unscored": 0, "passed_quality_rule": true}
+```
+
+Question and answer evidence:
+
+```text
+1. Closed-book check: what exact notes value should be recalled for "project codename"?
+Expected term: Glass Harbor
+Trained adapter answer: Exact answer: Quantum-X-2019-04-30. Project codename: Quantum-X-2019-04-30.
+Expected term hit: base false, trained false
+
+2. Closed-book check: what exact notes value should be recalled for "notebook signal phrase"?
+Expected term: copper-lantern-47
+Trained adapter answer: Exact answer: 10. Notebook signal phrase: 10.
+Expected term hit: base false, trained false
+
+3. Closed-book check: what exact notes value should be recalled for "local runner label"?
+Expected term: llama-harbor-alpha
+Trained adapter answer: Exact answer: 10-24-36. Local runner label: 10-24-36.
+Expected term hit: base false, trained false
+
+4. Closed-book check: what exact notes value should be recalled for "review ritual time"?
+Expected term: 4:17 PM
+Trained adapter answer: Exact answer: 14:00. Review ritual time is 14:00.
+Expected term hit: base false, trained false
+
+5. Closed-book check: what exact notes value should be recalled for "demo owner alias"?
+Expected term: Mira Vale
+Trained adapter answer: Exact answer: Mira Vale. Demo owner alias: Mira Vale.
+Expected term hit: base false, trained true
+
+6. Closed-book check: what exact notes value should be recalled for "safety boundary phrase"?
+Expected term: notes-only-v0
+Trained adapter answer: Exact answer: 10. Safety boundary phrase: 10.
+Expected term hit: base false, trained false
+
+7. Closed-book check: what exact notes value should be recalled for "export placeholder name"?
+Expected term: basalt-arc-29
+Trained adapter answer: Exact answer: "export-async". Export-async is the correct answer to "export placeholder name".
+Expected term hit: base false, trained false
+
+8. Closed-book check: what exact notes value should be recalled for "review ritual color"?
+Expected term: ultramarine
+Trained adapter answer: Exact answer: ultramarine. Review ritual color: ultramarine.
+Expected term hit: base false, trained true
+```
+
+Miss diagnostic evidence:
+
+```text
+invented_numeric_time_identifier_value: 6
+same_chunk_value_confusion: 0
+known_value_confusion: 0
+label_echo: 0
+answer_shape_without_fact: 0
+generic_miss: 0
+```
+
+Interpretation:
+
+- The anti-invention known-values row signal produced the first manifest-gated pass by exact held-out fact count: trained hits improved from 0/8 to 2/8 and beat the previous best 1/8.
+- This is a bounded positive signal, not useful learned note memory. The adapter still missed 6/8 facts, and every miss was still an invented numeric/time/identifier value.
+- Do not rerun the same smoke or change training knobs next. Diagnose why the remaining six misses still invent values, strengthen the data signal only where that diagnosis points, and require the next GPU run to reach at least 3/8 exact hits with at most 5/8 invented-value misses.
+- The exact `worse: 0` count only means no base exact-hit row became a trained miss. Because the base scored 0/8, it is not a broad human-quality guarantee.
+
+Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
 ## Colab GPU Quality Smoke: Same-Chunk Disambiguation Fact-Ledger 30-Step CLI Run
 
@@ -317,7 +473,7 @@ Interpretation:
 - Improved exact held-out fact hits from 0/8 to 1/8. This is a bounded positive learning signal, not proof of general model quality.
 - The six-row signal is better than the previous 0/8 result, but still not good enough: the adapter missed 7/8 facts and confused several labels with other values or invented values.
 - Changed wording alone is still not progress. The useful evidence is only the one exact expected-term hit for `ultramarine`.
-- Historical follow-up: this result led to same-chunk label/value disambiguation rows. The later 2026-06-16 T4 smoke tested that signal and regressed to 0/8 exact hits; follow-up local diagnostics now make the invented-value failure mode visible before another GPU run.
+- Historical follow-up: this result led to same-chunk label/value disambiguation rows. The later 2026-06-16 disambiguation T4 smoke tested that signal and regressed to 0/8 exact hits. Follow-up local diagnostics made the invented-value failure mode visible, and the later anti-invention T4 smoke improved to 2/8 while still missing 6/8 facts.
 
 Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 
@@ -464,7 +620,7 @@ Interpretation:
 - The revised value-first data/eval gate still did its local job: separated train/eval rows, full fact coverage, and zero leakage.
 - The GPU result is still a failed learning result. The adapter changed every answer but missed every exact expected term.
 - A later local audit fixed the reporting risk noted above: exact expected terms now travel with comparison examples by fact/question identity instead of by row position.
-- Historical follow-up: later local work strengthened the label/value training signal, added metadata-safe scoring, and exercised six-row and disambiguation T4 smokes. The current evidence after those reruns still points back to local signal diagnosis, not training-knob changes.
+- Historical follow-up: later local work strengthened the label/value training signal, added metadata-safe scoring, and exercised six-row, disambiguation, and anti-invention T4 smokes. The latest anti-invention smoke reached 2/8 exact hits, but the remaining 6/8 invented-value misses still point back to local signal diagnosis, not training-knob changes.
 
 Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
 

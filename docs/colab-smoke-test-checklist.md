@@ -25,7 +25,7 @@ Use this checklist before marking the optional real teacher, training, or before
 
 ## Anti-Invention Fact Smoke Preflight
 
-Run this CPU-only preflight before the next anti-invention T4 smoke. It writes a manifest to `/tmp` and exits nonzero if the local data no longer matches the exact sample-notes GPU contract.
+Run this CPU-only preflight before any future anti-invention-style T4 smoke. It writes a manifest to `/tmp` and exits nonzero if the local data no longer matches the exact sample-notes GPU contract. The 2026-06-16 anti-invention run already used this gate and reached trained 2/8 exact hits; a repeat run is only useful after a local change explains why the remaining 6/8 misses still invented values.
 
 ```bash
 PYTHONPATH=src python scripts/prepare_anti_invention_smoke.py \
@@ -37,7 +37,7 @@ PYTHONPATH=src python scripts/prepare_anti_invention_smoke.py \
 - [ ] Confirm the marker says `ready: true`.
 - [ ] Confirm the report shows `Facts: 8`, `Train rows: 48`, `Held-out eval rows: 8`, `Disambiguation rows: 8`, and `known-values anti-invention rows: 8`.
 - [ ] Confirm train/eval leakage is `0 exact, 0 near-duplicate`.
-- [ ] Confirm the pass condition says trained exact fact hits must be at least `2/8`, beating the previous best `1/8`.
+- [ ] Confirm the pass condition is stricter than the latest evidence when testing a new signal. The historical anti-invention gate required at least `2/8`, beating the previous best `1/8`; the current future gate requires at least `3/8` exact hits and at most `5/8` invented-value misses.
 - [ ] If the repo is dirty, commit the intended code change before using the manifest as GPU evidence.
 - [ ] If the preflight fails, do not run T4 training. Fix the row contract first and paste the validation errors in `docs/colab-smoke-test-results.md`.
 
@@ -139,5 +139,5 @@ Trained adapter answers:
 Reference-overlap values:
 Exact fact-hit report:
 Fact miss diagnostic report:
-Quality verdict versus previous best 1/8:
+Quality verdict versus latest best trained exact hits 2/8 and invented-value misses 6/8:
 ```
