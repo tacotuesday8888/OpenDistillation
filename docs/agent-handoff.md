@@ -6,7 +6,7 @@
 
 ## Current State
 
-OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, deterministic dataset quality reporting, an opt-in local real teacher path, fact-ledger train/eval checks, and bounded optional training and comparison entry points. The latest GPU learning evidence is still failed: the 2026-06-08 value-first fact-ledger Colab T4 smoke changed all 8 trained-adapter answers, but base and trained answers both hit 0/8 exact facts. This branch now implements the next local data-signal step: six label/value train rows per fact.
+OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, deterministic dataset quality reporting, an opt-in local real teacher path, fact-ledger train/eval checks, and bounded optional training and comparison entry points. The latest GPU learning evidence is still too weak: the 2026-06-15 six-row label/value fact-ledger Colab T4 smoke changed all 8 trained-adapter answers and improved exact held-out facts from 0/8 to 1/8, but still missed 7/8 facts. This branch now implements the next local data-signal step: same-chunk label/value disambiguation rows and readiness reporting for contrast coverage.
 
 The repo now contains:
 
@@ -19,10 +19,10 @@ The repo now contains:
 - Optional `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL `SFTTrainer` + PEFT LoRA training engine for `Qwen/Qwen2.5-0.5B-Instruct`, skipped by default in the notebook.
 - Optional multi-question before/after quality report, skipped by default in the notebook.
-- Fact-ledger quality gate with 8 sample facts, 48 train rows on this branch, 8 held-out eval rows, leakage checks, exact expected-term checks, and exact fact-hit scoring.
+- Fact-ledger quality gate with 8 sample facts, 48 train rows on this branch, 8 held-out eval rows, 16 same-chunk disambiguation rows, leakage checks, exact expected-term checks, and exact fact-hit scoring.
 - Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
 - Manual Colab GPU smoke-test checklist.
-- Smoke-test results file recording the first real Colab T4 blockers, the recovered-runtime pass, one clean GitHub-opened T4 training/comparison pass, one real-teacher end-to-end T4 verification, the uploaded-notes rehearsals, the earlier multi-question quality smokes, and the failed 0/8 fact-ledger T4 smokes.
+- Smoke-test results file recording the first real Colab T4 blockers, the recovered-runtime pass, one clean GitHub-opened T4 training/comparison pass, one real-teacher end-to-end T4 verification, the uploaded-notes rehearsals, the earlier multi-question quality smokes, the failed 0/8 fact-ledger T4 smokes, and the later weak 1/8 six-row label/value T4 smoke.
 - First-demo implementation plan.
 - GitHub issue forms.
 - Starter milestone and issue plan.
@@ -47,7 +47,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 Use `docs/next-goal-prompt.md`.
 
-The next task is one bounded GPU evidence run, not another local data rewrite: use a Colab T4 smoke with 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 30-step `Qwen/Qwen2.5-0.5B-Instruct` LoRA, and exact fact-hit scoring. If the adapter changes answers but still misses the expected facts, record it as failed.
+The next task is one bounded GPU evidence run, not another local data rewrite: use a Colab T4 smoke with 8 facts, 48 fact-ledger train rows, 8 held-out eval rows, 16 disambiguation rows, 30-step `Qwen/Qwen2.5-0.5B-Instruct` LoRA, and exact fact-hit scoring. If the adapter changes answers but still misses the expected facts, record it as failed.
 
 ## Important Guardrails
 
