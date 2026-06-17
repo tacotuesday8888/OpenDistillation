@@ -14,9 +14,11 @@ from opendistillation.fact_ledger import (
     build_fact_train_eval_split,
     extract_fact_ledger,
     FactTrainEvalSplit,
+    analyze_fact_miss_contexts,
     format_fact_score_report,
     format_fact_quality_report,
     format_fact_readiness_report,
+    format_fact_miss_context_report,
     compare_fact_scores,
     diagnose_fact_misses,
     score_fact_answer,
@@ -1035,6 +1037,49 @@ class FactLedgerTests(unittest.TestCase):
         self.assertEqual(report.items[0].value_matches[0].label, "Demo owner alias")
         self.assertEqual(report.items[1].miss_kind, "label_echo")
 
+    def test_fact_miss_diagnostics_do_not_count_label_echo_as_invented_value(self):
+        chunks = [
+            TextChunk(
+                id="chunk-0001",
+                index=0,
+                text="Project codename: Glass Harbor.",
+                char_count=32,
+                word_count=4,
+            )
+        ]
+        facts = extract_fact_ledger(chunks)
+        score = score_fact_outputs(
+            [
+                {
+                    "question": "What is the project codename?",
+                    "answer": "Exact answer: Project Codename.",
+                    "expected_terms": ["Glass Harbor"],
+                    "fact_id": "fact-0001",
+                    "label": "Project codename",
+                    "value": "Glass Harbor",
+                    "source_chunk_id": "chunk-0001",
+                },
+                {
+                    "question": "What is the project codename?",
+                    "answer": "Exact answer: 10. Project codename: 10.",
+                    "expected_terms": ["Glass Harbor"],
+                    "fact_id": "fact-0001",
+                    "label": "Project codename",
+                    "value": "Glass Harbor",
+                    "source_chunk_id": "chunk-0001",
+                },
+            ]
+        )
+
+        report = diagnose_fact_misses(score, facts)
+
+        self.assertEqual(report.count("label_echo"), 1)
+        self.assertEqual(report.count("invented_numeric_time_identifier_value"), 1)
+        self.assertEqual(report.items[0].miss_kind, "label_echo")
+        self.assertEqual(report.items[0].invented_values, ())
+        self.assertEqual(report.items[1].miss_kind, "invented_numeric_time_identifier_value")
+        self.assertEqual(report.items[1].invented_values, ("10",))
+
     def test_fact_miss_diagnostics_skip_hits_and_keep_unscored_separate(self):
         chunks = [
             TextChunk(
@@ -1071,6 +1116,173 @@ class FactLedgerTests(unittest.TestCase):
         self.assertEqual(report.unscored_count, 1)
         self.assertEqual(report.items, ())
         self.assertTrue(any("No scored misses were available" in line for line in lines))
+
+    def test_fact_miss_contexts_capture_latest_anti_invention_six_misses(self):
+        sample_path = Path(__file__).resolve().parents[1] / "examples" / "sample-notes.md"
+        document = load_text_document(sample_path.name, sample_path.read_text(encoding="utf-8"))
+        split = build_fact_train_eval_split(
+            extract_fact_ledger(chunk_text(document.text, max_chars=300))
+        )
+        trained_outputs = [
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "project codename"?',
+                "answer": "Exact answer: Quantum-X-2019-04-30. Project codename: Quantum-X-2019-04-30.",
+                "expected_terms": ["Glass Harbor"],
+                "fact_id": "fact-0001",
+                "label": "Project codename",
+                "value": "Glass Harbor",
+                "source_chunk_id": "chunk-0001",
+                "row_style": "held_out_direct_recall",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "notebook signal phrase"?',
+                "answer": "Exact answer: 10. Notebook signal phrase: 10.",
+                "expected_terms": ["copper-lantern-47"],
+                "fact_id": "fact-0003",
+                "label": "Notebook signal phrase",
+                "value": "copper-lantern-47",
+                "source_chunk_id": "chunk-0002",
+                "row_style": "held_out_direct_recall",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "local runner label"?',
+                "answer": "Exact answer: 10-24-36. Local runner label: 10-24-36.",
+                "expected_terms": ["llama-harbor-alpha"],
+                "fact_id": "fact-0005",
+                "label": "Local runner label",
+                "value": "llama-harbor-alpha",
+                "source_chunk_id": "chunk-0003",
+                "row_style": "held_out_direct_recall",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "review ritual time"?',
+                "answer": "Exact answer: 14:00. Review ritual time is 14:00.",
+                "expected_terms": ["4:17 PM"],
+                "fact_id": "fact-0007",
+                "label": "Review ritual time",
+                "value": "4:17 PM",
+                "source_chunk_id": "chunk-0004",
+                "row_style": "held_out_direct_recall",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "demo owner alias"?',
+                "answer": "Exact answer: Mira Vale. Demo owner alias: Mira Vale.",
+                "expected_terms": ["Mira Vale"],
+                "fact_id": "fact-0002",
+                "label": "Demo owner alias",
+                "value": "Mira Vale",
+                "source_chunk_id": "chunk-0001",
+                "row_style": "held_out_direct_recall",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "safety boundary phrase"?',
+                "answer": "Exact answer: 10. Safety boundary phrase: 10.",
+                "expected_terms": ["notes-only-v0"],
+                "fact_id": "fact-0004",
+                "label": "Safety boundary phrase",
+                "value": "notes-only-v0",
+                "source_chunk_id": "chunk-0002",
+                "row_style": "held_out_direct_recall",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "export placeholder name"?',
+                "answer": 'Exact answer: "export-async". Export-async is the correct answer to "export placeholder name".',
+                "expected_terms": ["basalt-arc-29"],
+                "fact_id": "fact-0006",
+                "label": "Export placeholder name",
+                "value": "basalt-arc-29",
+                "source_chunk_id": "chunk-0003",
+                "row_style": "held_out_direct_recall",
+            },
+            {
+                "question": 'Closed-book check: what exact notes value should be recalled for "review ritual color"?',
+                "answer": "Exact answer: ultramarine. Review ritual color: ultramarine.",
+                "expected_terms": ["ultramarine"],
+                "fact_id": "fact-0008",
+                "label": "Review ritual color",
+                "value": "ultramarine",
+                "source_chunk_id": "chunk-0004",
+                "row_style": "held_out_direct_recall",
+            },
+        ]
+
+        trained_score = score_fact_outputs(trained_outputs)
+        context_report = analyze_fact_miss_contexts(split, trained_score)
+        lines = format_fact_miss_context_report(context_report, max_examples=6)
+
+        self.assertEqual(trained_score.hit_count, 2)
+        self.assertEqual(context_report.trained_exact_hits, 2)
+        self.assertEqual(context_report.trained_misses, 6)
+        self.assertEqual(context_report.invented_value_misses, 6)
+        self.assertFalse(context_report.passes_next_smoke_gate)
+        self.assertEqual(
+            context_report.failure_reasons,
+            (
+                "trained exact hits 2/8 are below required 3/8",
+                "invented-value misses 6/8 exceed maximum 5/8",
+            ),
+        )
+        self.assertEqual(
+            [item.fact_id for item in context_report.items],
+            ["fact-0001", "fact-0003", "fact-0005", "fact-0007", "fact-0004", "fact-0006"],
+        )
+        project_context = context_report.items[0]
+        self.assertEqual(project_context.expected_value, "Glass Harbor")
+        self.assertEqual(project_context.expected_value_shapes, ("name",))
+        self.assertEqual(project_context.invented_values[0].text, "Quantum-X-2019-04-30")
+        self.assertIn("identifier", project_context.invented_values[0].value_shapes)
+        self.assertEqual(project_context.train_row_count, 6)
+        self.assertEqual(project_context.exact_value_in_completion_rows, 6)
+        self.assertEqual(project_context.exact_value_in_prompt_rows, 1)
+        self.assertTrue(project_context.known_values_only_warning_present)
+        self.assertEqual(project_context.same_chunk_known_values, ("Glass Harbor", "Mira Vale"))
+        self.assertIn("known_values_only_label_value", project_context.row_styles_seen)
+        self.assertTrue(project_context.training_rows)
+        self.assertTrue(
+            all(
+                set(row.public_row_fields) == {"instruction", "response", "source_chunk_id"}
+                for row in project_context.training_rows
+            )
+        )
+        self.assertTrue(any("Next smoke gate: failed" in line for line in lines))
+        self.assertTrue(any("fact-0001 | Project codename" in line for line in lines))
+        self.assertTrue(any("training signal: 6 row(s)" in line for line in lines))
+        self.assertTrue(any("model learned answer shape/value type" in line for line in lines))
+
+    def test_fact_miss_context_gate_rejects_partial_eval_outputs(self):
+        sample_path = Path(__file__).resolve().parents[1] / "examples" / "sample-notes.md"
+        document = load_text_document(sample_path.name, sample_path.read_text(encoding="utf-8"))
+        split = build_fact_train_eval_split(
+            extract_fact_ledger(chunk_text(document.text, max_chars=300))
+        )
+        comparison_rows = build_fact_comparison_rows(split)
+        partial_outputs = [
+            {
+                "question": row["instruction"],
+                "answer": row["value"],
+                "expected_terms": row["expected_terms"],
+                "fact_id": row["fact_id"],
+                "label": row["label"],
+                "value": row["value"],
+                "source_chunk_id": row["source_chunk_id"],
+                "row_style": row["row_style"],
+            }
+            for row in comparison_rows[:3]
+        ]
+
+        context_report = analyze_fact_miss_contexts(split, score_fact_outputs(partial_outputs))
+        lines = format_fact_miss_context_report(context_report)
+
+        self.assertEqual(context_report.answer_count, 3)
+        self.assertEqual(context_report.expected_answer_count, 8)
+        self.assertEqual(context_report.trained_exact_hits, 3)
+        self.assertFalse(context_report.passes_next_smoke_gate)
+        self.assertEqual(
+            context_report.failure_reasons,
+            ("answer count 3/8 does not match held-out eval rows",),
+        )
+        self.assertTrue(any("Trained exact hits: 3/8" in line for line in lines))
+        self.assertTrue(any("Gate failure: answer count 3/8" in line for line in lines))
 
 
 if __name__ == "__main__":

@@ -18,6 +18,9 @@ from .text import TextChunk
 
 
 DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT = 6
+DEFAULT_NEXT_SMOKE_REQUIRED_EXACT_HITS = 3
+DEFAULT_NEXT_SMOKE_MAX_INVENTED_VALUE_MISSES = 5
+_ANTI_INVENTION_WARNING_TEXT = "Do not invent a new number, time, identifier, name, or color."
 
 
 @dataclass(frozen=True)
@@ -168,6 +171,94 @@ class FactMissDiagnosticReport:
 
     def count(self, miss_kind: str) -> int:
         return sum(1 for item in self.items if item.miss_kind == miss_kind)
+
+
+@dataclass(frozen=True)
+class FactInventedValueCandidate:
+    """Plausible-looking wrong value produced by the model."""
+
+    text: str
+    value_shapes: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class FactMissTrainingRowSignal:
+    """One internal training row tied to a missed fact."""
+
+    row_id: str
+    row_style: str
+    instruction: str
+    response: str
+    public_row_fields: tuple[str, ...]
+    exact_value_in_instruction: bool
+    exact_value_in_response: bool
+    known_values_only_warning_present: bool
+
+
+@dataclass(frozen=True)
+class FactMissContextItem:
+    """Local context joining a missed answer back to its training signal."""
+
+    fact_id: str
+    label: str
+    source_chunk_id: str
+    question: str
+    trained_answer: str
+    expected_value: str
+    expected_value_shapes: tuple[str, ...]
+    missing_terms: tuple[str, ...]
+    miss_kind: str
+    invented_values: tuple[FactInventedValueCandidate, ...]
+    row_styles_seen: tuple[str, ...]
+    train_row_count: int
+    exact_value_in_prompt_rows: int
+    exact_value_in_completion_rows: int
+    known_values_only_warning_present: bool
+    same_chunk_known_values: tuple[str, ...]
+    training_rows: tuple[FactMissTrainingRowSignal, ...]
+    diagnosis: str
+
+
+@dataclass(frozen=True)
+class FactMissContextReport:
+    """Post-run local audit for deciding whether another GPU smoke is justified."""
+
+    answer_count: int
+    expected_answer_count: int
+    trained_exact_hits: int
+    trained_misses: int
+    invented_value_misses: int
+    required_trained_exact_hits: int
+    maximum_invented_value_misses: int
+    items: tuple[FactMissContextItem, ...]
+    unscored_count: int = 0
+
+    @property
+    def passes_next_smoke_gate(self) -> bool:
+        return not self.failure_reasons
+
+    @property
+    def failure_reasons(self) -> tuple[str, ...]:
+        reasons: list[str] = []
+        expected_answer_count = self.expected_answer_count or self.answer_count
+        if self.expected_answer_count and self.answer_count != self.expected_answer_count:
+            reasons.append(
+                f"answer count {self.answer_count}/{self.expected_answer_count} "
+                "does not match held-out eval rows"
+            )
+        if self.trained_exact_hits < self.required_trained_exact_hits:
+            reasons.append(
+                f"trained exact hits {self.trained_exact_hits}/{expected_answer_count} "
+                f"are below required {self.required_trained_exact_hits}/{expected_answer_count}"
+            )
+        if self.invented_value_misses > self.maximum_invented_value_misses:
+            reasons.append(
+                f"invented-value misses {self.invented_value_misses}/{expected_answer_count} "
+                f"exceed maximum {self.maximum_invented_value_misses}/{expected_answer_count}"
+            )
+        if self.unscored_count:
+            reasons.append(f"unscored answers {self.unscored_count}/{expected_answer_count} need expected terms")
+        return tuple(reasons)
 
 
 @dataclass(frozen=True)
@@ -722,6 +813,118 @@ def diagnose_fact_misses(
         unscored_count=score.unscored_count,
         items=items,
     )
+
+
+def analyze_fact_miss_contexts(
+    split: FactTrainEvalSplit,
+    trained_score: FactOutputScore,
+    *,
+    required_trained_exact_hits: int = DEFAULT_NEXT_SMOKE_REQUIRED_EXACT_HITS,
+    maximum_invented_value_misses: int = DEFAULT_NEXT_SMOKE_MAX_INVENTED_VALUE_MISSES,
+) -> FactMissContextReport:
+    """Join trained exact misses back to the local fact-ledger training signal.
+
+    This is a post-run audit. It does not change scoring and it does not give
+    credit for wrong answers. Its job is to explain whether a missed fact had
+    clear local supervision before another GPU run is justified.
+    """
+
+    if required_trained_exact_hits < 0:
+        raise ValueError("required_trained_exact_hits must be non-negative")
+    if maximum_invented_value_misses < 0:
+        raise ValueError("maximum_invented_value_misses must be non-negative")
+
+    facts = tuple(split.facts)
+    diagnostics = diagnose_fact_misses(trained_score, facts)
+    context_items = tuple(
+        _fact_miss_context_item(diagnostic, split=split, facts=facts)
+        for diagnostic in diagnostics.items
+    )
+    return FactMissContextReport(
+        answer_count=trained_score.answer_count,
+        expected_answer_count=len(split.eval_rows),
+        trained_exact_hits=trained_score.hit_count,
+        trained_misses=trained_score.miss_count,
+        invented_value_misses=diagnostics.count("invented_numeric_time_identifier_value"),
+        required_trained_exact_hits=required_trained_exact_hits,
+        maximum_invented_value_misses=maximum_invented_value_misses,
+        unscored_count=trained_score.unscored_count,
+        items=context_items,
+    )
+
+
+def format_fact_miss_context_report(
+    report: FactMissContextReport,
+    *,
+    max_examples: int = 6,
+    max_training_rows_per_fact: int = 6,
+) -> list[str]:
+    """Format the post-run miss context audit in plain language."""
+
+    if max_examples < 1:
+        raise ValueError("max_examples must be at least 1")
+    if max_training_rows_per_fact < 1:
+        raise ValueError("max_training_rows_per_fact must be at least 1")
+
+    verdict = "passed" if report.passes_next_smoke_gate else "failed"
+    expected_answer_count = report.expected_answer_count or report.answer_count
+    lines = [
+        "Fact miss context report",
+        (
+            f"Trained exact hits: {report.trained_exact_hits}/{expected_answer_count}; "
+            f"misses: {report.trained_misses}/{expected_answer_count}; "
+            f"invented-value misses: {report.invented_value_misses}/{expected_answer_count}"
+        ),
+        (
+            f"Next smoke gate: {verdict}; requires at least "
+            f"{report.required_trained_exact_hits}/{expected_answer_count} exact hits "
+            f"and at most {report.maximum_invented_value_misses}/{expected_answer_count} "
+            "invented-value misses."
+        ),
+        "This audit explains failures; it does not give credit unless exact expected terms are present.",
+    ]
+    for reason in report.failure_reasons:
+        lines.append(f"Gate failure: {reason}.")
+    if not report.items:
+        lines.append("No scored miss contexts to inspect.")
+        return lines
+
+    for item in report.items[:max_examples]:
+        lines.append(f"Miss context: {_fact_miss_context_label(item)} | {item.miss_kind}")
+        lines.append(
+            "  expected value: "
+            + item.expected_value
+            + _format_shape_suffix(item.expected_value_shapes)
+        )
+        lines.append(f"  trained answer: {item.trained_answer}")
+        if item.invented_values:
+            invented = ", ".join(
+                candidate.text + _format_shape_suffix(candidate.value_shapes)
+                for candidate in item.invented_values
+            )
+            lines.append("  invented value candidate(s): " + invented)
+        if item.same_chunk_known_values:
+            lines.append("  same-chunk known value(s): " + "; ".join(item.same_chunk_known_values))
+        lines.append(
+            "  training signal: "
+            f"{item.train_row_count} row(s); row styles: "
+            + (", ".join(item.row_styles_seen) if item.row_styles_seen else "(none)")
+        )
+        lines.append(
+            "  exact value presence: "
+            f"{item.exact_value_in_prompt_rows} prompt row(s), "
+            f"{item.exact_value_in_completion_rows} completion row(s)"
+        )
+        lines.append(
+            "  known-values warning present: "
+            + ("yes" if item.known_values_only_warning_present else "no")
+        )
+        lines.append("  diagnosis: " + item.diagnosis)
+        for row in item.training_rows[:max_training_rows_per_fact]:
+            lines.append(f"  train row {row.row_id} | {row.row_style}")
+            lines.append("    prompt: " + row.instruction)
+            lines.append("    completion: " + row.response)
+    return lines
 
 
 def format_fact_miss_diagnostic_report(
@@ -1406,9 +1609,14 @@ def _diagnose_fact_answer_miss(
         for match in value_matches
         if target_fact is not None and match.source_chunk_id == target_fact.source_chunk_id
     )
-    invented_values = _invented_value_candidates(item.answer, facts=facts)
+    label = item.label or (target_fact.label if target_fact else "")
+    invented_values = tuple(
+        candidate
+        for candidate in _invented_value_candidates(item.answer, facts=facts)
+        if not _candidate_echoes_label(candidate, label)
+    )
     shape_markers = _answer_shape_markers(item.answer)
-    label_echo = _answer_echoes_label(item.answer, item.label or (target_fact.label if target_fact else ""))
+    label_echo = _answer_echoes_label(item.answer, label)
 
     if same_chunk_matches:
         miss_kind = "same_chunk_value_confusion"
@@ -1462,6 +1670,149 @@ def _target_fact_for_score(item: FactAnswerScore, facts: Sequence[FactCard]) -> 
     return None
 
 
+def _fact_miss_context_item(
+    diagnostic: FactMissDiagnostic,
+    *,
+    split: FactTrainEvalSplit,
+    facts: Sequence[FactCard],
+) -> FactMissContextItem:
+    target_fact = _target_fact_for_diagnostic(diagnostic, facts)
+    expected_value = diagnostic.value or (target_fact.value if target_fact else "")
+    training_rows = _fact_training_row_signals(
+        diagnostic.fact_id or (target_fact.fact_id if target_fact else ""),
+        expected_value=expected_value,
+        manifest_rows=split.manifest_rows,
+    )
+    row_styles_seen = _unique_in_order(row.row_style for row in training_rows if row.row_style)
+    same_chunk_known_values = _same_chunk_known_values(target_fact, facts)
+    exact_value_in_prompt_rows = sum(1 for row in training_rows if row.exact_value_in_instruction)
+    exact_value_in_completion_rows = sum(1 for row in training_rows if row.exact_value_in_response)
+    known_values_only_warning_present = any(row.known_values_only_warning_present for row in training_rows)
+    invented_values = tuple(
+        FactInventedValueCandidate(text=value, value_shapes=_value_shapes(value))
+        for value in diagnostic.invented_values
+    )
+    return FactMissContextItem(
+        fact_id=diagnostic.fact_id or (target_fact.fact_id if target_fact else ""),
+        label=diagnostic.label or (target_fact.label if target_fact else ""),
+        source_chunk_id=diagnostic.source_chunk_id or (target_fact.source_chunk_id if target_fact else ""),
+        question=diagnostic.question,
+        trained_answer=diagnostic.answer,
+        expected_value=expected_value,
+        expected_value_shapes=_value_shapes(expected_value),
+        missing_terms=diagnostic.missing_terms,
+        miss_kind=diagnostic.miss_kind,
+        invented_values=invented_values,
+        row_styles_seen=row_styles_seen,
+        train_row_count=len(training_rows),
+        exact_value_in_prompt_rows=exact_value_in_prompt_rows,
+        exact_value_in_completion_rows=exact_value_in_completion_rows,
+        known_values_only_warning_present=known_values_only_warning_present,
+        same_chunk_known_values=same_chunk_known_values,
+        training_rows=training_rows,
+        diagnosis=_fact_miss_context_diagnosis(
+            diagnostic,
+            expected_value_shapes=_value_shapes(expected_value),
+            invented_values=invented_values,
+            training_rows=training_rows,
+            exact_value_in_completion_rows=exact_value_in_completion_rows,
+        ),
+    )
+
+
+def _target_fact_for_diagnostic(
+    diagnostic: FactMissDiagnostic,
+    facts: Sequence[FactCard],
+) -> FactCard | None:
+    if diagnostic.fact_id:
+        for fact in facts:
+            if fact.fact_id == diagnostic.fact_id:
+                return fact
+    label = _normalize_fact_text(diagnostic.label)
+    for fact in facts:
+        if label and _normalize_fact_text(fact.label) == label:
+            return fact
+    return None
+
+
+def _fact_training_row_signals(
+    fact_id: str,
+    *,
+    expected_value: str,
+    manifest_rows: Sequence[Mapping[str, object]],
+) -> tuple[FactMissTrainingRowSignal, ...]:
+    rows: list[FactMissTrainingRowSignal] = []
+    for row in manifest_rows:
+        if row.get("split") != "train" or str(row.get("fact_id", "")) != fact_id:
+            continue
+        instruction = str(row.get("instruction", ""))
+        response = str(row.get("response", ""))
+        rows.append(
+            FactMissTrainingRowSignal(
+                row_id=str(row.get("row_id", "")),
+                row_style=str(row.get("row_style", "")),
+                instruction=instruction,
+                response=response,
+                public_row_fields=("instruction", "response", "source_chunk_id"),
+                exact_value_in_instruction=_contains_expected_value(instruction, expected_value),
+                exact_value_in_response=_contains_expected_value(response, expected_value),
+                known_values_only_warning_present=_ANTI_INVENTION_WARNING_TEXT in instruction,
+            )
+        )
+    return tuple(rows)
+
+
+def _same_chunk_known_values(target_fact: FactCard | None, facts: Sequence[FactCard]) -> tuple[str, ...]:
+    if target_fact is None:
+        return ()
+    return tuple(
+        fact.value
+        for fact in facts
+        if fact.source_chunk_id == target_fact.source_chunk_id
+    )
+
+
+def _fact_miss_context_diagnosis(
+    diagnostic: FactMissDiagnostic,
+    *,
+    expected_value_shapes: tuple[str, ...],
+    invented_values: tuple[FactInventedValueCandidate, ...],
+    training_rows: tuple[FactMissTrainingRowSignal, ...],
+    exact_value_in_completion_rows: int,
+) -> str:
+    if not training_rows:
+        return "The miss could not be linked to fact-ledger training rows; inspect stale or missing metadata."
+    if diagnostic.miss_kind in {"same_chunk_value_confusion", "known_value_confusion"}:
+        return "The model selected a real note value for the wrong label; strengthen label/value separation."
+    if diagnostic.miss_kind == "label_echo":
+        return "The model repeated the label but did not recall the exact note value."
+    if diagnostic.miss_kind == "invented_numeric_time_identifier_value":
+        invented_shapes = {shape for candidate in invented_values for shape in candidate.value_shapes}
+        if expected_value_shapes and invented_shapes.intersection(expected_value_shapes):
+            return "The model learned answer shape/value type, but not the exact note value."
+        return "The model invented a plausible-looking value instead of using the recorded note value."
+    if exact_value_in_completion_rows == len(training_rows):
+        return "The exact value is present in every completion row, so the miss is not a missing-value row issue."
+    return "The model missed the exact note value; inspect the prompt/completion rows for weak value emphasis."
+
+
+def _contains_expected_value(text: str, expected_value: str) -> bool:
+    if not expected_value:
+        return False
+    return _answer_contains_expected_term(text, _text_tokens(text), expected_value)
+
+
+def _unique_in_order(values: Iterable[str]) -> tuple[str, ...]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        ordered.append(value)
+    return tuple(ordered)
+
+
 def _known_value_matches(
     answer: str,
     *,
@@ -1504,6 +1855,27 @@ def _invented_value_candidates(answer: str, *, facts: Sequence[FactCard]) -> tup
     return tuple(candidates)
 
 
+def _value_shapes(value: str) -> tuple[str, ...]:
+    clean_value = _clean_invented_candidate(value)
+    if not clean_value:
+        return ()
+
+    shapes: list[str] = []
+    if _looks_like_time(clean_value):
+        shapes.append("time")
+    if _looks_like_identifier(clean_value):
+        shapes.append("identifier")
+    elif _looks_like_number(clean_value):
+        shapes.append("number")
+    if _looks_like_color(clean_value):
+        shapes.append("color")
+    if _looks_like_name(clean_value):
+        shapes.append("name")
+    if not shapes:
+        shapes.append("phrase")
+    return tuple(shapes)
+
+
 def _exact_answer_candidates(answer: str) -> tuple[str, ...]:
     candidates = []
     for match in re.finditer(r"exact answer:\s*([^.\n]+)", answer, flags=re.IGNORECASE):
@@ -1533,14 +1905,65 @@ def _candidate_is_known_fact_value(candidate: str, facts: Sequence[FactCard]) ->
     return any(_answer_contains_expected_term(candidate, candidate_tokens, fact.value) for fact in facts)
 
 
+def _candidate_echoes_label(candidate: str, label: str) -> bool:
+    normalized_candidate = _normalize_fact_text(candidate)
+    normalized_label = _normalize_fact_text(label)
+    return bool(normalized_candidate and normalized_candidate == normalized_label)
+
+
 def _candidate_looks_like_plausible_value(candidate: str) -> bool:
     if len(candidate) < 2:
         return False
-    if re.search(r"\d", candidate):
+    return any(shape in {"time", "identifier", "number", "name", "color"} for shape in _value_shapes(candidate))
+
+
+def _looks_like_time(value: str) -> bool:
+    return bool(re.search(r"\b\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?\b", value))
+
+
+def _looks_like_identifier(value: str) -> bool:
+    if re.fullmatch(r"version\s+\d+", value, flags=re.IGNORECASE):
         return True
-    if "-" in candidate and re.search(r"[A-Za-z]", candidate):
-        return True
-    return False
+    return bool(
+        "-" in value
+        and re.search(r"[A-Za-z0-9]", value)
+    )
+
+
+def _looks_like_number(value: str) -> bool:
+    return bool(re.fullmatch(r"\d+(?:[.,]\d+)?", value))
+
+
+def _looks_like_name(value: str) -> bool:
+    words = value.split()
+    return (
+        1 < len(words) <= 4
+        and all(re.fullmatch(r"[A-Z][A-Za-z0-9-]*", word) for word in words)
+    )
+
+
+def _looks_like_color(value: str) -> bool:
+    return _normalize_fact_text(value) in {
+        "black",
+        "blue",
+        "brown",
+        "cyan",
+        "gold",
+        "green",
+        "grey",
+        "gray",
+        "indigo",
+        "magenta",
+        "orange",
+        "pink",
+        "purple",
+        "red",
+        "silver",
+        "ultramarine",
+        "violet",
+        "white",
+        "yellow",
+    }
 
 
 def _answer_shape_markers(answer: str) -> tuple[str, ...]:
@@ -1569,10 +1992,25 @@ def _fact_miss_label(item: FactMissDiagnostic) -> str:
     return " | ".join(parts) if parts else item.question
 
 
+def _fact_miss_context_label(item: FactMissContextItem) -> str:
+    parts = [part for part in (item.fact_id, item.label or item.question, item.source_chunk_id) if part]
+    return " | ".join(parts) if parts else item.question
+
+
+def _format_shape_suffix(shapes: tuple[str, ...]) -> str:
+    return " (shape: " + ", ".join(shapes) + ")" if shapes else ""
+
+
 __all__ = [
     "DEFAULT_FACT_TRAIN_EXAMPLES_PER_FACT",
+    "DEFAULT_NEXT_SMOKE_MAX_INVENTED_VALUE_MISSES",
+    "DEFAULT_NEXT_SMOKE_REQUIRED_EXACT_HITS",
     "FactAnswerScore",
     "FactCard",
+    "FactInventedValueCandidate",
+    "FactMissContextItem",
+    "FactMissContextReport",
+    "FactMissTrainingRowSignal",
     "FactMissDiagnostic",
     "FactMissDiagnosticReport",
     "FactOutputScore",
@@ -1583,12 +2021,14 @@ __all__ = [
     "FactScoreComparisonItem",
     "FactTrainEvalSplit",
     "FactValueMatch",
+    "analyze_fact_miss_contexts",
     "analyze_fact_quality_gate",
     "analyze_fact_readiness",
     "build_fact_train_eval_split",
     "compare_fact_scores",
     "diagnose_fact_misses",
     "extract_fact_ledger",
+    "format_fact_miss_context_report",
     "format_fact_miss_diagnostic_report",
     "format_fact_quality_report",
     "format_fact_readiness_report",

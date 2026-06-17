@@ -185,6 +185,7 @@ Default behavior:
 - Generate the base-model answer with the LoRA adapter disabled, then generate the trained-adapter answer with the adapter enabled.
 - Show the generated reference answer, base-model answer, and trained-adapter answer when training has run.
 - Print a crude reference-overlap signal for each answer pair.
+- When exact fact metadata is present, print exact fact-hit scoring, miss diagnostics, and miss-context rows that show the training signal for each wrong trained answer.
 - Label the comparison as a qualitative smoke report, not a benchmark.
 
 Expected output:
@@ -270,7 +271,7 @@ Included now:
 
 Planned later in v0:
 
-- Diagnose the six remaining invented-value misses from the manifest-gated anti-invention T4 smoke before another GPU run; the next gate is at least 3/8 exact held-out hits and at most 5/8 invented-value misses.
+- Use the local miss-context report to make one targeted data-signal change for the six remaining invented-value misses before another GPU run; the next gate is at least 3/8 exact held-out hits and at most 5/8 invented-value misses.
 - Harden larger uploaded notes files and higher generated row counts after the tiny `.txt` and `.md` upload rehearsals.
 - Local-run guidance, after the notes-model quality loop shows useful note-grounded answers.
 
