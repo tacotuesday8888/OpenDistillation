@@ -340,13 +340,13 @@ If a secret or token is ever exposed in logs or git, treat it as compromised and
 
 The next implementation goal should be:
 
-> Use the local fact-miss diagnostics to make a targeted fact-ledger row-signal change before another GPU run.
+> Use the local fact-miss context audit to make a targeted fact-ledger row-signal change before another GPU run.
 
 This should happen before Unsloth migration, export, local runtime packaging, new model profiles, another GPU smoke, or a training-parameter sweep.
 
 The exact next local work is:
 
-- Use the exact-miss diagnostics to explain why the 2026-06-16 anti-invention run learned two facts but still invented values for the six missed facts.
+- Use the exact-miss context report to trace each 2026-06-16 anti-invention miss back to its row styles, prompt/completion value binding, and same-chunk known values.
 - Change rows only where the diagnostics show a concrete target, especially invented-value answer shape without exact value binding.
 - Add local diagnostics or row changes only when they directly make exact label/value facts clearer.
 - Preserve the public JSONL schema, train/eval split, leakage checks, SFT preview, and exact fact-hit scoring by fact/question identity.

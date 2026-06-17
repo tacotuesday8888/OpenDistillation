@@ -12,7 +12,7 @@ The current prototype is much narrower:
 
 > One Colab-first notes / school model prototype for `.txt` and `.md` notes.
 
-It has a runnable notebook, helper package, deterministic mock teacher with varied question styles, a deterministic dataset quality report, a fact-ledger quality gate, a six-row-per-fact label/value local signal, same-chunk label/value disambiguation rows, anti-invention known-values rows, local fact-miss diagnostics for changed-but-wrong answers, an internal anti-invention T4 smoke preflight manifest, an opt-in local Qwen real teacher path, a bounded optional TRL/PEFT LoRA training entry point, runtime readiness messages, and optional multi-question before/after quality report wiring. The latest GPU evidence is a narrow pass, not useful note learning: the 2026-06-16 manifest-gated anti-invention T4 smoke changed all 8 trained answers and improved exact held-out facts from base 0/8 to trained 2/8, beating the previous best 1/8, but it still missed 6/8 facts and every miss was an invented-value failure. It does not yet have model export, local runtime instructions, reliable held-out fact learning, or multiple model profiles.
+It has a runnable notebook, helper package, deterministic mock teacher with varied question styles, a deterministic dataset quality report, a fact-ledger quality gate, a six-row-per-fact label/value local signal, same-chunk label/value disambiguation rows, anti-invention known-values rows, local fact-miss diagnostics and training-signal context reports for changed-but-wrong answers, an internal anti-invention T4 smoke preflight manifest, an opt-in local Qwen real teacher path, a bounded optional TRL/PEFT LoRA training entry point, runtime readiness messages, and optional multi-question before/after quality report wiring. The latest GPU evidence is a narrow pass, not useful note learning: the 2026-06-16 manifest-gated anti-invention T4 smoke changed all 8 trained answers and improved exact held-out facts from base 0/8 to trained 2/8, beating the previous best 1/8, but it still missed 6/8 facts and every miss was an invented-value failure. It does not yet have model export, local runtime instructions, reliable held-out fact learning, or multiple model profiles.
 
 ## Read These In Order
 
@@ -26,7 +26,7 @@ It has a runnable notebook, helper package, deterministic mock teacher with vari
 
 ## What To Do Next
 
-Diagnose the six remaining invented-value misses locally before another GPU run. The anti-invention signal beat the previous best by reaching 2/8 exact held-out hits, but the model still invented wrong numbers, times, identifiers, or names for the missed facts. The next data change should directly explain or reduce those failures, then the next bounded T4 smoke should require at least 3/8 exact held-out fact hits and at most 5/8 invented-value misses.
+Use the local fact-miss context report to make one targeted data-signal change before another GPU run. The anti-invention signal beat the previous best by reaching 2/8 exact held-out hits, but the model still invented wrong numbers, times, identifiers, or names for the missed facts. The next data change should directly reduce those failures, then the next bounded T4 smoke should require at least 3/8 exact held-out fact hits and at most 5/8 invented-value misses.
 
 ## What Not To Do Next
 

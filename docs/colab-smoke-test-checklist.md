@@ -28,7 +28,7 @@ Use this checklist before marking the optional real teacher, training, or before
 Run this CPU-only preflight before any future anti-invention-style T4 smoke. It writes a manifest to `/tmp` and exits nonzero if the local data no longer matches the exact sample-notes GPU contract. The 2026-06-16 anti-invention run already used this gate and reached trained 2/8 exact hits; a repeat run is only useful after a local change explains why the remaining 6/8 misses still invented values.
 
 ```bash
-PYTHONPATH=src python scripts/prepare_anti_invention_smoke.py \
+PYTHONPATH=src python3 scripts/prepare_anti_invention_smoke.py \
   --output /tmp/opendistillation_anti_invention_smoke_manifest.json
 ```
 

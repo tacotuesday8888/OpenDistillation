@@ -6,7 +6,7 @@
 
 ## Current State
 
-OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, deterministic dataset quality reporting, an opt-in local real teacher path, fact-ledger train/eval checks, bounded optional training and comparison entry points, local exact-miss diagnostics, and an internal anti-invention T4 smoke preflight manifest. The latest GPU learning evidence is a narrow pass but still weak: the 2026-06-16 manifest-gated anti-invention fact-ledger Colab T4 smoke changed all 8 trained-adapter answers and improved exact held-out fact hits from base 0/8 to trained 2/8, beating the previous best 1/8. It still missed 6/8 facts, and every miss was classified as an invented-value failure.
+OpenDistillation is GitHub-ready at the documentation and prototype level, with a safe mock teacher default, deterministic dataset quality reporting, an opt-in local real teacher path, fact-ledger train/eval checks, bounded optional training and comparison entry points, local exact-miss diagnostics, a local fact-miss context audit, and an internal anti-invention T4 smoke preflight manifest. The latest GPU learning evidence is a narrow pass but still weak: the 2026-06-16 manifest-gated anti-invention fact-ledger Colab T4 smoke changed all 8 trained-adapter answers and improved exact held-out fact hits from base 0/8 to trained 2/8, beating the previous best 1/8. It still missed 6/8 facts, and every miss was classified as an invented-value failure.
 
 The repo now contains:
 
@@ -19,6 +19,7 @@ The repo now contains:
 - Optional `HuggingFaceLocalTeacherEngine` using `Qwen/Qwen2.5-1.5B-Instruct`, disabled by default with `RUN_REAL_TEACHER = False`.
 - Optional TRL `SFTTrainer` + PEFT LoRA training engine for `Qwen/Qwen2.5-0.5B-Instruct`, skipped by default in the notebook.
 - Optional multi-question before/after quality report with exact-miss diagnostics, skipped by default in the notebook.
+- Local fact-miss context report that joins each missed answer back to the fact's exact training rows, row styles, same-chunk values, known-values warning, and stricter next-run gate.
 - Fact-ledger quality gate with 8 sample facts, 48 train rows in the current flow, 8 held-out eval rows, 8 same-chunk disambiguation rows, 8 known-values-only anti-invention rows, leakage checks, exact expected-term checks, anti-invention known-values coverage, and exact fact-hit scoring.
 - Internal anti-invention smoke preflight script and manifest builder that pinned the latest sample-notes T4 contract before GPU time.
 - Runtime readiness helpers for optional Colab training dependencies, CUDA checks, and common setup failure messages.
@@ -46,7 +47,7 @@ The first implementation surface is a Colab notebook. The CLI comes later as a t
 
 ## Next Recommended Work
 
-The next task is local diagnosis of the six remaining invented-value misses from the anti-invention T4 smoke. Do not rerun the same smoke or tune training knobs first. Inspect the missed questions and SFT prompt/completion signal, strengthen the data/reporting only where it directly targets invented number/time/identifier/name/color substitutes, and require the next bounded T4 smoke to reach at least 3/8 exact held-out fact hits with at most 5/8 invented-value misses.
+The next task is one targeted data-signal change guided by the local fact-miss context report. Do not rerun the same smoke or tune training knobs first. Inspect the missed questions, the per-fact training rows, and the invented value shapes; strengthen only the data/reporting that directly targets invented number/time/identifier/name/color substitutes; and require the next bounded T4 smoke to reach at least 3/8 exact held-out fact hits with at most 5/8 invented-value misses.
 
 ## Important Guardrails
 

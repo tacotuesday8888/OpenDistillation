@@ -185,7 +185,7 @@ Interpretation:
 
 - The anti-invention known-values row signal produced the first manifest-gated pass by exact held-out fact count: trained hits improved from 0/8 to 2/8 and beat the previous best 1/8.
 - This is a bounded positive signal, not useful learned note memory. The adapter still missed 6/8 facts, and every miss was still an invented numeric/time/identifier value.
-- Do not rerun the same smoke or change training knobs next. Diagnose why the remaining six misses still invent values, strengthen the data signal only where that diagnosis points, and require the next GPU run to reach at least 3/8 exact hits with at most 5/8 invented-value misses.
+- Do not rerun the same smoke or change training knobs next. Use the local fact-miss context audit to strengthen the data signal only where row-level evidence points, and require the next GPU run to reach at least 3/8 exact hits with at most 5/8 invented-value misses.
 - The exact `worse: 0` count only means no base exact-hit row became a trained miss. Because the base scored 0/8, it is not a broad human-quality guarantee.
 
 Generated datasets, adapters, checkpoints, and model files stayed inside the Colab runtime and were not copied into this repository.
