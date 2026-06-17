@@ -1865,6 +1865,7 @@ def _value_shapes(value: str) -> tuple[str, ...]:
         shapes.append("time")
     if _looks_like_identifier(clean_value):
         shapes.append("identifier")
+    # Identifier-shaped values are more useful than also tagging their embedded digits as numbers.
     elif _looks_like_number(clean_value):
         shapes.append("number")
     if _looks_like_color(clean_value):
